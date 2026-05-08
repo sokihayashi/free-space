@@ -523,6 +523,8 @@ const S = {
 
 const MAX_DIM = 1000;
 let renderDebounce = null;
+let renderLock     = false;
+let renderQueued   = false;
 
 // ─────────────────────────────────────────────────────────────
 // PAPER TEXTURE — pronounced uncoated-paper grain (190–254 range)
@@ -800,6 +802,8 @@ function setOverlayState(pct, label) {
 // ─────────────────────────────────────────────────────────────
 async function render() {
   if (!S.imageData) return;
+  if (renderLock) { renderQueued = true; return; }
+  renderLock = true;
 
   const overlay = document.getElementById('render-overlay');
   overlay.classList.add('active');
@@ -833,10 +837,12 @@ async function render() {
   setOverlayState(94, 'FINISHING…');
   await tick();
   applyPaperGrain();
-  setOverlayState(100, 'DONE');
-  await tick();
+  setOverlayState(100, 'PRINTED');
+  await new Promise(r => setTimeout(r, 420));  // hold so the user reads "PRINTED"
 
   overlay.classList.remove('active');
+  renderLock = false;
+  if (renderQueued) { renderQueued = false; render(); }
 }
 
 function scheduleRender() {
