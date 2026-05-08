@@ -1217,80 +1217,79 @@ function makeAutoImage() {
   c.width = w; c.height = h;
   const ctx = c.getContext('2d');
 
-  // Deep night sky
-  ctx.fillStyle = '#08090f';
+  // ── 4-TONE ZINE POSTER ──
+  // Tonal strategy (channels mode):
+  //   Sky (dark)    → dense dots on BOTH plates  → rich bi-color
+  //   Moon (bright) → sparse dots on both plates → paper shows through
+  //   Water (mid)   → medium density             → halftone grid visible
+  //   Horizon line  → bright rule, max contrast
+  // These four tones create the full halftone dynamic range.
+
+  // Dark sky
+  ctx.fillStyle = '#0b0c16';
   ctx.fillRect(0, 0, w, h);
 
-  // ── STARS ── random bright points; cluster size varies for depth
-  // Seeded via a deterministic sequence so the pattern is the same every load
+  // ── STARS — deterministic bright points ──
   const starSeed = [0.14,0.87,0.33,0.62,0.09,0.71,0.45,0.28,0.93,0.55,
                     0.18,0.76,0.41,0.66,0.05,0.83,0.37,0.59,0.22,0.97,
                     0.50,0.13,0.79,0.35,0.68,0.03,0.91,0.47,0.26,0.84];
   for (let s = 0; s < 30; s++) {
-    const sx = starSeed[s]      * w;
-    const sy = starSeed[(s + 7) % 30] * h * 0.55; // keep stars in sky half
-    const sr = 0.8 + starSeed[(s + 14) % 30] * 2.2;
-    const bri = Math.round(140 + starSeed[(s + 21) % 30] * 115);
+    const sx  = starSeed[s]           * w;
+    const sy  = starSeed[(s+7)  % 30] * h * 0.58;
+    const sr  = 0.9 + starSeed[(s+14) % 30] * 2.0;
+    const bri = Math.round(150 + starSeed[(s+21) % 30] * 105);
     ctx.beginPath();
     ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-    ctx.fillStyle = `rgb(${bri},${bri-10},${bri-25})`;
+    ctx.fillStyle = `rgb(${bri},${bri-8},${bri-20})`;
     ctx.fill();
   }
 
   // ── MOON (crescent) ──
-  // Bright full disc
   ctx.beginPath();
-  ctx.arc(w * 0.52, h * 0.34, h * 0.26, 0, Math.PI * 2);
-  ctx.fillStyle = '#DDD5BC';
+  ctx.arc(w * 0.52, h * 0.34, h * 0.25, 0, Math.PI * 2);
+  ctx.fillStyle = '#E0D8C0';
   ctx.fill();
-  // Shadow bite to form crescent
   ctx.beginPath();
-  ctx.arc(w * 0.60, h * 0.31, h * 0.235, 0, Math.PI * 2);
-  ctx.fillStyle = '#08090f';
+  ctx.arc(w * 0.60, h * 0.31, h * 0.225, 0, Math.PI * 2);
+  ctx.fillStyle = '#0b0c16';
   ctx.fill();
-
-  // ── ATMOSPHERIC HORIZON BAND — city glow ──
-  ctx.fillStyle = '#14142a';
-  ctx.fillRect(0, h * 0.56, w, h * 0.03);
-  ctx.fillStyle = '#1e1c38';
-  ctx.fillRect(0, h * 0.59, w, h * 0.04);
-  ctx.fillStyle = '#201e3c';
-  ctx.fillRect(0, h * 0.63, w, h * 0.03);
 
   // ── HORIZON LINE ──
-  ctx.fillStyle = '#9890a0';
-  ctx.fillRect(0, h * 0.66, w, 2);
+  ctx.fillStyle = '#C8C2B0';
+  ctx.fillRect(0, h * 0.64, w, 3);
 
-  // ── GROUND ──
-  ctx.fillStyle = '#14121c';
-  ctx.fillRect(0, h * 0.662, w, h * 0.338);
+  // ── WATER / GROUND — MID-GRAY so halftone dot grid is visible ──
+  // Mid-tone base: channels plate densities ~130/255 → dot radius ~73% of max
+  // This is the sweet spot where individual dots are clearly readable.
+  ctx.fillStyle = '#6e6880';
+  ctx.fillRect(0, h * 0.643, w, h * 0.357);
 
-  // Moon water reflection — lighter bands read as reflected light on ground
-  ctx.fillStyle = '#3a3050';
-  ctx.fillRect(w * 0.34, h * 0.695, w * 0.32, h * 0.045);
-  ctx.fillStyle = '#2e2844';
-  ctx.fillRect(w * 0.40, h * 0.745, w * 0.22, h * 0.04);
-  ctx.fillStyle = '#221e34';
-  ctx.fillRect(w * 0.44, h * 0.792, w * 0.14, h * 0.032);
+  // Horizontal water ripple bands — lighter bands = moon reflection
+  // Each lighter strip has lower channel density → smaller dots → brighter
+  const ripples = [
+    { y: 0.675, h: 0.032, col: '#c8c0d8' },  // bright reflection: lum ~198
+    { y: 0.722, h: 0.022, col: '#a89ab8' },  // medium reflection: lum ~166
+    { y: 0.762, h: 0.016, col: '#8c7ea0' },  // fading: lum ~138
+    { y: 0.796, h: 0.010, col: '#7c7090' },  // hint: lum ~116
+  ];
+  ripples.forEach(r => {
+    // taper width to simulate perspective
+    const margin = (r.y - 0.64) * w * 0.25;
+    ctx.fillStyle = r.col;
+    ctx.fillRect(margin, h * r.y, w - margin * 2, h * r.h);
+  });
 
-  // ── CITY SILHOUETTE ──
-  ctx.fillStyle = '#050508';
-  // Left cluster
-  ctx.fillRect(w * 0.02, h * 0.46, w * 0.05, h * 0.21);
-  ctx.fillRect(w * 0.07, h * 0.50, w * 0.035, h * 0.17);
-  ctx.fillRect(w * 0.105, h * 0.42, w * 0.065, h * 0.25);
-  ctx.fillRect(w * 0.17, h * 0.53, w * 0.04, h * 0.14);
-  ctx.fillRect(w * 0.21, h * 0.48, w * 0.03, h * 0.19);
-  // Right cluster
-  ctx.fillRect(w * 0.73, h * 0.47, w * 0.04, h * 0.20);
-  ctx.fillRect(w * 0.77, h * 0.41, w * 0.055, h * 0.26);
-  ctx.fillRect(w * 0.825, h * 0.51, w * 0.04, h * 0.16);
-  ctx.fillRect(w * 0.865, h * 0.44, w * 0.07, h * 0.23);
-  ctx.fillRect(w * 0.935, h * 0.52, w * 0.065, h * 0.15);
-
-  // Antenna spires (thin vertical lines)
-  ctx.fillRect(w * 0.128 - 1, h * 0.38, 2, h * 0.045);
-  ctx.fillRect(w * 0.798 - 1, h * 0.37, 2, h * 0.045);
+  // ── DISTANT SHORELINE / RIDGE (dark, sits at horizon) ──
+  ctx.fillStyle = '#1a1824';
+  ctx.beginPath();
+  ctx.moveTo(0, h * 0.64);
+  ctx.bezierCurveTo(w * 0.12, h * 0.59, w * 0.30, h * 0.61, w * 0.42, h * 0.625);
+  ctx.bezierCurveTo(w * 0.55, h * 0.64, w * 0.68, h * 0.60, w * 0.82, h * 0.615);
+  ctx.bezierCurveTo(w * 0.92, h * 0.625, w * 0.97, h * 0.615, w, h * 0.62);
+  ctx.lineTo(w, h * 0.64);
+  ctx.lineTo(0, h * 0.64);
+  ctx.closePath();
+  ctx.fill();
 
   return ctx.getImageData(0, 0, w, h);
 }
