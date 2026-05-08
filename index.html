@@ -1,322 +1,555 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mesh Gradient Studio — Free Interactive Mesh Gradient Generator</title>
-<meta name="description" content="Create stunning mesh gradients for free. Interactive editor, animated effects, export CSS & PNG instantly. No signup needed.">
-<meta property="og:title" content="Mesh Gradient Studio — Free Mesh Gradient Generator">
-<meta property="og:description" content="Create beautiful animated mesh gradients. Drag color points, animate, export CSS/PNG. 100% free forever.">
-<meta property="og:type" content="website">
+<title>HEISEI VHS STUDIO — 平成レトロジェネレーター</title>
+<meta name="description" content="写真をアップロードするだけで本物そっくりのVHS映像風に変換。昭和・平成・令和・グリッチの4モード。無料・即完成。">
+<meta property="og:title" content="HEISEI VHS STUDIO — 平成レトロジェネレーター">
+<meta property="og:description" content="写真を昭和・平成VHS風に一瞬で変換。無料・ノーサインアップ。">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Mesh Gradient Studio">
-<meta name="twitter:description" content="The free mesh gradient generator designers actually use. Interactive, animated, CSS export. No signup.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='30%' cy='30%'><stop offset='0%' stop-color='%2300ff9f'/><stop offset='100%' stop-color='%239500ff'/></radialGradient></defs><rect width='100' height='100' rx='22' fill='url(%23g)'/></svg>">
+<meta name="twitter:title" content="HEISEI VHS STUDIO">
+<meta name="twitter:description" content="写真をVHS風に変換する無料ツール。昭和・平成・グリッチの4モード対応。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='70' font-size='60' text-anchor='middle' x='50'>📼</text></svg>">
 <style>
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap');
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
 :root{
-  --bg:#07070e;
-  --surface:#10101a;
-  --surface2:#181826;
-  --border:rgba(255,255,255,0.07);
-  --border2:rgba(255,255,255,0.12);
-  --text:#eeeeff;
-  --muted:#7878a8;
-  --accent:#6366f1;
-  --accent2:#a855f7;
-  --glow:rgba(99,102,241,0.22);
-  --r:14px;
+  --bg:#0a0a0a;
+  --crt:#0d1a0d;
+  --green:#00ff41;
+  --amber:#ffb300;
+  --red:#ff3333;
+  --white:#e8ffe8;
+  --dim:#2a2a2a;
+  --border:#1a3a1a;
 }
 
-html,body{height:100%}
-body{
+html,body{
+  height:100%;
   background:var(--bg);
-  color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',system-ui,sans-serif;
-  display:grid;
-  grid-template-rows:auto 1fr auto;
+  color:var(--white);
+  font-family:'Share Tech Mono',monospace;
   overflow:hidden;
 }
 
-/* ── Header ── */
+/* CRT scanline effect on entire page */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.15) 2px,
+    rgba(0,0,0,0.15) 4px
+  );
+  pointer-events:none;
+  z-index:9999;
+}
+
+/* CRT flicker */
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background:radial-gradient(ellipse at 50% 50%,transparent 60%,rgba(0,0,0,0.4) 100%);
+  pointer-events:none;
+  z-index:9998;
+  animation:flicker 8s infinite;
+}
+
+@keyframes flicker{
+  0%,95%,100%{opacity:1}
+  97%{opacity:.92}
+  98%{opacity:.96}
+  99%{opacity:.88}
+}
+
+/* Header */
 header{
   display:flex;align-items:center;justify-content:space-between;
-  padding:.875rem 1.5rem;
+  padding:.5rem 1.25rem;
   border-bottom:1px solid var(--border);
+  background:var(--crt);
+  position:relative;
   flex-shrink:0;
-  gap:1rem;
 }
-.logo{display:flex;align-items:center;gap:.6rem;flex-shrink:0}
-.logo-gem{
-  width:30px;height:30px;border-radius:8px;flex-shrink:0;
-  background:linear-gradient(135deg,#00ff9f 0%,#00b3ff 40%,#9500ff 100%);
-  box-shadow:0 4px 16px rgba(0,180,255,.35);
-}
-.logo-name{
-  font-size:1rem;font-weight:800;letter-spacing:-.02em;
-  background:linear-gradient(135deg,#818cf8,#c084fc);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.badge{
-  font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  color:#10b981;background:rgba(16,185,129,.12);
-  border:1px solid rgba(16,185,129,.25);
-  padding:.12rem .45rem;border-radius:100px;
-}
-.hdr-right{display:flex;align-items:center;gap:.75rem}
-.x-btn{
-  display:flex;align-items:center;gap:.4rem;
-  padding:.42rem .85rem;
-  background:#000;color:#fff;
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:100px;font-size:.78rem;font-weight:600;
-  cursor:pointer;text-decoration:none;
-  transition:all .2s;white-space:nowrap;
-}
-.x-btn:hover{background:#111;border-color:rgba(255,255,255,.35)}
 
-/* ── Layout ── */
-main{display:flex;overflow:hidden;min-height:0}
+.logo-area{
+  display:flex;align-items:center;gap:.75rem;
+}
 
-/* ── Canvas area ── */
-.canvas-area{
-  flex:1;min-width:0;
+.logo{
+  font-family:'VT323',monospace;
+  font-size:1.8rem;
+  color:var(--green);
+  text-shadow:0 0 20px rgba(0,255,65,0.8),0 0 40px rgba(0,255,65,0.4);
+  letter-spacing:.08em;
+  line-height:1;
+}
+
+.logo span{
+  color:var(--amber);
+  text-shadow:0 0 20px rgba(255,179,0,0.8);
+}
+
+.rec-badge{
+  display:flex;align-items:center;gap:.35rem;
+  font-size:.7rem;color:var(--red);
+  animation:blink 1.5s step-end infinite;
+}
+
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+.rec-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--red);
+  box-shadow:0 0 6px var(--red);
+}
+
+.header-right{
+  display:flex;align-items:center;gap:1rem;
+}
+
+.mode-leds{
+  display:flex;gap:.4rem;
+}
+
+.led{
+  width:8px;height:8px;border-radius:50%;
+  background:#222;
+}
+.led.on-green{background:var(--green);box-shadow:0 0 6px var(--green)}
+.led.on-amber{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+
+.timer{
+  font-family:'VT323',monospace;
+  font-size:1.1rem;
+  color:var(--amber);
+  text-shadow:0 0 10px rgba(255,179,0,0.6);
+  letter-spacing:.1em;
+  min-width:70px;
+}
+
+/* Main layout */
+.layout{
+  display:flex;
+  height:calc(100vh - 48px);
+  overflow:hidden;
+}
+
+/* Canvas zone */
+.canvas-zone{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:.75rem;
+  background:var(--bg);
+  position:relative;
+  min-width:0;
+}
+
+.screen{
+  position:relative;
+  background:#000;
+  border:3px solid #222;
+  box-shadow:
+    0 0 0 1px #333,
+    0 0 30px rgba(0,255,65,0.06),
+    inset 0 0 60px rgba(0,0,0,0.8);
+  border-radius:4px;
+  overflow:hidden;
+  max-width:100%;
+  max-height:100%;
+  aspect-ratio:4/3;
+}
+
+/* 4:3 canvas */
+#vhsCanvas{
+  display:block;
+  width:100%;
+  height:100%;
+  image-rendering:pixelated;
+}
+
+.screen-overlay{
+  position:absolute;inset:0;
+  pointer-events:none;
+}
+
+/* Drop zone */
+.drop-zone{
+  position:absolute;inset:0;
   display:flex;flex-direction:column;
-  padding:1.125rem;gap:.75rem;
-}
-.canvas-wrap{
-  position:relative;flex:1;min-height:0;
-  border-radius:18px;overflow:hidden;
-  border:1px solid var(--border);
-  box-shadow:0 32px 80px rgba(0,0,0,.65);
-  cursor:crosshair;
-}
-#gc{width:100%;height:100%;display:block}
-#grc{
-  position:absolute;inset:0;width:100%;height:100%;
-  pointer-events:none;mix-blend-mode:overlay;opacity:0;
-}
-.blob-handle{
-  position:absolute;
-  width:22px;height:22px;border-radius:50%;
-  border:2.5px solid rgba(255,255,255,.92);
-  box-shadow:0 0 0 1.5px rgba(0,0,0,.5),0 4px 14px rgba(0,0,0,.45);
-  cursor:grab;transform:translate(-50%,-50%);
-  transition:transform .14s,box-shadow .14s;z-index:10;
-}
-.blob-handle:hover{
-  transform:translate(-50%,-50%) scale(1.28);
-  box-shadow:0 0 0 1.5px rgba(0,0,0,.5),0 8px 24px rgba(0,0,0,.55);
-}
-.blob-handle.dragging{cursor:grabbing;transform:translate(-50%,-50%) scale(1.12)}
-.canvas-hint{
-  font-size:.72rem;color:var(--muted);text-align:center;flex-shrink:0;
+  align-items:center;justify-content:center;
+  gap:1rem;
+  cursor:pointer;
+  transition:background .2s;
 }
 
-/* ── Panel ── */
-.panel{
-  width:296px;flex-shrink:0;
-  border-left:1px solid var(--border);
-  overflow-y:auto;padding:1rem;
-  display:flex;flex-direction:column;gap:.875rem;
+.drop-zone:hover,.drop-zone.drag-over{
+  background:rgba(0,255,65,0.03);
 }
+
+.drop-icon{
+  font-size:4rem;
+  filter:drop-shadow(0 0 16px rgba(0,255,65,0.5));
+  animation:float 3s ease-in-out infinite;
+}
+
+@keyframes float{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-8px)}
+}
+
+.drop-text{
+  font-family:'VT323',monospace;
+  font-size:1.4rem;
+  color:var(--green);
+  text-shadow:0 0 10px rgba(0,255,65,0.5);
+  text-align:center;
+  line-height:1.4;
+}
+
+.drop-sub{
+  font-size:.75rem;
+  color:#4a4a4a;
+  text-align:center;
+}
+
+/* VHS timestamp overlay */
+.vhs-ui{
+  position:absolute;inset:0;
+  pointer-events:none;
+  font-family:'VT323',monospace;
+}
+
+.vhs-timestamp{
+  position:absolute;
+  bottom:8%;right:3%;
+  color:var(--amber);
+  font-size:clamp(.65rem,2vw,1rem);
+  text-shadow:0 0 8px rgba(255,140,0,0.9),1px 1px 0 rgba(0,0,0,0.8);
+  letter-spacing:.08em;
+  opacity:.9;
+}
+
+.vhs-ch{
+  position:absolute;
+  top:6%;left:3%;
+  color:var(--white);
+  font-size:clamp(.6rem,1.8vw,.9rem);
+  text-shadow:0 0 8px rgba(255,255,255,0.7),1px 1px 0 rgba(0,0,0,0.8);
+  opacity:.85;
+}
+
+.vhs-sp{
+  position:absolute;
+  top:6%;right:3%;
+  color:var(--green);
+  font-size:clamp(.6rem,1.8vw,.9rem);
+  text-shadow:0 0 8px rgba(0,255,65,0.7);
+}
+
+/* Pause bar */
+.pause-bar{
+  position:absolute;
+  left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);
+  pointer-events:none;
+  animation:pauseScroll 4s linear infinite;
+  display:none;
+}
+
+@keyframes pauseScroll{
+  from{top:0%}to{top:105%}
+}
+
+/* Right control panel */
+.panel{
+  width:280px;
+  flex-shrink:0;
+  background:var(--crt);
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  padding:.75rem;
+  gap:.75rem;
+}
+
 .panel::-webkit-scrollbar{width:3px}
 .panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
-.card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r);padding:.9rem;
-}
-.card-title{
-  font-size:.67rem;font-weight:700;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--muted);margin-bottom:.8rem;
+.section{
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:.6rem .75rem;
+  background:rgba(0,20,0,0.3);
 }
 
-/* Presets */
-.presets-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.45rem}
-.preset-btn{
-  aspect-ratio:1;border-radius:9px;
-  border:2px solid transparent;cursor:pointer;
-  transition:all .18s;position:relative;overflow:hidden;
+.section-title{
+  font-size:.65rem;
+  color:#3a5a3a;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  margin-bottom:.5rem;
 }
-.preset-btn:hover{transform:scale(1.07);border-color:rgba(255,255,255,.4)}
-.preset-btn.active{border-color:var(--accent);box-shadow:0 0 0 2px var(--glow)}
-.preset-lbl{
-  position:absolute;bottom:0;left:0;right:0;
-  background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
-  font-size:.52rem;font-weight:700;color:#fff;text-align:center;
-  padding:.18rem;opacity:0;transition:opacity .18s;
-}
-.preset-btn:hover .preset-lbl{opacity:1}
 
-/* Blob list */
-.blob-list{display:flex;flex-direction:column;gap:.45rem;margin-bottom:.55rem}
-.blob-item{
-  display:flex;align-items:center;gap:.55rem;
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:10px;padding:.45rem .6rem;
-  cursor:pointer;transition:border-color .18s;
+/* Era selector */
+.era-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.4rem;
 }
-.blob-item:hover{border-color:var(--border2)}
-.blob-item.sel{border-color:var(--accent)}
 
-.swatch-btn{
-  width:28px;height:28px;border-radius:7px;
-  border:none;padding:0;cursor:pointer;flex-shrink:0;
-  position:relative;overflow:hidden;
+.era-btn{
+  padding:.45rem .5rem;
+  background:#0a1a0a;
+  border:1px solid var(--border);
+  border-radius:3px;
+  color:#4a8a4a;
+  font-family:'Share Tech Mono',monospace;
+  font-size:.7rem;
+  cursor:pointer;
+  text-align:center;
+  transition:all .15s;
+  line-height:1.3;
 }
-.swatch-btn input[type=color]{
-  position:absolute;inset:-4px;width:calc(100%+8px);height:calc(100%+8px);
-  opacity:0;cursor:pointer;border:none;padding:0;
-}
-.blob-info{flex:1;min-width:0}
-.blob-name{font-size:.78rem;font-weight:500}
-.blob-hex{font-size:.68rem;color:var(--muted);font-family:monospace}
-.blob-del{
-  background:none;border:none;color:var(--muted);cursor:pointer;
-  padding:.22rem;border-radius:5px;font-size:.95rem;line-height:1;
-  transition:color .18s,background .18s;flex-shrink:0;
-}
-.blob-del:hover{color:#f87171;background:rgba(248,113,113,.1)}
 
-.add-btn{
-  width:100%;padding:.55rem;
-  background:transparent;border:1.5px dashed var(--border);
-  border-radius:10px;color:var(--muted);cursor:pointer;
-  font-size:.78rem;font-weight:500;
-  display:flex;align-items:center;justify-content:center;gap:.35rem;
-  transition:all .18s;
+.era-btn:hover{
+  border-color:var(--green);
+  color:var(--green);
 }
-.add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--glow)}
 
-/* Toggles */
-.tog-row{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.3rem 0;
+.era-btn.active{
+  background:rgba(0,255,65,0.08);
+  border-color:var(--green);
+  color:var(--green);
+  text-shadow:0 0 8px rgba(0,255,65,0.5);
+  box-shadow:0 0 8px rgba(0,255,65,0.1) inset;
 }
-.tog-label{font-size:.83rem}
-.tog{position:relative;width:40px;height:22px;flex-shrink:0}
-.tog input{opacity:0;width:0;height:0;position:absolute}
-.tog-track{
-  position:absolute;inset:0;
-  background:var(--surface2);border:1px solid var(--border);
-  border-radius:22px;cursor:pointer;transition:.24s;
+
+.era-name{
+  display:block;
+  font-size:.65rem;
+  color:inherit;
 }
-.tog-track::after{
-  content:'';position:absolute;
-  width:15px;height:15px;top:2.5px;left:2.5px;
-  background:var(--muted);border-radius:50%;transition:.24s;
+
+.era-year{
+  display:block;
+  font-size:.8rem;
+  font-family:'VT323',monospace;
+  color:var(--amber);
 }
-.tog input:checked~.tog-track{background:var(--accent);border-color:var(--accent)}
-.tog input:checked~.tog-track::after{transform:translateX(18px);background:#fff}
 
 /* Sliders */
-.slider-sec{padding-top:.45rem}
-.sl-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.45rem}
-.sl-label{font-size:.78rem;color:var(--muted)}
-.sl-val{font-size:.78rem;font-weight:700;color:var(--text)}
-input[type=range]{
-  -webkit-appearance:none;width:100%;height:4px;
-  border-radius:4px;background:var(--surface2);outline:none;cursor:pointer;
+.slider-row{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:.4rem;
+  gap:.5rem;
 }
+
+.slider-label{
+  font-size:.68rem;
+  color:#5a7a5a;
+  white-space:nowrap;
+  min-width:55px;
+}
+
+.slider-val{
+  font-size:.68rem;
+  color:var(--green);
+  min-width:30px;
+  text-align:right;
+  font-family:'VT323',monospace;
+}
+
+input[type=range]{
+  flex:1;
+  -webkit-appearance:none;
+  height:3px;
+  background:var(--border);
+  border-radius:2px;
+  outline:none;
+}
+
 input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
-  background:var(--accent);box-shadow:0 0 0 3px var(--glow);cursor:pointer;
+  -webkit-appearance:none;
+  width:12px;height:12px;
+  border-radius:2px;
+  background:var(--green);
+  box-shadow:0 0 6px rgba(0,255,65,0.5);
+  cursor:pointer;
+}
+
+/* Toggle row */
+.tog-row{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:.4rem;
+}
+
+.tog-label{font-size:.68rem;color:#5a7a5a}
+
+.tog{
+  position:relative;width:36px;height:18px;
+}
+
+.tog input{opacity:0;width:0;height:0;position:absolute}
+
+.tog-track{
+  position:absolute;inset:0;
+  background:#0a1a0a;
+  border:1px solid var(--border);
+  border-radius:2px;
+  cursor:pointer;transition:.2s;
+}
+
+.tog-track::after{
+  content:'';position:absolute;
+  width:12px;height:12px;
+  top:2px;left:2px;
+  background:#3a5a3a;
+  border-radius:1px;transition:.2s;
+}
+
+.tog input:checked~.tog-track{
+  background:rgba(0,255,65,0.1);
+  border-color:var(--green);
+}
+
+.tog input:checked~.tog-track::after{
+  transform:translateX(18px);
+  background:var(--green);
+  box-shadow:0 0 6px rgba(0,255,65,0.5);
 }
 
 /* Buttons */
-.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
-.btn{
-  display:flex;align-items:center;justify-content:center;gap:.38rem;
-  padding:.62rem .8rem;border-radius:10px;border:none;
-  font-size:.78rem;font-weight:700;cursor:pointer;
-  transition:all .18s;white-space:nowrap;
+.action-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.4rem;
 }
-.btn-full{grid-column:1/-1}
-.btn-primary{
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  color:#fff;box-shadow:0 4px 16px var(--glow);
-}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 24px var(--glow)}
-.btn-primary:active{transform:translateY(0)}
-.btn-sec{
-  background:var(--surface2);color:var(--text);
-  border:1px solid var(--border);
-}
-.btn-sec:hover{border-color:var(--accent);color:var(--accent);background:var(--glow)}
 
-/* Modal */
-.modal-ov{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.78);backdrop-filter:blur(14px);
-  z-index:1000;display:flex;align-items:center;justify-content:center;
-  opacity:0;pointer-events:none;transition:opacity .24s;
+.vhs-btn{
+  display:flex;align-items:center;justify-content:center;gap:.35rem;
+  padding:.6rem .5rem;
+  border-radius:3px;
+  border:1px solid var(--border);
+  background:#0a1a0a;
+  color:#4a8a4a;
+  font-family:'Share Tech Mono',monospace;
+  font-size:.7rem;
+  cursor:pointer;
+  transition:all .15s;
+  white-space:nowrap;
 }
-.modal-ov.open{opacity:1;pointer-events:all}
-.modal{
-  background:var(--surface);border:1px solid var(--border2);
-  border-radius:20px;padding:1.4rem;
-  width:min(560px,92vw);
-  transform:translateY(22px) scale(.98);
-  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
-  box-shadow:0 36px 80px rgba(0,0,0,.65);
+
+.vhs-btn:hover{
+  border-color:var(--green);
+  color:var(--green);
+  box-shadow:0 0 8px rgba(0,255,65,0.1);
 }
-.modal-ov.open .modal{transform:translateY(0) scale(1)}
-.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
-.modal-ttl{font-size:.95rem;font-weight:700}
-.modal-x{
-  background:var(--surface2);border:1px solid var(--border);
-  color:var(--muted);width:28px;height:28px;border-radius:8px;
-  cursor:pointer;font-size:.85rem;
-  display:flex;align-items:center;justify-content:center;transition:all .18s;
+
+.vhs-btn.primary{
+  grid-column:1/-1;
+  background:rgba(0,255,65,0.06);
+  border-color:rgba(0,255,65,0.4);
+  color:var(--green);
+  text-shadow:0 0 8px rgba(0,255,65,0.4);
 }
-.modal-x:hover{color:var(--text);border-color:var(--border2)}
-.code-blk{
-  background:var(--bg);border:1px solid var(--border);border-radius:10px;
-  padding:.9rem;
-  font-family:'Fira Code','Cascadia Code','JetBrains Mono',monospace;
-  font-size:.7rem;line-height:1.65;color:#93c5fd;
-  overflow-x:auto;white-space:pre;max-height:280px;overflow-y:auto;
+
+.vhs-btn.primary:hover{
+  background:rgba(0,255,65,0.12);
+  box-shadow:0 0 16px rgba(0,255,65,0.15);
 }
-.copy-css-btn{
-  width:100%;margin-top:.8rem;padding:.72rem;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));
-  color:#fff;border:none;border-radius:10px;
-  font-size:.85rem;font-weight:700;cursor:pointer;
-  transition:all .18s;letter-spacing:.02em;
+
+.vhs-btn.amber-btn{
+  border-color:rgba(255,179,0,0.3);
+  color:var(--amber);
 }
-.copy-css-btn:hover{opacity:.88;transform:translateY(-1px)}
-.copy-css-btn.copied{background:linear-gradient(135deg,#10b981,#059669)}
+
+.vhs-btn.amber-btn:hover{
+  border-color:var(--amber);
+  box-shadow:0 0 8px rgba(255,179,0,0.1);
+}
+
+/* Tape counter decoration */
+.tape-counter{
+  font-family:'VT323',monospace;
+  font-size:.9rem;
+  color:#2a4a2a;
+  text-align:center;
+  padding:.3rem 0;
+  letter-spacing:.2em;
+  border-top:1px solid var(--border);
+  margin-top:auto;
+}
+
+/* Hidden file input */
+#fileInput{display:none}
 
 /* Toast */
 .toast{
-  position:fixed;bottom:1.4rem;left:50%;
-  transform:translateX(-50%) translateY(70px);
-  background:var(--surface);border:1px solid var(--border2);
-  border-radius:100px;padding:.55rem 1.2rem;
-  font-size:.78rem;font-weight:500;
-  z-index:2000;box-shadow:0 8px 32px rgba(0,0,0,.55);
-  transition:transform .32s cubic-bezier(.34,1.56,.64,1);
-  pointer-events:none;white-space:nowrap;
+  position:fixed;
+  bottom:1rem;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:rgba(0,20,0,0.95);
+  border:1px solid var(--green);
+  border-radius:3px;
+  padding:.5rem 1.2rem;
+  font-size:.75rem;
+  color:var(--green);
+  text-shadow:0 0 8px rgba(0,255,65,0.5);
+  z-index:10000;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;
+  letter-spacing:.05em;
 }
+
 .toast.show{transform:translateX(-50%) translateY(0)}
 
-/* Footer */
-footer{
-  display:flex;align-items:center;justify-content:center;gap:.45rem;
-  padding:.65rem;border-top:1px solid var(--border);
-  font-size:.7rem;color:var(--muted);flex-shrink:0;
+/* Processing overlay */
+.processing{
+  display:none;
+  position:absolute;inset:0;
+  background:rgba(0,0,0,0.8);
+  align-items:center;justify-content:center;
+  font-family:'VT323',monospace;
+  font-size:1.5rem;
+  color:var(--green);
+  text-shadow:0 0 20px rgba(0,255,65,0.8);
+  animation:pulse 1s ease-in-out infinite;
 }
-footer a{color:var(--muted);text-decoration:none;transition:color .18s}
-footer a:hover{color:var(--text)}
 
-/* Mobile */
-@media(max-width:720px){
-  body{overflow:auto}
-  main{flex-direction:column;overflow:visible}
-  .canvas-area{padding:.75rem}
-  .canvas-wrap{aspect-ratio:16/9;flex:none;height:auto}
+.processing.show{display:flex}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* Webcam active indicator */
+.webcam-active{
+  display:none;
+  align-items:center;gap:.4rem;
+  font-size:.65rem;
+  color:var(--red);
+  text-shadow:0 0 8px rgba(255,51,51,0.7);
+  animation:blink 1s step-end infinite;
+}
+.webcam-active.show{display:flex}
+.webcam-active::before{
+  content:'●';
+  font-size:.8rem;
+}
+
+/* Mobile responsive */
+@media(max-width:680px){
+  html,body{overflow:auto}
+  .layout{flex-direction:column;height:auto}
+  .canvas-zone{height:60vw;min-height:240px}
+  .screen{max-width:95vw}
   .panel{width:100%;border-left:none;border-top:1px solid var(--border)}
 }
 </style>
@@ -324,655 +557,788 @@ footer a:hover{color:var(--text)}
 <body>
 
 <header>
-  <div class="logo">
-    <div class="logo-gem"></div>
-    <span class="logo-name">Mesh Gradient Studio</span>
-    <span class="badge">Free</span>
+  <div class="logo-area">
+    <div class="logo">HEISEI <span>VHS</span> STUDIO</div>
+    <div class="rec-badge">
+      <div class="rec-dot"></div>
+      <span>REC</span>
+    </div>
+    <div class="webcam-active" id="webcamIndicator">LIVE CAM</div>
   </div>
-  <div class="hdr-right">
-    <a id="xShareBtn" href="#" class="x-btn" target="_blank" rel="noopener noreferrer">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.735-8.835L1.254 2.25H8.08l4.259 5.632L18.244 2.25zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77z"/></svg>
-      Share on X
-    </a>
+  <div class="header-right">
+    <div class="mode-leds">
+      <div class="led on-green" id="led1"></div>
+      <div class="led on-amber" id="led2"></div>
+      <div class="led" id="led3"></div>
+    </div>
+    <div class="timer" id="timer">00:00:00</div>
   </div>
 </header>
 
-<main>
-  <div class="canvas-area">
-    <div class="canvas-wrap" id="cw">
-      <canvas id="gc"></canvas>
-      <canvas id="grc"></canvas>
+<div class="layout">
+  <!-- Canvas area -->
+  <div class="canvas-zone">
+    <div class="screen" id="screen">
+      <canvas id="vhsCanvas" width="640" height="480"></canvas>
+
+      <!-- Drop zone (shown when no image) -->
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">📼</div>
+        <div class="drop-text">
+          写真をドロップ<br>またはクリックして選択
+        </div>
+        <div class="drop-sub">JPG / PNG / WEBP 対応<br>PCカメラでリアルタイム変換も可</div>
+      </div>
+
+      <!-- VHS UI overlays (shown when image loaded) -->
+      <div class="vhs-ui" id="vhsUI" style="display:none">
+        <div class="vhs-ch" id="vhsCh">CH01 カメラ1</div>
+        <div class="vhs-sp" id="vhsSp">SP ■HI-FI</div>
+        <div class="vhs-timestamp" id="vhsTimestamp">1993.07.15  21:42:17</div>
+      </div>
+
+      <div class="pause-bar" id="pauseBar"></div>
+      <div class="processing" id="processingOverlay">PROCESSING...</div>
     </div>
-    <div class="canvas-hint">Drag the glowing points · Click canvas to add a color point</div>
   </div>
 
+  <!-- Control panel -->
   <div class="panel">
-    <div class="card">
-      <div class="card-title">Presets</div>
-      <div class="presets-grid" id="presetsGrid"></div>
+
+    <!-- Era selector -->
+    <div class="section">
+      <div class="section-title">▶ ERA / 時代</div>
+      <div class="era-grid" id="eraGrid">
+        <button class="era-btn" data-era="showa">
+          <span class="era-name">昭和</span>
+          <span class="era-year">SHOWA '70s</span>
+        </button>
+        <button class="era-btn active" data-era="heisei">
+          <span class="era-name">平成</span>
+          <span class="era-year">HEISEI '90s</span>
+        </button>
+        <button class="era-btn" data-era="2000s">
+          <span class="era-name">2000年代</span>
+          <span class="era-year">DIGITAL CAM</span>
+        </button>
+        <button class="era-btn" data-era="glitch">
+          <span class="era-name">グリッチ</span>
+          <span class="era-year">MAX DAMAGE</span>
+        </button>
+      </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Color Points</div>
-      <div class="blob-list" id="blobList"></div>
-      <button class="add-btn" id="addBtn">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-        Add Color Point
-      </button>
+    <!-- Effect controls -->
+    <div class="section">
+      <div class="section-title">▶ EFFECT / エフェクト</div>
+
+      <div class="slider-row">
+        <span class="slider-label">DAMAGE</span>
+        <input type="range" id="damageSlider" min="0" max="100" value="60">
+        <span class="slider-val" id="damageVal">60</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">TRACKING</span>
+        <input type="range" id="trackingSlider" min="0" max="100" value="40">
+        <span class="slider-val" id="trackingVal">40</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">CHROMA</span>
+        <input type="range" id="chromaSlider" min="0" max="100" value="50">
+        <span class="slider-val" id="chromaVal">50</span>
+      </div>
+
+      <div class="slider-row">
+        <span class="slider-label">NOISE</span>
+        <input type="range" id="noiseSlider" min="0" max="100" value="45">
+        <span class="slider-val" id="noiseVal">45</span>
+      </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Effects</div>
+    <!-- Overlays -->
+    <div class="section">
+      <div class="section-title">▶ OVERLAY / オーバーレイ</div>
 
       <div class="tog-row">
-        <span class="tog-label">Animate</span>
+        <span class="tog-label">日付スタンプ</span>
         <label class="tog">
-          <input type="checkbox" id="animTog">
+          <input type="checkbox" id="dateToggle" checked>
           <div class="tog-track"></div>
         </label>
       </div>
-      <div class="slider-sec" id="speedSec" style="display:none">
-        <div class="sl-hdr"><span class="sl-label">Speed</span><span class="sl-val" id="speedLbl">50</span></div>
-        <input type="range" id="speedSl" min="5" max="100" value="50">
-      </div>
 
-      <div class="tog-row" style="margin-top:.5rem">
-        <span class="tog-label">Film Grain</span>
+      <div class="tog-row">
+        <span class="tog-label">スキャンライン</span>
         <label class="tog">
-          <input type="checkbox" id="grainTog">
+          <input type="checkbox" id="scanlineToggle" checked>
           <div class="tog-track"></div>
         </label>
       </div>
-      <div class="slider-sec" id="grainSec" style="display:none">
-        <div class="sl-hdr"><span class="sl-label">Amount</span><span class="sl-val" id="grainLbl">40</span></div>
-        <input type="range" id="grainSl" min="5" max="80" value="40">
+
+      <div class="tog-row">
+        <span class="tog-label">ビネット</span>
+        <label class="tog">
+          <input type="checkbox" id="vignetteToggle" checked>
+          <div class="tog-track"></div>
+        </label>
+      </div>
+
+      <div class="tog-row">
+        <span class="tog-label">VHSノイズライン</span>
+        <label class="tog">
+          <input type="checkbox" id="noiseBandToggle" checked>
+          <div class="tog-track"></div>
+        </label>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Export</div>
-      <div class="btn-grid">
-        <button class="btn btn-primary" id="cssBtnOpen">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          Copy CSS
+    <!-- Date settings -->
+    <div class="section">
+      <div class="section-title">▶ DATE STAMP</div>
+      <div class="slider-row">
+        <span class="slider-label">YEAR</span>
+        <input type="range" id="yearSlider" min="1975" max="2009" value="1993">
+        <span class="slider-val" id="yearVal">1993</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">MONTH</span>
+        <input type="range" id="monthSlider" min="1" max="12" value="7">
+        <span class="slider-val" id="monthVal">07</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="section">
+      <div class="section-title">▶ ACTION</div>
+      <div class="action-grid">
+        <button class="vhs-btn primary" id="loadBtn">
+          <span>📁</span> 写真を読み込む
         </button>
-        <button class="btn btn-sec" id="dlBtn">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-          Save PNG
+        <button class="vhs-btn" id="webcamBtn">
+          <span>📷</span> カメラ
         </button>
-        <button class="btn btn-sec btn-full" id="rndBtn">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
-          Randomize
+        <button class="vhs-btn amber-btn" id="reprocessBtn">
+          <span>🎲</span> ランダム
+        </button>
+        <button class="vhs-btn" id="saveBtn">
+          <span>⬇</span> 保存
+        </button>
+        <button class="vhs-btn primary amber-btn" id="shareBtn">
+          <span>𝕏</span> Xでシェア
         </button>
       </div>
     </div>
-  </div>
-</main>
 
-<!-- CSS Modal -->
-<div class="modal-ov" id="cssModal">
-  <div class="modal">
-    <div class="modal-hdr">
-      <span class="modal-ttl">CSS Code</span>
-      <button class="modal-x" id="closeModal">✕</button>
+    <div class="tape-counter" id="tapeCounter">
+      ◀◀ T-120  SP  ▶▶
     </div>
-    <pre class="code-blk" id="cssCode"></pre>
-    <button class="copy-css-btn" id="copyCssBtn">Copy to Clipboard</button>
   </div>
 </div>
 
+<input type="file" id="fileInput" accept="image/*">
 <div class="toast" id="toast"></div>
 
-<footer>
-  <span>Mesh Gradient Studio</span>
-  <span>·</span>
-  <a href="https://github.com/sokihayashi/free-space" target="_blank" rel="noopener">GitHub</a>
-  <span>·</span>
-  <svg width="11" height="11" viewBox="0 0 24 24" fill="#f43f5e"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-  <span>Free forever</span>
-</footer>
-
 <script>
-/* =============================================
-   MESH GRADIENT STUDIO — ENGINE
-   ============================================= */
+/* ==============================================
+   HEISEI VHS STUDIO — CORE ENGINE
+   ============================================== */
 
-const RENDER_SCALE = 4;   // render at 1/RENDER_SCALE resolution
-const IDW_POWER    = 4;   // higher = sharper color boundaries
-const GRAIN_TILE   = 128;
+const canvas     = document.getElementById('vhsCanvas');
+const ctx        = canvas.getContext('2d', { willReadFrequently: true });
+const dropZone   = document.getElementById('dropZone');
+const vhsUI      = document.getElementById('vhsUI');
+const fileInput  = document.getElementById('fileInput');
+const processing = document.getElementById('processingOverlay');
 
-// --- State ---
-let blobs       = [];
-let blobId      = 0;
-let animated    = false;
-let grainOn     = false;
-let grainAmt    = 40;
-let animSpd     = 50;
-let selId       = null;
+const W = 640, H = 480;
 
-let dragging    = false;
-let dragId      = null;
+// — State —
+let currentEra   = 'heisei';
+let sourceImage  = null;
+let webcamStream = null;
+let webcamRaf    = null;
+let timerInterval;
+let timerSecs    = 0;
 
-let rafId       = null;
-let frameN      = 0;
+// — Settings —
+const settings = {
+  damage:    60,
+  tracking:  40,
+  chroma:    50,
+  noise:     45,
+  date:      true,
+  scanline:  true,
+  vignette:  true,
+  noiseBand: true,
+  year:      1993,
+  month:     7,
+};
 
-// --- DOM ---
-const cw         = document.getElementById('cw');
-const gc         = document.getElementById('gc');
-const grc        = document.getElementById('grc');
-const ctx        = gc.getContext('2d');
-const grCtx      = grc.getContext('2d');
-const blobListEl = document.getElementById('blobList');
-const presetsEl  = document.getElementById('presetsGrid');
-const cssModal   = document.getElementById('cssModal');
-const cssCodeEl  = document.getElementById('cssCode');
-const copyCssBtn = document.getElementById('copyCssBtn');
-const toast      = document.getElementById('toast');
-
-// Offscreen canvas (1/RENDER_SCALE resolution)
-const off = document.createElement('canvas');
-const offCtx = off.getContext('2d', { willReadFrequently: true });
-
-// Grain tile
-const gt    = document.createElement('canvas');
-gt.width = gt.height = GRAIN_TILE;
-const gtCtx = gt.getContext('2d');
-
-// --- Presets ---
-const PRESETS = [
-  {
-    name:'Aurora',
-    bg:'linear-gradient(135deg,#00ff9f,#00b3ff,#9500ff)',
-    blobs:[
-      {x:.14,y:.24,c:'#00ff9f'},
-      {x:.72,y:.62,c:'#00b3ff'},
-      {x:.88,y:.18,c:'#9500ff'},
-      {x:.32,y:.83,c:'#ff00c8'},
-    ]
+// — Era presets —
+const ERA_PRESETS = {
+  showa: {
+    name:'SHOWA \'70s',
+    colorShift:{ r:18, g:8, b:-20 },
+    satMul:0.75,
+    brightness:0.88,
+    contrast:1.15,
+    damage:75, tracking:65, chroma:45, noise:60,
+    noiseBand:true,
+    tint:[30, 15, -25],
+    yearRange:[1975,1985],
   },
-  {
-    name:'Sunset',
-    bg:'linear-gradient(135deg,#ff4500,#ff8c00,#ff1493)',
-    blobs:[
-      {x:.09,y:.86,c:'#ff4500'},
-      {x:.47,y:.37,c:'#ff8c00'},
-      {x:.88,y:.14,c:'#ff1493'},
-      {x:.65,y:.83,c:'#7a0030'},
-    ]
+  heisei: {
+    name:'HEISEI \'90s',
+    colorShift:{ r:10, g:12, b:-8 },
+    satMul:0.88,
+    brightness:0.93,
+    contrast:1.08,
+    damage:55, tracking:40, chroma:55, noise:42,
+    noiseBand:true,
+    tint:[10, 12, -8],
+    yearRange:[1989,2000],
   },
-  {
-    name:'Ocean',
-    bg:'linear-gradient(135deg,#006994,#00bcd4,#40e0d0)',
-    blobs:[
-      {x:.17,y:.27,c:'#006994'},
-      {x:.76,y:.66,c:'#00bcd4'},
-      {x:.42,y:.88,c:'#003f80'},
-      {x:.88,y:.12,c:'#40e0d0'},
-    ]
+  '2000s': {
+    name:'DIGITAL \'00s',
+    colorShift:{ r:5, g:5, b:0 },
+    satMul:0.95,
+    brightness:0.96,
+    contrast:1.03,
+    damage:25, tracking:15, chroma:25, noise:22,
+    noiseBand:false,
+    tint:[5, 5, 0],
+    yearRange:[2000,2009],
   },
-  {
-    name:'Candy',
-    bg:'linear-gradient(135deg,#ff80ab,#ea80fc,#82b1ff)',
-    blobs:[
-      {x:.18,y:.38,c:'#ff80ab'},
-      {x:.78,y:.27,c:'#ea80fc'},
-      {x:.52,y:.78,c:'#82b1ff'},
-      {x:.88,y:.73,c:'#a7ffeb'},
-    ]
+  glitch: {
+    name:'MAX DAMAGE',
+    colorShift:{ r:25, g:-5, b:-25 },
+    satMul:0.6,
+    brightness:0.82,
+    contrast:1.3,
+    damage:95, tracking:90, chroma:80, noise:85,
+    noiseBand:true,
+    tint:[40, -10, -40],
+    yearRange:[1985,1995],
   },
-  {
-    name:'Cyber',
-    bg:'linear-gradient(135deg,#0ff,#f0f,#ff0)',
-    blobs:[
-      {x:.12,y:.48,c:'#00ffff'},
-      {x:.88,y:.52,c:'#ff00ff'},
-      {x:.52,y:.12,c:'#ffff00'},
-      {x:.52,y:.88,c:'#0000ff'},
-    ]
-  },
-  {
-    name:'Forest',
-    bg:'linear-gradient(135deg,#004d00,#228b22,#adff2f)',
-    blobs:[
-      {x:.18,y:.32,c:'#006400'},
-      {x:.72,y:.62,c:'#228b22'},
-      {x:.48,y:.88,c:'#003200'},
-      {x:.88,y:.12,c:'#adff2f'},
-    ]
-  },
-  {
-    name:'Lavender',
-    bg:'linear-gradient(135deg,#6c3483,#9b59b6,#f8d7f4)',
-    blobs:[
-      {x:.22,y:.32,c:'#6c3483'},
-      {x:.72,y:.52,c:'#9b59b6'},
-      {x:.48,y:.82,c:'#c39bd3'},
-      {x:.88,y:.14,c:'#f8d7f4'},
-    ]
-  },
-  {
-    name:'Lemon',
-    bg:'linear-gradient(135deg,#ffeaa7,#f9ca24,#f0932b)',
-    blobs:[
-      {x:.22,y:.32,c:'#ffeaa7'},
-      {x:.78,y:.62,c:'#f9ca24'},
-      {x:.52,y:.88,c:'#f0932b'},
-      {x:.12,y:.72,c:'#c0392b'},
-    ]
-  },
-];
+};
 
-// --- Blob helpers ---
-function mkBlob(x, y, color) {
-  return {
-    id: blobId++, x, y, bx: x, by: y,
-    color: color || rndColor(),
-    px: Math.random() * Math.PI * 2,
-    py: Math.random() * Math.PI * 2,
-    amp: .06 + Math.random() * .06,
-  };
-}
+// — Effect pipeline —
+function applyVHSEffect(imgEl) {
+  const era = ERA_PRESETS[currentEra];
 
-function rndColor() {
-  const h = Math.random() * 360;
-  const s = 65 + Math.random() * 35;
-  const l = 45 + Math.random() * 22;
-  return hsl2hex(h, s, l);
-}
+  // Draw image to canvas (letterbox 4:3)
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
 
-function hsl2hex(h, s, l) {
-  l /= 100; s /= 100;
-  const a = s * Math.min(l, 1 - l);
-  const f = n => {
-    const k = (n + h / 30) % 12;
-    return Math.round(255 * (l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1))).toString(16).padStart(2, '0');
-  };
-  return `#${f(0)}${f(8)}${f(4)}`;
-}
+  const ir = imgEl.width / imgEl.height;
+  const cr = W / H;
+  let sw = W, sh = H, sx = 0, sy = 0;
+  if (ir > cr) { sh = W / ir; sy = (H - sh) / 2; }
+  else          { sw = H * ir; sx = (W - sw) / 2; }
+  ctx.drawImage(imgEl, sx, sy, sw, sh);
 
-function hex2rgb(hex) {
-  const v = parseInt(hex.replace('#',''), 16);
-  return [(v>>16)&255, (v>>8)&255, v&255];
-}
+  let imgData = ctx.getImageData(0, 0, W, H);
 
-// --- Rendering ---
-function render(ts) {
-  const W = gc.width, H = gc.height;
-  const RW = Math.ceil(W / RENDER_SCALE);
-  const RH = Math.ceil(H / RENDER_SCALE);
+  // 1. Color grade
+  imgData = colorGrade(imgData, era);
 
-  if (off.width !== RW)  off.width  = RW;
-  if (off.height !== RH) off.height = RH;
+  // 2. Chromatic aberration
+  const chromaAmt = Math.round((settings.chroma / 100) * 8);
+  if (chromaAmt > 0) imgData = chromaticAberration(imgData, chromaAmt);
 
-  const id   = offCtx.createImageData(RW, RH);
-  const data = id.data;
+  // 3. Horizontal blur (color bleed)
+  const blurAmt = Math.round((settings.damage / 100) * 3);
+  if (blurAmt > 0) imgData = horizontalBlur(imgData, blurAmt);
 
-  // Compute positions (with optional animation)
-  const bd = blobs.map(b => {
-    let bx = b.bx, by = b.by;
-    if (animated && ts !== undefined) {
-      const t = ts * .001 * (animSpd / 50);
-      bx += Math.sin(t + b.px) * b.amp;
-      by += Math.cos(t + b.py) * b.amp;
-      bx = Math.max(.01, Math.min(.99, bx));
-      by = Math.max(.01, Math.min(.99, by));
-    }
-    return { x: bx * RW, y: by * RH, rgb: hex2rgb(b.color) };
-  });
-
-  if (!bd.length) {
-    ctx.fillStyle = '#10101a';
-    ctx.fillRect(0, 0, W, H);
-    return;
+  // 4. VHS tracking glitch
+  if (settings.tracking > 0) {
+    imgData = vhsTracking(imgData, settings.tracking / 100);
   }
 
-  for (let py = 0; py < RH; py++) {
-    for (let px = 0; px < RW; px++) {
-      let r=0, g=0, b=0, tw=0;
-      for (const p of bd) {
-        const dx = px - p.x, dy = py - p.y;
-        const w = 1 / Math.pow(dx*dx + dy*dy + .001, IDW_POWER * .5);
-        tw += w;
-        r  += w * p.rgb[0];
-        g  += w * p.rgb[1];
-        b  += w * p.rgb[2];
-      }
-      const i = (py * RW + px) * 4;
-      data[i]   = r  / tw;
-      data[i+1] = g  / tw;
-      data[i+2] = b  / tw;
-      data[i+3] = 255;
-    }
+  // 5. Noise bands
+  if (settings.noiseBand && era.noiseBand) {
+    imgData = addNoiseBand(imgData);
   }
 
-  offCtx.putImageData(id, 0, 0);
-  ctx.imageSmoothingEnabled  = true;
-  ctx.imageSmoothingQuality  = 'high';
-  ctx.clearRect(0, 0, W, H);
-  ctx.drawImage(off, 0, 0, W, H);
+  // 6. Film noise
+  if (settings.noise > 0) {
+    imgData = addNoise(imgData, settings.noise * 0.6);
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+
+  // 7. Scanlines (CSS-like, fast)
+  if (settings.scanline) drawScanlines();
+
+  // 8. Vignette
+  if (settings.vignette) drawVignette();
+
+  // 9. Timestamp overlay
+  if (settings.date) drawTimestamp();
+
+  // 10. VHS head noise at top
+  drawHeadNoise();
 }
 
-// --- Grain ---
-function mkGrain() {
-  const id = gtCtx.createImageData(GRAIN_TILE, GRAIN_TILE);
-  const d  = id.data;
+// Color grading
+function colorGrade(imgData, era) {
+  const d = imgData.data;
+  const { r: rShift, g: gShift, b: bShift } = era.colorShift;
+  const bri = era.brightness;
+  const con = era.contrast;
+
   for (let i = 0; i < d.length; i += 4) {
-    const v = Math.random() * 255 | 0;
-    d[i] = d[i+1] = d[i+2] = v; d[i+3] = 255;
+    let r = d[i], g = d[i+1], b = d[i+2];
+
+    // Brightness + contrast
+    r = (r - 128) * con + 128 + (bri - 1) * 128;
+    g = (g - 128) * con + 128 + (bri - 1) * 128;
+    b = (b - 128) * con + 128 + (bri - 1) * 128;
+
+    // Color shift (VHS tint)
+    r += rShift;
+    g += gShift;
+    b += bShift;
+
+    // Desaturate slightly
+    const avg = (r + g + b) / 3;
+    r = avg + (r - avg) * era.satMul;
+    g = avg + (g - avg) * era.satMul;
+    b = avg + (b - avg) * era.satMul;
+
+    d[i]   = Math.max(0, Math.min(255, r));
+    d[i+1] = Math.max(0, Math.min(255, g));
+    d[i+2] = Math.max(0, Math.min(255, b));
   }
-  gtCtx.putImageData(id, 0, 0);
+  return imgData;
 }
 
-function drawGrain() {
-  if (!grainOn) { grc.style.opacity = '0'; return; }
-  mkGrain();
-  grCtx.clearRect(0, 0, grc.width, grc.height);
-  for (let y = 0; y < grc.height; y += GRAIN_TILE)
-    for (let x = 0; x < grc.width; x += GRAIN_TILE)
-      grCtx.drawImage(gt, x, y);
-  grc.style.opacity = String(grainAmt / 200);
-}
+// Chromatic aberration (RGB channel split)
+function chromaticAberration(imgData, amount) {
+  const src  = imgData.data;
+  const out  = ctx.createImageData(W, H);
+  const dst  = out.data;
+  const rOff = -amount;
+  const bOff = +amount;
 
-// --- Loop ---
-function tick(ts) {
-  frameN++;
-  render(ts);
-  if (grainOn && frameN % 4 === 0) drawGrain();
-  rafId = requestAnimationFrame(tick);
-}
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * 4;
 
-function startLoop() {
-  if (rafId) cancelAnimationFrame(rafId);
-  rafId = requestAnimationFrame(tick);
-}
+      // R from left-shifted
+      const rx = Math.max(0, Math.min(W-1, x + rOff));
+      const ri = (y * W + rx) * 4;
 
-function stopLoop() {
-  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-  render(); drawGrain();
-}
+      // B from right-shifted
+      const bx = Math.max(0, Math.min(W-1, x + bOff));
+      const bi = (y * W + bx) * 4;
 
-function loopNeeded() { return animated || grainOn; }
-
-// --- Canvas setup ---
-function setupCanvas() {
-  const rect = cw.getBoundingClientRect();
-  const dpr  = Math.min(window.devicePixelRatio || 1, 2);
-  const W = Math.round(rect.width  * dpr);
-  const H = Math.round(rect.height * dpr);
-  if (gc.width !== W || gc.height !== H) {
-    gc.width  = W; gc.height  = H;
-    grc.width = W; grc.height = H;
+      dst[i]   = src[ri];
+      dst[i+1] = src[i+1];
+      dst[i+2] = src[bi+2];
+      dst[i+3] = 255;
+    }
   }
-  render(); drawGrain(); updateHandles();
+  return out;
 }
 
-// --- Handles ---
-function updateHandles() {
-  document.querySelectorAll('.blob-handle').forEach(el => el.remove());
-  const rect = cw.getBoundingClientRect();
-  blobs.forEach(b => {
-    const el = document.createElement('div');
-    el.className = 'blob-handle' + (b.id === selId ? ' sel' : '');
-    el.dataset.id = b.id;
-    el.style.left  = (b.bx * rect.width)  + 'px';
-    el.style.top   = (b.by * rect.height) + 'px';
-    el.style.background = b.color;
-    cw.appendChild(el);
-  });
-}
+// Horizontal blur (color bleed)
+function horizontalBlur(imgData, radius) {
+  const d   = imgData.data;
+  const tmp = new Uint8ClampedArray(d);
 
-function moveHandle(id, bx, by) {
-  const el = cw.querySelector(`.blob-handle[data-id="${id}"]`);
-  if (!el) return;
-  const rect = cw.getBoundingClientRect();
-  el.style.left = (bx * rect.width)  + 'px';
-  el.style.top  = (by * rect.height) + 'px';
-}
-
-// --- Drag ---
-cw.addEventListener('mousedown', e => {
-  if (e.target.classList.contains('blob-handle')) {
-    dragging = true;
-    dragId   = Number(e.target.dataset.id);
-    selId    = dragId;
-    e.target.classList.add('dragging');
-    e.preventDefault();
-    return;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      let r=0,g=0,b=0,tw=0;
+      for (let dx = -radius; dx <= radius; dx++) {
+        const xx = Math.max(0, Math.min(W-1, x+dx));
+        const i2 = (y*W + xx)*4;
+        const w  = 1 - Math.abs(dx)/(radius+1);
+        r += tmp[i2]   * w;
+        g += tmp[i2+1] * w;
+        b += tmp[i2+2] * w;
+        tw += w;
+      }
+      const i = (y*W + x)*4;
+      d[i]   = r/tw;
+      d[i+1] = g/tw;
+      d[i+2] = b/tw;
+    }
   }
-  if (e.target === gc || e.target === grc) {
-    const r = cw.getBoundingClientRect();
-    const b = mkBlob(
-      (e.clientX - r.left) / r.width,
-      (e.clientY - r.top)  / r.height
-    );
-    blobs.push(b);
-    selId = b.id;
-    updateBlobList(); updateHandles();
-    if (!loopNeeded()) render();
-  }
-});
-
-document.addEventListener('mousemove', e => {
-  if (!dragging) return;
-  const r = cw.getBoundingClientRect();
-  const bx = Math.max(.01, Math.min(.99, (e.clientX - r.left) / r.width));
-  const by = Math.max(.01, Math.min(.99, (e.clientY - r.top)  / r.height));
-  const blob = blobs.find(b => b.id === dragId);
-  if (blob) {
-    blob.bx = bx; blob.by = by;
-    moveHandle(dragId, bx, by);
-    if (!loopNeeded()) render();
-  }
-});
-
-document.addEventListener('mouseup', () => {
-  if (!dragging) return;
-  cw.querySelectorAll('.blob-handle').forEach(el => el.classList.remove('dragging'));
-  dragging = false; dragId = null;
-});
-
-// Touch
-cw.addEventListener('touchstart', e => {
-  if (e.target.classList.contains('blob-handle')) {
-    dragging = true;
-    dragId   = Number(e.target.dataset.id);
-    selId    = dragId;
-    e.preventDefault();
-  }
-}, { passive: false });
-
-document.addEventListener('touchmove', e => {
-  if (!dragging) return;
-  e.preventDefault();
-  const t = e.touches[0];
-  const r = cw.getBoundingClientRect();
-  const bx = Math.max(.01, Math.min(.99, (t.clientX - r.left) / r.width));
-  const by = Math.max(.01, Math.min(.99, (t.clientY - r.top)  / r.height));
-  const blob = blobs.find(b => b.id === dragId);
-  if (blob) {
-    blob.bx = bx; blob.by = by;
-    moveHandle(dragId, bx, by);
-    if (!loopNeeded()) render();
-  }
-}, { passive: false });
-
-document.addEventListener('touchend', () => { dragging = false; dragId = null; });
-
-// --- Blob list ---
-function updateBlobList() {
-  blobListEl.innerHTML = '';
-  blobs.forEach((b, i) => {
-    const item = document.createElement('div');
-    item.className = 'blob-item' + (b.id === selId ? ' sel' : '');
-    item.dataset.id = b.id;
-
-    const sw = document.createElement('div');
-    sw.className = 'swatch-btn';
-    sw.style.background = b.color;
-    const ci = document.createElement('input');
-    ci.type = 'color'; ci.value = b.color;
-    ci.addEventListener('input', e => {
-      b.color = e.target.value;
-      sw.style.background = b.color;
-      const hEl = item.querySelector('.blob-hex');
-      if (hEl) hEl.textContent = b.color.toUpperCase();
-      const hnd = cw.querySelector(`.blob-handle[data-id="${b.id}"]`);
-      if (hnd) hnd.style.background = b.color;
-      if (!loopNeeded()) render();
-    });
-    sw.appendChild(ci);
-
-    const inf = document.createElement('div');
-    inf.className = 'blob-info';
-    inf.innerHTML = `<div class="blob-name">Point ${i+1}</div><div class="blob-hex">${b.color.toUpperCase()}</div>`;
-
-    const del = document.createElement('button');
-    del.className = 'blob-del'; del.textContent = '×'; del.title = 'Remove';
-    del.addEventListener('click', e => {
-      e.stopPropagation();
-      blobs = blobs.filter(x => x.id !== b.id);
-      if (selId === b.id) selId = null;
-      updateBlobList(); updateHandles();
-      if (!loopNeeded()) render();
-    });
-
-    item.addEventListener('click', () => {
-      selId = b.id;
-      updateBlobList(); updateHandles();
-      ci.click();
-    });
-
-    item.append(sw, inf, del);
-    blobListEl.appendChild(item);
-  });
+  return imgData;
 }
 
-// --- Presets ---
-function loadPreset(preset, idx) {
-  blobs = preset.blobs.map(b => mkBlob(b.x, b.y, b.c));
-  selId = null;
-  document.querySelectorAll('.preset-btn').forEach((el, i) => el.classList.toggle('active', i === idx));
-  updateBlobList(); updateHandles();
-  if (!loopNeeded()) render();
+// VHS tracking glitch
+function vhsTracking(imgData, intensity) {
+  const d   = imgData.data;
+  const tmp = new Uint8ClampedArray(d);
+
+  // Whole-frame slight wave distortion
+  const waveAmp = intensity * 3;
+  for (let y = 0; y < H; y++) {
+    const wave = Math.sin(y * 0.05 + Math.random() * 0.3) * waveAmp * 0.5;
+    const rowOff = Math.round(wave);
+    if (rowOff === 0) continue;
+    for (let x = 0; x < W; x++) {
+      const sx = (x - rowOff + W) % W;
+      const di = (y*W + x)*4;
+      const si = (y*W + sx)*4;
+      d[di]   = tmp[si];
+      d[di+1] = tmp[si+1];
+      d[di+2] = tmp[si+2];
+    }
+  }
+
+  // Random glitch bands
+  let y = 0;
+  const rng = Math.random;
+  while (y < H) {
+    if (rng() < intensity * 0.03) {
+      const bandH = Math.floor(rng() * 20 * intensity) + 2;
+      const off   = Math.floor((rng() - 0.4) * 40 * intensity);
+      for (let by = y; by < Math.min(y + bandH, H); by++) {
+        for (let x = 0; x < W; x++) {
+          const sx = (x - off + W) % W;
+          const di = (by*W + x)*4;
+          const si = (by*W + sx)*4;
+          // Slight brightness boost on glitch band
+          d[di]   = Math.min(255, tmp[si]   + 20);
+          d[di+1] = Math.min(255, tmp[si+1] + 20);
+          d[di+2] = Math.min(255, tmp[si+2] + 20);
+        }
+      }
+      y += bandH;
+    } else {
+      y++;
+    }
+  }
+
+  return imgData;
 }
 
-function buildPresets() {
-  PRESETS.forEach((p, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'preset-btn' + (i === 0 ? ' active' : '');
-    btn.style.background = p.bg;
-    btn.title = p.name;
-    btn.innerHTML = `<div class="preset-lbl">${p.name}</div>`;
-    btn.addEventListener('click', () => loadPreset(p, i));
-    presetsEl.appendChild(btn);
-  });
+// Noise band (horizontal bright/dark band that scrolls)
+let noiseBandY = 0;
+function addNoiseBand(imgData) {
+  const d = imgData.data;
+  noiseBandY = (noiseBandY + 1.5) % H;
+  const bandY = Math.floor(noiseBandY);
+  const bh    = 8 + Math.floor(Math.random() * 15);
+
+  for (let y = bandY; y < Math.min(bandY + bh, H); y++) {
+    const fade = 1 - Math.abs((y - bandY) / bh - 0.5) * 2;
+    for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * 4;
+      const boost = fade * 45;
+      d[i]   = Math.min(255, d[i]   + boost);
+      d[i+1] = Math.min(255, d[i+1] + boost);
+      d[i+2] = Math.min(255, d[i+2] + boost);
+    }
+  }
+  return imgData;
 }
 
-// --- Controls ---
-document.getElementById('animTog').addEventListener('change', e => {
-  animated = e.target.checked;
-  document.getElementById('speedSec').style.display = animated ? 'block' : 'none';
-  if (loopNeeded()) startLoop(); else stopLoop();
-});
-
-document.getElementById('speedSl').addEventListener('input', e => {
-  animSpd = +e.target.value;
-  document.getElementById('speedLbl').textContent = animSpd;
-});
-
-document.getElementById('grainTog').addEventListener('change', e => {
-  grainOn = e.target.checked;
-  document.getElementById('grainSec').style.display = grainOn ? 'block' : 'none';
-  if (loopNeeded()) startLoop(); else stopLoop();
-  if (!grainOn) { grc.style.opacity = '0'; }
-});
-
-document.getElementById('grainSl').addEventListener('input', e => {
-  grainAmt = +e.target.value;
-  document.getElementById('grainLbl').textContent = grainAmt;
-  if (grainOn) grc.style.opacity = String(grainAmt / 200);
-});
-
-document.getElementById('addBtn').addEventListener('click', () => {
-  const b = mkBlob(.2 + Math.random() * .6, .2 + Math.random() * .6);
-  blobs.push(b); selId = b.id;
-  updateBlobList(); updateHandles();
-  if (!loopNeeded()) render();
-});
-
-// --- CSS export ---
-function makeCSS() {
-  if (!blobs.length) return `.gradient {\n  background: #10101a;\n}`;
-  const stops = blobs.map(b =>
-    `  radial-gradient(\n    ellipse at ${Math.round(b.bx*100)}% ${Math.round(b.by*100)}%,\n    ${b.color} 0%,\n    transparent 65%\n  )`
-  ).join(',\n');
-  return `.gradient {\n  background:\n${stops},\n  #10101a;\n}`;
+// Film noise/grain
+function addNoise(imgData, amount) {
+  const d = imgData.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const n = (Math.random() - 0.5) * amount;
+    d[i]   = Math.max(0, Math.min(255, d[i]   + n));
+    d[i+1] = Math.max(0, Math.min(255, d[i+1] + n));
+    d[i+2] = Math.max(0, Math.min(255, d[i+2] + n));
+  }
+  return imgData;
 }
 
-document.getElementById('cssBtnOpen').addEventListener('click', () => {
-  cssCodeEl.textContent = makeCSS();
-  cssModal.classList.add('open');
-});
-document.getElementById('closeModal').addEventListener('click', () => cssModal.classList.remove('open'));
-cssModal.addEventListener('click', e => { if (e.target === cssModal) cssModal.classList.remove('open'); });
+// Scanlines overlay
+function drawScanlines() {
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  for (let y = 0; y < H; y += 2) {
+    ctx.fillRect(0, y, W, 1);
+  }
+}
 
-copyCssBtn.addEventListener('click', async () => {
+// Vignette
+function drawVignette() {
+  const grad = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H/2, H*0.85);
+  grad.addColorStop(0, 'rgba(0,0,0,0)');
+  grad.addColorStop(1, 'rgba(0,0,0,0.72)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+}
+
+// VHS head noise at top of frame
+function drawHeadNoise() {
+  if (Math.random() > 0.3) return;
+  const lines = Math.floor(Math.random() * 4) + 1;
+  for (let i = 0; i < lines; i++) {
+    const y = Math.floor(Math.random() * 12);
+    ctx.fillStyle = `rgba(${Math.random()*255|0},${Math.random()*255|0},${Math.random()*255|0},0.6)`;
+    ctx.fillRect(0, y, W, 1 + Math.floor(Math.random() * 2));
+  }
+}
+
+// Timestamp overlay on canvas
+function drawTimestamp() {
+  const y  = settings.year;
+  const m  = String(settings.month).padStart(2, '0');
+  const d  = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
+  const hh = String(Math.floor(Math.random() * 24)).padStart(2, '0');
+  const mm = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+  const ss = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+
+  const ts = `${y}.${m}.${d}  ${hh}:${mm}:${ss}`;
+
+  ctx.font = 'bold 18px "VT323", monospace';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.8)';
+  ctx.fillText(ts, W - 14, H - 12);
+
+  // Amber glow
+  ctx.shadowColor = 'rgba(255,140,0,0.9)';
+  ctx.shadowBlur  = 8;
+  ctx.fillStyle   = '#ffb300';
+  ctx.fillText(ts, W - 15, H - 13);
+  ctx.shadowBlur = 0;
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+}
+
+// — Image loading —
+function loadImageFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  stopWebcam();
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      sourceImage = img;
+      dropZone.style.display = 'none';
+      vhsUI.style.display = 'block';
+      processing.classList.add('show');
+      setTimeout(() => {
+        applyVHSEffect(img);
+        processing.classList.remove('show');
+      }, 50);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// — Webcam —
+async function startWebcam() {
   try {
-    await navigator.clipboard.writeText(cssCodeEl.textContent);
-    copyCssBtn.textContent = '✓ Copied!';
-    copyCssBtn.classList.add('copied');
-    setTimeout(() => { copyCssBtn.textContent = 'Copy to Clipboard'; copyCssBtn.classList.remove('copied'); }, 2200);
-  } catch { showToast('Please copy the code manually'); }
-});
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { width:640, height:480 } });
+    webcamStream = stream;
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.play();
+    video.addEventListener('playing', () => {
+      sourceImage = null;
+      dropZone.style.display = 'none';
+      vhsUI.style.display = 'block';
+      document.getElementById('webcamIndicator').classList.add('show');
 
-// --- PNG download ---
-document.getElementById('dlBtn').addEventListener('click', () => {
-  const a = document.createElement('a');
-  a.download = 'mesh-gradient.png';
-  a.href = gc.toDataURL('image/png');
-  a.click();
-  showToast('PNG saved!');
-});
+      const frame = () => {
+        if (!webcamStream) return;
+        applyVHSEffect(video);
+        webcamRaf = requestAnimationFrame(frame);
+      };
+      webcamRaf = requestAnimationFrame(frame);
+      showToast('LIVE CAMERA: カメラ起動');
+    });
+    document.getElementById('webcamBtn').textContent = '⏹ 停止';
+  } catch (err) {
+    showToast('カメラにアクセスできませんでした');
+  }
+}
 
-// --- Randomize ---
-document.getElementById('rndBtn').addEventListener('click', () => {
-  blobs.forEach(b => {
-    b.color = rndColor();
-    b.bx = .1 + Math.random() * .8;
-    b.by = .1 + Math.random() * .8;
-    b.px = Math.random() * Math.PI * 2;
-    b.py = Math.random() * Math.PI * 2;
+function stopWebcam() {
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(t => t.stop());
+    webcamStream = null;
+  }
+  if (webcamRaf) { cancelAnimationFrame(webcamRaf); webcamRaf = null; }
+  document.getElementById('webcamIndicator').classList.remove('show');
+  document.getElementById('webcamBtn').innerHTML = '<span>📷</span> カメラ';
+}
+
+// — Controls —
+document.getElementById('eraGrid').addEventListener('click', e => {
+  const btn = e.target.closest('.era-btn');
+  if (!btn) return;
+  currentEra = btn.dataset.era;
+  document.querySelectorAll('.era-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // Apply era presets to sliders
+  const era = ERA_PRESETS[currentEra];
+  ['damage','tracking','chroma','noise'].forEach(k => {
+    const el = document.getElementById(k + 'Slider');
+    el.value = era[k];
+    settings[k] = era[k];
+    document.getElementById(k + 'Val').textContent = era[k];
   });
-  document.querySelectorAll('.preset-btn').forEach(el => el.classList.remove('active'));
-  updateBlobList(); updateHandles();
-  if (!loopNeeded()) render();
-  showToast('Randomized!');
+
+  // Set year range
+  const [y1, y2] = era.yearRange;
+  const ySlider = document.getElementById('yearSlider');
+  ySlider.min = y1;
+  ySlider.max = y2;
+  const midY = Math.floor((y1 + y2) / 2);
+  ySlider.value = midY;
+  settings.year = midY;
+  document.getElementById('yearVal').textContent = midY;
+
+  if (sourceImage) applyVHSEffect(sourceImage);
 });
 
-// --- Share X ---
-document.getElementById('xShareBtn').addEventListener('click', e => {
-  e.preventDefault();
-  const text = encodeURIComponent('This free mesh gradient generator is insane 🔥\n\nCreate stunning animated gradients and export CSS instantly — no signup needed.\n\n');
-  const url  = encodeURIComponent(window.location.href);
+// Sliders
+['damage','tracking','chroma','noise'].forEach(key => {
+  document.getElementById(key + 'Slider').addEventListener('input', e => {
+    settings[key] = +e.target.value;
+    document.getElementById(key + 'Val').textContent = e.target.value;
+    if (sourceImage && !webcamStream) applyVHSEffect(sourceImage);
+  });
+});
+
+document.getElementById('yearSlider').addEventListener('input', e => {
+  settings.year = +e.target.value;
+  document.getElementById('yearVal').textContent = e.target.value;
+  if (sourceImage && !webcamStream) applyVHSEffect(sourceImage);
+});
+
+document.getElementById('monthSlider').addEventListener('input', e => {
+  settings.month = +e.target.value;
+  document.getElementById('monthVal').textContent = String(e.target.value).padStart(2,'0');
+  if (sourceImage && !webcamStream) applyVHSEffect(sourceImage);
+});
+
+// Toggles
+['date','scanline','vignette','noiseBand'].forEach((key, i) => {
+  const ids = ['dateToggle','scanlineToggle','vignetteToggle','noiseBandToggle'];
+  document.getElementById(ids[i]).addEventListener('change', e => {
+    settings[key] = e.target.checked;
+    if (sourceImage && !webcamStream) applyVHSEffect(sourceImage);
+  });
+});
+
+// Action buttons
+document.getElementById('loadBtn').addEventListener('click', () => fileInput.click());
+document.getElementById('fileInput').addEventListener('change', e => {
+  loadImageFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+document.getElementById('webcamBtn').addEventListener('click', () => {
+  if (webcamStream) { stopWebcam(); if (sourceImage) applyVHSEffect(sourceImage); }
+  else startWebcam();
+});
+
+document.getElementById('reprocessBtn').addEventListener('click', () => {
+  if (!sourceImage && !webcamStream) { showToast('先に写真を読み込んでください'); return; }
+  // Randomize settings
+  settings.damage   = 20 + Math.floor(Math.random() * 80);
+  settings.tracking = 10 + Math.floor(Math.random() * 80);
+  settings.chroma   = 10 + Math.floor(Math.random() * 80);
+  settings.noise    = 10 + Math.floor(Math.random() * 70);
+  ['damage','tracking','chroma','noise'].forEach(k => {
+    document.getElementById(k+'Slider').value = settings[k];
+    document.getElementById(k+'Val').textContent = settings[k];
+  });
+  if (sourceImage) applyVHSEffect(sourceImage);
+});
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  if (!sourceImage && !webcamStream) { showToast('先に写真を読み込んでください'); return; }
+  const link = document.createElement('a');
+  link.download = `vhs-${currentEra}-${Date.now()}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  showToast('SAVED: 保存しました ✓');
+});
+
+document.getElementById('shareBtn').addEventListener('click', () => {
+  const era = ERA_PRESETS[currentEra];
+  const text = encodeURIComponent(
+    `${era.name}風VHSエフェクトで懐かしすぎる映像に変換してもらった🎞️📼\n無料で使えるHEISEI VHS STUDIO、最高すぎる\n\n`
+  );
+  const url = encodeURIComponent(window.location.href);
   window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
 });
 
-// --- Toast ---
-let toastTmr;
-function showToast(msg) {
-  toast.textContent = msg;
-  toast.classList.add('show');
-  clearTimeout(toastTmr);
-  toastTmr = setTimeout(() => toast.classList.remove('show'), 2400);
+// Drag & drop
+const screen = document.getElementById('screen');
+screen.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('drag-over');
+});
+screen.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+screen.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  loadImageFile(e.dataTransfer.files[0]);
+});
+dropZone.addEventListener('click', () => fileInput.click());
+
+// Paste image
+document.addEventListener('paste', e => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      loadImageFile(item.getAsFile());
+      break;
+    }
+  }
+});
+
+// — Timer —
+function startTimer() {
+  const timerEl = document.getElementById('timer');
+  timerInterval = setInterval(() => {
+    timerSecs++;
+    const h = String(Math.floor(timerSecs/3600)).padStart(2,'0');
+    const m = String(Math.floor((timerSecs%3600)/60)).padStart(2,'0');
+    const s = String(timerSecs%60).padStart(2,'0');
+    timerEl.textContent = `${h}:${m}:${s}`;
+  }, 1000);
 }
 
-// --- Resize ---
-new ResizeObserver(setupCanvas).observe(cw);
+// — Toast —
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
 
-// --- Init ---
-buildPresets();
-loadPreset(PRESETS[0], 0);
-setTimeout(setupCanvas, 40);
+// — Init —
+startTimer();
+
+// Draw idle static noise on canvas
+(function drawStatic() {
+  const id   = ctx.createImageData(W, H);
+  const d    = id.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const v = Math.random() * 40;
+    d[i] = d[i+1] = d[i+2] = v;
+    d[i+3] = 255;
+  }
+  ctx.putImageData(id, 0, 0);
+
+  // Scanlines on idle
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  for (let y = 0; y < H; y += 2) ctx.fillRect(0, y, W, 1);
+})();
 </script>
 </body>
 </html>
