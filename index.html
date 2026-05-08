@@ -413,9 +413,9 @@
       <div class="slider-wrap">
         <div class="slider-header">
           <span class="slider-label">Cell Size</span>
-          <span class="slider-value" id="cell-val">8 px</span>
+          <span class="slider-value" id="cell-val">10 px</span>
         </div>
-        <input type="range" id="cell-size" min="4" max="24" step="1" value="8">
+        <input type="range" id="cell-size" min="4" max="24" step="1" value="10">
       </div>
 
       <div class="slider-wrap">
@@ -432,9 +432,17 @@
       <div class="slider-wrap">
         <div class="slider-header">
           <span class="slider-label">Ink Bleed</span>
-          <span class="slider-value" id="blur-val">0.8</span>
+          <span class="slider-value" id="blur-val">0.5</span>
         </div>
-        <input type="range" id="blur-amount" min="0" max="3" step="0.1" value="0.8">
+        <input type="range" id="blur-amount" min="0" max="3" step="0.1" value="0.5">
+      </div>
+
+      <div class="slider-wrap">
+        <div class="slider-header">
+          <span class="slider-label">Paper Grain</span>
+          <span class="slider-value" id="grain-val">55%</span>
+        </div>
+        <input type="range" id="grain-amount" min="0" max="100" step="5" value="55">
       </div>
     </div>
 
@@ -491,9 +499,10 @@ const S = {
   imgH:         0,
   inks:         ['#3255A4', '#FF48B0'],
   splitMode:    'shadows-highlights',
-  cellSize:     8,
+  cellSize:     10,
   misreg:       3,
-  blurPx:       0.8,
+  blurPx:       0.5,
+  grainAmount:  0.55,   // 0–1 intensity of paper grain multiply
   paperTexture: null,
   misregDirs:   null,
   activePreset: 'TOKYO NIGHT',
@@ -503,7 +512,9 @@ const MAX_DIM = 1000;
 let renderDebounce = null;
 
 // ─────────────────────────────────────────────────────────────
-// PAPER TEXTURE — subtle grain via multiply-friendly near-white noise
+// PAPER TEXTURE — pronounced uncoated-paper grain
+// Range 190–254 so multiply darkens grain areas by up to ~25%.
+// Sparse fiber marks (1.5 % of pixels) simulate paper fibers.
 // ─────────────────────────────────────────────────────────────
 function makePaperTexture(w, h) {
   const c = document.createElement('canvas');
@@ -511,10 +522,12 @@ function makePaperTexture(w, h) {
   const ctx = c.getContext('2d');
   const d = ctx.createImageData(w, h);
   for (let i = 0; i < d.data.length; i += 4) {
-    const v = 244 + Math.floor(Math.random() * 11);
+    const base  = 190 + Math.floor(Math.random() * 64);          // 190–253
+    const fiber = Math.random() < 0.015 ? base - 55 : base;      // rare dark fiber
+    const v     = Math.max(150, Math.min(254, fiber));
     d.data[i]   = v;
-    d.data[i+1] = Math.max(0, v - 1);
-    d.data[i+2] = Math.max(0, v - 3);
+    d.data[i+1] = Math.max(0, v - 2);
+    d.data[i+2] = Math.max(0, v - 6);   // warm paper tint
     d.data[i+3] = 255;
   }
   ctx.putImageData(d, 0, 0);
@@ -579,15 +592,18 @@ function createPlates(imgData, w, h, mode, inkCount) {
   }
 
   // shadows-highlights (default)
-  const p1 = new Uint8Array(n);
-  const p2 = new Uint8Array(n);
+  // Gamma-0.75 curves keep shadows and highlights cleanly separated;
+  // midtones overlap to create the characteristic Riso blended color.
+  const p1 = new Uint8Array(n);   // shadow plate  → ink 1
+  const p2 = new Uint8Array(n);   // highlight plate → ink 2
   for (let i = 0; i < n; i++) {
-    const l = lum[i];
-    p1[i] = Math.round(255 - l);
-    p2[i] = Math.round(Math.pow(l / 255, 0.38) * 255);
+    const t = lum[i] / 255;
+    p1[i] = Math.round(Math.pow(1 - t, 0.75) * 255);
+    p2[i] = Math.round(Math.pow(t,     0.75) * 255);
   }
   if (inkCount === 2) return [p1, p2];
 
+  // 3-ink: add midtone bell-curve plate between shadow and highlight
   const p3 = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
     const t = lum[i] / 255;
@@ -688,8 +704,12 @@ function compositeRiso(layers) {
     ctx.drawImage(layers[i], dir.dx * S.misreg, dir.dy * S.misreg);
   }
 
-  // Paper grain (near-white texture, multiply keeps it barely visible)
-  if (S.paperTexture) ctx.drawImage(S.paperTexture, 0, 0, w, h);
+  // Paper grain: grainAmount controls how strongly the texture multiplies
+  if (S.paperTexture && S.grainAmount > 0.01) {
+    ctx.globalAlpha = S.grainAmount;
+    ctx.drawImage(S.paperTexture, 0, 0, w, h);
+    ctx.globalAlpha = 1;
+  }
 
   ctx.globalCompositeOperation = 'source-over';
 }
@@ -908,6 +928,12 @@ function setup() {
   document.getElementById('blur-amount').addEventListener('input', e => {
     S.blurPx = parseFloat(e.target.value);
     document.getElementById('blur-val').textContent = S.blurPx.toFixed(1);
+    scheduleRender();
+  });
+
+  document.getElementById('grain-amount').addEventListener('input', e => {
+    S.grainAmount = parseInt(e.target.value) / 100;
+    document.getElementById('grain-val').textContent = e.target.value + '%';
     scheduleRender();
   });
 
