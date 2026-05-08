@@ -9,6 +9,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: pages
@@ -23,6 +24,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Enable GitHub Pages (first-time setup)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/${{ github.repository }}/pages \
+            --method POST \
+            -f source[branch]=main \
+            -f source[path]='/' \
+            2>/dev/null || echo "Pages already configured or being configured via GitHub Actions"
+          sleep 3
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
