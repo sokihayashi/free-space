@@ -36,323 +36,210 @@
       padding-bottom: 18px;
       border-bottom: 2px solid var(--ink);
     }
-    .logo {
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
+    .logo   { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
     .tagline {
-      font-size: 11px;
-      color: var(--ink-light);
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      font-weight: 500;
+      font-size: 11px; color: var(--ink-light);
+      letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500;
     }
 
     /* ── PRESETS ───────────────────────────────── */
-    .presets-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
-    }
+    .presets-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
     .preset-btn {
-      display: flex;
-      align-items: center;
-      gap: 7px;
+      display: flex; align-items: center; gap: 7px;
       padding: 6px 14px 6px 10px;
-      border: 1.5px solid var(--border);
-      border-radius: 100px;
-      background: transparent;
-      cursor: pointer;
-      font-family: var(--font);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: var(--ink);
+      border: 1.5px solid var(--border); border-radius: 100px;
+      background: transparent; cursor: pointer;
+      font-family: var(--font); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink);
       transition: all 0.13s ease;
     }
-    .preset-btn:hover   { border-color: var(--ink); background: var(--paper-dark); }
-    .preset-btn.active  { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-    .preset-dots        { display: flex; gap: 3px; }
-    .preset-dot         { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
+    .preset-btn:hover  { border-color: var(--ink); background: var(--paper-dark); }
+    .preset-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .preset-dots { display: flex; gap: 3px; }
+    .preset-dot  { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
     .preset-btn.active .preset-dot { border-color: rgba(255,255,255,0.25); }
 
     /* ── LAYOUT ────────────────────────────────── */
-    .main {
-      display: grid;
-      grid-template-columns: 1fr 288px;
-      gap: 28px;
-      align-items: start;
-    }
+    .main { display: grid; grid-template-columns: 1fr 288px; gap: 28px; align-items: start; }
 
     /* ── CANVAS AREA ───────────────────────────── */
-    .canvas-wrap {
-      position: relative;
-      box-shadow: 0 6px 32px rgba(0,0,0,0.1);
-    }
-    #output-canvas {
-      width: 100%;
-      height: auto;
-      display: block;
-      background: var(--paper);
-    }
+    .canvas-wrap { position: relative; }
+
+    /* Drop zone */
     .drop-zone {
       aspect-ratio: 4/3;
       border: 2px dashed var(--border);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      cursor: pointer;
-      transition: border-color 0.15s;
-      background: var(--paper);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; cursor: pointer; transition: border-color 0.15s; background: var(--paper);
     }
     .drop-zone:hover, .drop-zone.drag-over { border-color: var(--ink); }
     .drop-icon { width: 44px; height: 44px; opacity: 0.25; }
     .drop-text {
-      font-size: 13px;
-      color: var(--ink-light);
-      text-align: center;
-      line-height: 1.7;
-      font-weight: 500;
+      font-size: 13px; color: var(--ink-light);
+      text-align: center; line-height: 1.7; font-weight: 500;
     }
     .drop-text strong { color: var(--ink-mid); }
 
-    .reupload-btn {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      font-family: var(--font);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 5px 10px;
-      background: rgba(245,240,232,0.88);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      cursor: pointer;
-      color: var(--ink-mid);
+    /* Paper frame — gives the Riso print its signature white margin */
+    .paper-frame {
       display: none;
-      transition: all 0.13s;
+      background: #F8F4ED;
+      padding: 36px;
+      box-shadow:
+        inset 0 0 0 1px rgba(0,0,0,0.04),
+        0 2px 8px rgba(0,0,0,0.07),
+        0 16px 56px rgba(0,0,0,0.13);
     }
-    .reupload-btn:hover { background: var(--paper); color: var(--ink); border-color: var(--ink); }
+    #output-canvas { display: block; width: 100%; height: auto; }
 
-    .render-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(245,240,232,0.65);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--ink-mid);
+    /* Re-upload */
+    .reupload-btn {
+      position: absolute; top: 10px; left: 10px;
+      font-family: var(--font); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 5px 10px;
+      background: rgba(248,244,237,0.9); border: 1px solid var(--border);
+      border-radius: 4px; cursor: pointer; color: var(--ink-mid);
+      display: none; transition: all 0.13s;
     }
-    .render-overlay.active { display: flex; }
+    .reupload-btn:hover { background: #F8F4ED; color: var(--ink); border-color: var(--ink); }
+
+    /* ── RENDER OVERLAY ────────────────────────── */
+    .render-overlay {
+      position: absolute; inset: 0;
+      background: rgba(245,240,232,0.72);
+      display: none; overflow: hidden;
+      pointer-events: none;
+    }
+    .render-overlay.active { display: block; }
+
+    /* Scan bar — simulates the Riso print drum sweeping across the page */
+    @keyframes riso-scan {
+      0%   { transform: translateX(-15%); }
+      100% { transform: translateX(115%); }
+    }
+    .scan-bar {
+      position: absolute; top: 0; left: 0;
+      width: 14%; height: 100%;
+      animation: riso-scan 1.4s linear infinite;
+      /* color set dynamically per ink via JS */
+      background: linear-gradient(90deg, transparent, rgba(50,85,164,.18) 30%, rgba(50,85,164,.45) 50%, rgba(50,85,164,.18) 70%, transparent);
+    }
+
+    /* Progress info */
+    .overlay-info {
+      position: absolute; bottom: 18px;
+      left: 0; right: 0; text-align: center;
+    }
+    .overlay-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--ink-mid); margin-bottom: 7px;
+    }
+    .progress-track {
+      width: 96px; height: 2px;
+      background: rgba(0,0,0,0.1); border-radius: 1px;
+      margin: 0 auto; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; background: var(--ink);
+      width: 0%; transition: width 0.25s ease;
+    }
 
     /* ── CONTROLS ──────────────────────────────── */
     .controls { display: flex; flex-direction: column; }
-
-    .control-section {
-      padding: 18px 0;
-      border-bottom: 1px solid var(--border);
-    }
+    .control-section { padding: 18px 0; border-bottom: 1px solid var(--border); }
     .control-section:last-child { border-bottom: none; padding-bottom: 0; }
-
     .section-label {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--ink-light);
-      margin-bottom: 14px;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--ink-light); margin-bottom: 14px;
     }
 
+    /* Ink slots */
     .ink-slots { display: flex; flex-direction: column; gap: 9px; }
-
-    .ink-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .ink-index {
-      font-size: 10px;
-      font-weight: 700;
-      color: var(--border);
-      width: 12px;
-      flex-shrink: 0;
-    }
+    .ink-row   { display: flex; align-items: center; gap: 8px; }
+    .ink-index { font-size: 10px; font-weight: 700; color: var(--border); width: 12px; flex-shrink: 0; }
     .ink-swatch {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      border: 1.5px solid rgba(0,0,0,0.12);
-      transition: background 0.2s;
+      width: 22px; height: 22px; border-radius: 50%;
+      flex-shrink: 0; border: 1.5px solid rgba(0,0,0,0.12); transition: background 0.2s;
     }
     .ink-select {
-      flex: 1;
-      font-family: var(--font);
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--ink);
-      background: transparent;
-      border: 1.5px solid var(--border);
-      border-radius: 6px;
-      padding: 6px 26px 6px 9px;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
+      flex: 1; font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--ink);
+      background: transparent; border: 1.5px solid var(--border); border-radius: 6px;
+      padding: 6px 26px 6px 9px; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%23999'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 9px center;
+      background-repeat: no-repeat; background-position: right 9px center;
     }
     .ink-select:focus { outline: none; border-color: var(--ink); }
-
     .remove-ink-btn {
-      width: 22px; height: 22px;
-      border: none; background: none;
-      cursor: pointer; color: var(--border);
-      font-size: 17px; line-height: 1;
-      flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      border-radius: 50%;
-      transition: all 0.13s;
+      width: 22px; height: 22px; border: none; background: none;
+      cursor: pointer; color: var(--border); font-size: 17px; line-height: 1;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; transition: all 0.13s;
     }
     .remove-ink-btn:hover { background: var(--paper-dark); color: var(--ink); }
-
     .add-ink-btn {
-      font-family: var(--font);
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.05em;
-      color: var(--ink-light);
-      background: none;
-      border: 1.5px dashed var(--border);
-      border-radius: 6px;
-      padding: 7px;
-      cursor: pointer;
-      width: 100%;
-      text-align: center;
-      margin-top: 8px;
-      transition: all 0.13s;
+      font-family: var(--font); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.05em; color: var(--ink-light); background: none;
+      border: 1.5px dashed var(--border); border-radius: 6px;
+      padding: 7px; cursor: pointer; width: 100%; text-align: center;
+      margin-top: 8px; transition: all 0.13s;
     }
     .add-ink-btn:hover { border-color: var(--ink-mid); color: var(--ink-mid); }
 
+    /* Sliders */
     .slider-wrap { margin-bottom: 13px; }
     .slider-wrap:last-child { margin-bottom: 0; }
-
-    .slider-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 6px;
-    }
-    .slider-label {
-      font-size: 10px; font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--ink-mid);
-    }
-    .slider-value {
-      font-size: 11px; font-weight: 700;
-      color: var(--ink);
-      min-width: 30px;
-      text-align: right;
-    }
-
-    .slider-row-inline {
-      display: flex; align-items: center; gap: 8px;
-    }
-
+    .slider-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+    .slider-label  { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-mid); }
+    .slider-value  { font-size: 11px; font-weight: 700; color: var(--ink); min-width: 30px; text-align: right; }
+    .slider-row-inline { display: flex; align-items: center; gap: 8px; }
     input[type="range"] {
-      appearance: none;
-      -webkit-appearance: none;
-      flex: 1;
-      height: 3px;
-      background: var(--border);
-      border-radius: 2px;
-      outline: none;
-      cursor: pointer;
+      appearance: none; -webkit-appearance: none;
+      flex: 1; height: 3px; background: var(--border); border-radius: 2px; outline: none; cursor: pointer;
     }
     input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: var(--ink);
-      cursor: pointer;
+      -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%;
+      background: var(--ink); cursor: pointer;
     }
     input[type="range"]::-moz-range-thumb {
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: var(--ink);
-      border: none;
-      cursor: pointer;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--ink); border: none; cursor: pointer;
     }
-
     .regen-btn {
-      font-size: 14px;
-      background: none;
-      border: 1.5px solid var(--border);
-      border-radius: 5px;
-      width: 26px; height: 26px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-      color: var(--ink-mid);
-      transition: all 0.13s;
+      font-size: 14px; background: none; border: 1.5px solid var(--border);
+      border-radius: 5px; width: 26px; height: 26px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      color: var(--ink-mid); transition: all 0.13s;
     }
     .regen-btn:hover { border-color: var(--ink); color: var(--ink); }
 
+    /* Select */
     .control-select {
-      font-family: var(--font);
-      font-size: 12px; font-weight: 500;
-      color: var(--ink);
-      background: transparent;
-      border: 1.5px solid var(--border);
-      border-radius: 6px;
-      padding: 8px 28px 8px 10px;
-      width: 100%;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
+      font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--ink);
+      background: transparent; border: 1.5px solid var(--border); border-radius: 6px;
+      padding: 8px 28px 8px 10px; width: 100%; cursor: pointer;
+      appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%23999'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
+      background-repeat: no-repeat; background-position: right 10px center;
     }
     .control-select:focus { outline: none; border-color: var(--ink); }
 
+    /* Action buttons */
     .btn-primary {
-      display: block; width: 100%;
-      padding: 13px;
-      background: var(--ink); color: var(--paper);
-      border: none; border-radius: 8px;
-      font-family: var(--font);
-      font-size: 12px; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      cursor: pointer;
-      transition: opacity 0.13s;
-      margin-bottom: 9px;
+      display: block; width: 100%; padding: 13px;
+      background: var(--ink); color: var(--paper); border: none; border-radius: 8px;
+      font-family: var(--font); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+      transition: opacity 0.13s; margin-bottom: 9px;
     }
     .btn-primary:hover:not(:disabled) { opacity: 0.82; }
     .btn-primary:disabled { opacity: 0.35; cursor: default; }
-
     .btn-secondary {
-      display: block; width: 100%;
-      padding: 11px;
-      background: transparent; color: var(--ink);
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-family: var(--font);
-      font-size: 12px; font-weight: 600;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.13s;
+      display: block; width: 100%; padding: 11px;
+      background: transparent; color: var(--ink); border: 1.5px solid var(--border);
+      border-radius: 8px; font-family: var(--font); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.13s;
     }
     .btn-secondary:hover { border-color: var(--ink); background: var(--paper-dark); }
 
@@ -374,6 +261,7 @@
 
 <div class="main">
   <div class="canvas-wrap" id="canvas-wrap">
+    <!-- Empty state -->
     <div class="drop-zone" id="drop-zone">
       <svg class="drop-icon" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <rect x="4" y="10" width="36" height="28" rx="2"/>
@@ -386,9 +274,24 @@
       </div>
       <input type="file" id="file-input" accept="image/*" style="display:none">
     </div>
-    <canvas id="output-canvas" style="display:none"></canvas>
+
+    <!-- Paper frame — the printed output with margin -->
+    <div class="paper-frame" id="paper-frame">
+      <canvas id="output-canvas"></canvas>
+    </div>
+
     <button class="reupload-btn" id="reupload-btn">↑ New Image</button>
-    <div class="render-overlay" id="render-overlay">Printing…</div>
+
+    <!-- Printing animation overlay -->
+    <div class="render-overlay" id="render-overlay">
+      <div class="scan-bar" id="scan-bar"></div>
+      <div class="overlay-info">
+        <div class="overlay-label" id="overlay-label">SEPARATING</div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="controls">
@@ -413,19 +316,19 @@
       <div class="slider-wrap">
         <div class="slider-header">
           <span class="slider-label">Cell Size</span>
-          <span class="slider-value" id="cell-val">10 px</span>
+          <span class="slider-value" id="cell-val">6 px</span>
         </div>
-        <input type="range" id="cell-size" min="4" max="24" step="1" value="10">
+        <input type="range" id="cell-size" min="4" max="24" step="1" value="6">
       </div>
 
       <div class="slider-wrap">
         <div class="slider-header">
           <span class="slider-label">Misregistration</span>
-          <span class="slider-value" id="misreg-val">3 px</span>
+          <span class="slider-value" id="misreg-val">4 px</span>
         </div>
         <div class="slider-row-inline">
-          <input type="range" id="misregistration" min="0" max="14" step="0.5" value="3">
-          <button class="regen-btn" id="regen-btn" title="Randomize plate offsets">↺</button>
+          <input type="range" id="misregistration" min="0" max="20" step="0.5" value="4">
+          <button class="regen-btn" id="regen-btn" title="Re-roll plate offsets">↺</button>
         </div>
       </div>
 
@@ -499,11 +402,12 @@ const S = {
   imgH:         0,
   inks:         ['#3255A4', '#FF48B0'],
   splitMode:    'shadows-highlights',
-  cellSize:     10,
-  misreg:       3,
+  cellSize:     6,       // fine halftone by default
+  misreg:       4,       // visible Riso plate offset
   blurPx:       0.5,
-  grainAmount:  0.55,   // 0–1 intensity of paper grain multiply
+  grainAmount:  0.55,
   paperTexture: null,
+  overlayTex:   null,    // slot for user-provided burn texture asset
   misregDirs:   null,
   activePreset: 'TOKYO NIGHT',
 };
@@ -512,22 +416,21 @@ const MAX_DIM = 1000;
 let renderDebounce = null;
 
 // ─────────────────────────────────────────────────────────────
-// PAPER TEXTURE — pronounced uncoated-paper grain
-// Range 190–254 so multiply darkens grain areas by up to ~25%.
-// Sparse fiber marks (1.5 % of pixels) simulate paper fibers.
+// PAPER TEXTURE — pronounced uncoated-paper grain (190–254 range)
+// 1.5% fiber marks darken like actual paper fibers.
 // ─────────────────────────────────────────────────────────────
 function makePaperTexture(w, h) {
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
+  const c   = document.createElement('canvas');
+  c.width   = w; c.height = h;
   const ctx = c.getContext('2d');
-  const d = ctx.createImageData(w, h);
+  const d   = ctx.createImageData(w, h);
   for (let i = 0; i < d.data.length; i += 4) {
-    const base  = 190 + Math.floor(Math.random() * 64);          // 190–253
-    const fiber = Math.random() < 0.015 ? base - 55 : base;      // rare dark fiber
+    const base  = 190 + Math.floor(Math.random() * 64);   // 190–253
+    const fiber = Math.random() < 0.015 ? base - 55 : base;
     const v     = Math.max(150, Math.min(254, fiber));
     d.data[i]   = v;
     d.data[i+1] = Math.max(0, v - 2);
-    d.data[i+2] = Math.max(0, v - 6);   // warm paper tint
+    d.data[i+2] = Math.max(0, v - 6);   // warm tint
     d.data[i+3] = 255;
   }
   ctx.putImageData(d, 0, 0);
@@ -535,14 +438,35 @@ function makePaperTexture(w, h) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// OVERLAY TEXTURE LOADER
+// Load an external image (e.g. paper/hair grain) as a burn layer.
+// Usage: loadOverlayTexture('path/to/grain.png').then(t => S.overlayTex = t)
+// ─────────────────────────────────────────────────────────────
+function loadOverlayTexture(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const c   = document.createElement('canvas');
+      c.width   = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      resolve(c);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
 // MISREGISTRATION DIRECTIONS
+// Real Riso paper-feed mostly drifts in Y (feed direction).
 // ─────────────────────────────────────────────────────────────
 function regenMisregDirs(count) {
   S.misregDirs = [{ dx: 0, dy: 0 }];
   for (let i = 1; i < count; i++) {
     S.misregDirs.push({
-      dx: (Math.random() - 0.5) * 2,
-      dy: (Math.random() - 0.5) * 2,
+      dx: (Math.random() - 0.5) * 1.2,   // narrow X spread
+      dy: (Math.random() - 0.5) * 2.0,   // wider Y spread (feed direction)
     });
   }
 }
@@ -561,11 +485,10 @@ function createPlates(imgData, w, h, mode, inkCount) {
   }
 
   if (mode === 'warm-cool') {
-    const p1 = new Uint8Array(n);
-    const p2 = new Uint8Array(n);
+    const p1 = new Uint8Array(n), p2 = new Uint8Array(n);
     for (let i = 0; i < n; i++) {
-      const b  = i * 4;
-      const r  = src[b], g = src[b+1], bl = src[b+2];
+      const b    = i * 4;
+      const r    = src[b], g = src[b+1], bl = src[b+2];
       const warm = Math.max(0, r - (g + bl) * 0.5);
       const cool = Math.max(0, bl - (r + g)  * 0.5);
       const l    = lum[i];
@@ -579,8 +502,7 @@ function createPlates(imgData, w, h, mode, inkCount) {
   }
 
   if (mode === 'channels') {
-    const p1 = new Uint8Array(n);
-    const p2 = new Uint8Array(n);
+    const p1 = new Uint8Array(n), p2 = new Uint8Array(n);
     for (let i = 0; i < n; i++) {
       p1[i] = 255 - src[i * 4];
       p2[i] = 255 - src[i * 4 + 2];
@@ -592,10 +514,10 @@ function createPlates(imgData, w, h, mode, inkCount) {
   }
 
   // shadows-highlights (default)
-  // Gamma-0.75 curves keep shadows and highlights cleanly separated;
-  // midtones overlap to create the characteristic Riso blended color.
-  const p1 = new Uint8Array(n);   // shadow plate  → ink 1
-  const p2 = new Uint8Array(n);   // highlight plate → ink 2
+  // Gamma-0.75 curves: shadow and highlight plates only overlap in midtones,
+  // creating the characteristic Riso mixed color at midrange tones.
+  const p1 = new Uint8Array(n);   // shadow  → ink 1
+  const p2 = new Uint8Array(n);   // highlight → ink 2
   for (let i = 0; i < n; i++) {
     const t = lum[i] / 255;
     p1[i] = Math.round(Math.pow(1 - t, 0.75) * 255);
@@ -603,7 +525,7 @@ function createPlates(imgData, w, h, mode, inkCount) {
   }
   if (inkCount === 2) return [p1, p2];
 
-  // 3-ink: add midtone bell-curve plate between shadow and highlight
+  // 3rd plate: midtone bell curve
   const p3 = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
     const t = lum[i] / 255;
@@ -629,8 +551,8 @@ function samplePlate(plate, w, h, cx, cy, r) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// HALFTONE LAYER — AM halftone on angled grid, single ink color
-// Dot radius = sqrt(density/255) * maxRadius  preserves tonal area
+// HALFTONE LAYER — AM halftone on angled grid per ink
+// dot radius = √(density/255) × maxR  preserves tonal area exactly
 // ─────────────────────────────────────────────────────────────
 function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
   const angle  = angleDeg * Math.PI / 180;
@@ -640,23 +562,20 @@ function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
   const maxR   = halfC * 0.97;
   const TWO_PI = Math.PI * 2;
   const diag   = Math.ceil(Math.sqrt(w * w + h * h));
-  const ocx    = w / 2;
-  const ocy    = h / 2;
+  const ocx    = w / 2, ocy = h / 2;
 
   const dc   = document.createElement('canvas');
-  dc.width   = w;
-  dc.height  = h;
+  dc.width   = w; dc.height = h;
   const dctx = dc.getContext('2d');
   dctx.fillStyle = '#FFFFFF';
   dctx.fillRect(0, 0, w, h);
   dctx.fillStyle = inkHex;
 
-  // Batch all arcs into one path for performance
+  // Single batched path for performance
   dctx.beginPath();
   for (let gy = -diag; gy < diag + cellSize; gy += cellSize) {
     for (let gx = -diag; gx < diag + cellSize; gx += cellSize) {
-      const rcx = gx + halfC;
-      const rcy = gy + halfC;
+      const rcx = gx + halfC, rcy = gy + halfC;
       const scx = ocx + rcx * cosA - rcy * sinA;
       const scy = ocy + rcx * sinA + rcy * cosA;
 
@@ -677,10 +596,8 @@ function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
 
   if (blurPx < 0.1) return dc;
 
-  // Ink bleed: Gaussian blur simulates dot gain / paper absorption
   const bc   = document.createElement('canvas');
-  bc.width   = w;
-  bc.height  = h;
+  bc.width   = w; bc.height = h;
   const bctx = bc.getContext('2d');
   bctx.filter = `blur(${blurPx}px)`;
   bctx.drawImage(dc, 0, 0);
@@ -688,7 +605,7 @@ function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// COMPOSITE — layers → paper background via Multiply blend
+// COMPOSITE — ink layers → paper via Multiply, then grain
 // ─────────────────────────────────────────────────────────────
 function compositeRiso(layers) {
   const canvas = document.getElementById('output-canvas');
@@ -704,10 +621,19 @@ function compositeRiso(layers) {
     ctx.drawImage(layers[i], dir.dx * S.misreg, dir.dy * S.misreg);
   }
 
-  // Paper grain: grainAmount controls how strongly the texture multiplies
+  // Paper grain via multiply at controlled intensity
   if (S.paperTexture && S.grainAmount > 0.01) {
     ctx.globalAlpha = S.grainAmount;
     ctx.drawImage(S.paperTexture, 0, 0, w, h);
+    ctx.globalAlpha = 1;
+  }
+
+  // User-supplied overlay texture (paper fiber / hair grain asset)
+  // Applied with color-burn for deep, organic integration
+  if (S.overlayTex) {
+    ctx.globalCompositeOperation = 'color-burn';
+    ctx.globalAlpha = 0.18;
+    ctx.drawImage(S.overlayTex, 0, 0, w, h);
     ctx.globalAlpha = 1;
   }
 
@@ -715,32 +641,55 @@ function compositeRiso(layers) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// RENDER
+// RENDER ANIMATION HELPERS
 // ─────────────────────────────────────────────────────────────
-function render() {
+function tick() { return new Promise(r => setTimeout(r, 0)); }
+
+function setOverlayState(pct, label, inkHex) {
+  const fill = document.getElementById('progress-fill');
+  const lbl  = document.getElementById('overlay-label');
+  const bar  = document.getElementById('scan-bar');
+  if (fill) fill.style.width = pct + '%';
+  if (lbl && label) lbl.textContent = label;
+  if (bar && inkHex) {
+    const r = parseInt(inkHex.slice(1,3), 16);
+    const g = parseInt(inkHex.slice(3,5), 16);
+    const b = parseInt(inkHex.slice(5,7), 16);
+    bar.style.background = `linear-gradient(90deg,transparent,rgba(${r},${g},${b},.18) 30%,rgba(${r},${g},${b},.48) 50%,rgba(${r},${g},${b},.18) 70%,transparent)`;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// RENDER (async — each ink plate yields to let animation update)
+// ─────────────────────────────────────────────────────────────
+async function render() {
   if (!S.imageData) return;
 
   const overlay = document.getElementById('render-overlay');
   overlay.classList.add('active');
+  setOverlayState(0, 'SEPARATING', S.inks[0]);
+  await tick();
 
-  setTimeout(() => {
-    if (!S.misregDirs || S.misregDirs.length !== S.inks.length) regenMisregDirs(S.inks.length);
+  if (!S.misregDirs || S.misregDirs.length !== S.inks.length) regenMisregDirs(S.inks.length);
 
-    const plates = createPlates(S.imageData, S.imgW, S.imgH, S.splitMode, S.inks.length);
+  const plates = createPlates(S.imageData, S.imgW, S.imgH, S.splitMode, S.inks.length);
 
-    const layers = S.inks.map((hex, i) => {
-      const info = INK_MAP[hex.toLowerCase()] || { angle: [45, 15, 75][i % 3] };
-      return createHalftoneLayer(
-        plates[i] || plates[0],
-        S.imgW, S.imgH,
-        S.cellSize, info.angle,
-        hex, S.blurPx
-      );
-    });
+  const layers = [];
+  for (let i = 0; i < S.inks.length; i++) {
+    const pct = Math.round(10 + (i / S.inks.length) * 75);
+    setOverlayState(pct, `INK ${i + 1} / ${S.inks.length}`, S.inks[i]);
+    await tick();   // yield → browser repaints, scan bar animates
+    const info = INK_MAP[S.inks[i].toLowerCase()] || { angle: [45, 15, 75][i % 3] };
+    layers.push(createHalftoneLayer(plates[i] || plates[0], S.imgW, S.imgH, S.cellSize, info.angle, S.inks[i], S.blurPx));
+  }
 
-    compositeRiso(layers);
-    overlay.classList.remove('active');
-  }, 20);
+  setOverlayState(92, 'PRESSING', null);
+  await tick();
+  compositeRiso(layers);
+  setOverlayState(100, 'DONE', null);
+  await tick();
+
+  overlay.classList.remove('active');
 }
 
 function scheduleRender() {
@@ -752,12 +701,10 @@ function scheduleRender() {
 // IMAGE LOADING
 // ─────────────────────────────────────────────────────────────
 function loadImageElement(img) {
-  let sw = img.naturalWidth;
-  let sh = img.naturalHeight;
+  let sw = img.naturalWidth, sh = img.naturalHeight;
   if (sw > MAX_DIM || sh > MAX_DIM) {
     const r = Math.min(MAX_DIM / sw, MAX_DIM / sh);
-    sw = Math.round(sw * r);
-    sh = Math.round(sh * r);
+    sw = Math.round(sw * r); sh = Math.round(sh * r);
   }
 
   const tmp = document.createElement('canvas');
@@ -765,19 +712,17 @@ function loadImageElement(img) {
   tmp.getContext('2d').drawImage(img, 0, 0, sw, sh);
 
   S.imageData    = tmp.getContext('2d').getImageData(0, 0, sw, sh);
-  S.imgW         = sw;
-  S.imgH         = sh;
+  S.imgW         = sw; S.imgH = sh;
   S.paperTexture = makePaperTexture(sw, sh);
   S.misregDirs   = null;
 
   const canvas  = document.getElementById('output-canvas');
-  canvas.width  = sw;
-  canvas.height = sh;
+  canvas.width  = sw; canvas.height = sh;
 
   document.getElementById('drop-zone').style.display    = 'none';
-  canvas.style.display                                   = 'block';
-  document.getElementById('reupload-btn').style.display  = 'block';
-  document.getElementById('save-btn').disabled           = false;
+  document.getElementById('paper-frame').style.display  = 'block';
+  document.getElementById('reupload-btn').style.display = 'block';
+  document.getElementById('save-btn').disabled          = false;
 
   render();
 }
@@ -786,9 +731,9 @@ function loadFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
   const reader = new FileReader();
   reader.onload = e => {
-    const img   = new Image();
-    img.onload  = () => loadImageElement(img);
-    img.src     = e.target.result;
+    const img = new Image();
+    img.onload = () => loadImageElement(img);
+    img.src    = e.target.result;
   };
   reader.readAsDataURL(file);
 }
@@ -831,9 +776,7 @@ function renderInkSlots() {
       S.inks.splice(i, 1);
       S.misregDirs   = null;
       S.activePreset = null;
-      renderInkSlots();
-      updatePresetBtns();
-      scheduleRender();
+      renderInkSlots(); updatePresetBtns(); scheduleRender();
     });
     slots.appendChild(row);
   });
@@ -845,8 +788,8 @@ function buildPresets() {
   const row = document.getElementById('presets-row');
   row.innerHTML = '';
   PRESETS.forEach(p => {
-    const btn       = document.createElement('button');
-    btn.className   = `preset-btn${S.activePreset === p.name ? ' active' : ''}`;
+    const btn        = document.createElement('button');
+    btn.className    = `preset-btn${S.activePreset === p.name ? ' active' : ''}`;
     btn.dataset.name = p.name;
     const dots = p.inks.map(h => {
       const info = INK_MAP[h.toLowerCase()];
@@ -872,9 +815,7 @@ function applyPreset(name) {
   S.activePreset = name;
   S.misregDirs   = null;
   document.getElementById('split-mode').value = p.mode;
-  renderInkSlots();
-  updatePresetBtns();
-  scheduleRender();
+  renderInkSlots(); updatePresetBtns(); scheduleRender();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -895,9 +836,9 @@ function setup() {
 
   document.getElementById('reupload-btn').addEventListener('click', () => {
     document.getElementById('drop-zone').style.display    = 'flex';
-    document.getElementById('output-canvas').style.display = 'none';
-    document.getElementById('reupload-btn').style.display  = 'none';
-    document.getElementById('save-btn').disabled           = true;
+    document.getElementById('paper-frame').style.display  = 'none';
+    document.getElementById('reupload-btn').style.display = 'none';
+    document.getElementById('save-btn').disabled          = true;
     fi.value = '';
     fi.click();
   });
@@ -921,8 +862,7 @@ function setup() {
   });
 
   document.getElementById('regen-btn').addEventListener('click', () => {
-    S.misregDirs = null;
-    render();
+    S.misregDirs = null; render();
   });
 
   document.getElementById('blur-amount').addEventListener('input', e => {
@@ -940,8 +880,7 @@ function setup() {
   document.getElementById('split-mode').addEventListener('change', e => {
     S.splitMode    = e.target.value;
     S.activePreset = null;
-    updatePresetBtns();
-    scheduleRender();
+    updatePresetBtns(); scheduleRender();
   });
 
   document.getElementById('add-ink-btn').addEventListener('click', () => {
@@ -951,15 +890,25 @@ function setup() {
     S.inks.push(next ? next.hex : RISO_INKS[3].hex);
     S.misregDirs   = null;
     S.activePreset = null;
-    renderInkSlots();
-    updatePresetBtns();
-    scheduleRender();
+    renderInkSlots(); updatePresetBtns(); scheduleRender();
   });
 
   document.getElementById('save-btn').addEventListener('click', () => {
+    // Export includes paper margin via paper-frame rendering
+    const frame  = document.getElementById('paper-frame');
+    const canvas = document.getElementById('output-canvas');
+    const pad    = 36;
+    const fw     = canvas.width  + pad * 2;
+    const fh     = canvas.height + pad * 2;
+    const exp    = document.createElement('canvas');
+    exp.width    = fw; exp.height = fh;
+    const ectx   = exp.getContext('2d');
+    ectx.fillStyle = '#F8F4ED';
+    ectx.fillRect(0, 0, fw, fh);
+    ectx.drawImage(canvas, pad, pad);
     const a  = document.createElement('a');
     a.download = 'riso-press.png';
-    a.href     = document.getElementById('output-canvas').toDataURL('image/png');
+    a.href     = exp.toDataURL('image/png');
     a.click();
   });
 
