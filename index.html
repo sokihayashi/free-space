@@ -244,9 +244,45 @@
     .btn-secondary:hover { border-color: var(--ink); background: var(--paper-dark); }
 
     @media (max-width: 720px) {
-      body { padding: 16px; }
-      .main { grid-template-columns: 1fr; }
-      .controls { margin-top: 20px; }
+      body { padding: 14px 14px 40px; }
+
+      header { gap: 12px; margin-bottom: 14px; padding-bottom: 14px; }
+      .logo  { font-size: 21px; }
+      .tagline { display: none; }
+
+      /* Preset chips: hide wrapping, scroll horizontally */
+      .presets-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 6px;
+        margin-bottom: 16px;
+        scrollbar-width: none;
+      }
+      .presets-row::-webkit-scrollbar { display: none; }
+      .preset-btn { flex-shrink: 0; font-size: 10px; padding: 5px 12px 5px 9px; }
+
+      /* Stack canvas → controls */
+      .main { grid-template-columns: 1fr; gap: 16px; }
+
+      /* Tighter paper frame on small screens */
+      .paper-frame { padding: 18px; }
+
+      /* Bigger touch targets on sliders */
+      input[type="range"] { height: 4px; }
+      input[type="range"]::-webkit-slider-thumb {
+        width: 22px; height: 22px;
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 22px; height: 22px;
+      }
+      .regen-btn { width: 34px; height: 34px; font-size: 16px; }
+
+      /* Bigger tap targets on action buttons */
+      .btn-primary   { padding: 15px; }
+      .btn-secondary { padding: 13px; }
+
+      .control-section { padding: 14px 0; }
     }
   </style>
 </head>
@@ -269,8 +305,8 @@
         <path d="M4 32 L13 23 20 29 29 19 40 32"/>
       </svg>
       <div class="drop-text">
-        <strong>Drop image here</strong><br>
-        or click to upload &nbsp;·&nbsp; paste (⌘V)
+        <strong>Drop your photo here</strong><br>
+        or click to upload
       </div>
       <input type="file" id="file-input" accept="image/*" style="display:none">
     </div>
@@ -935,12 +971,65 @@ function setup() {
 }
 
 // ─────────────────────────────────────────────────────────────
+// DEMO IMAGE — synthetic portrait-lighting gradient
+// Bright warm center → rich midtones → deep cool shadows.
+// Gives immediate visual result before the user uploads anything.
+// ─────────────────────────────────────────────────────────────
+function makeAutoImage() {
+  const w = 540, h = 540;
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+
+  const radial = ctx.createRadialGradient(w * 0.41, h * 0.37, w * 0.02, w * 0.52, h * 0.52, w * 0.78);
+  radial.addColorStop(0,    '#F8F0DC');
+  radial.addColorStop(0.20, '#E8C070');
+  radial.addColorStop(0.42, '#A87040');
+  radial.addColorStop(0.65, '#503858');
+  radial.addColorStop(1,    '#080818');
+  ctx.fillStyle = radial;
+  ctx.fillRect(0, 0, w, h);
+
+  const sweep = ctx.createLinearGradient(0, h * 0.1, w, h * 0.9);
+  sweep.addColorStop(0,    'rgba(18, 8, 50, 0.30)');
+  sweep.addColorStop(0.55, 'rgba(255, 240, 180, 0)');
+  sweep.addColorStop(1,    'rgba(8, 38, 10, 0.24)');
+  ctx.fillStyle = sweep;
+  ctx.fillRect(0, 0, w, h);
+
+  return ctx.getImageData(0, 0, w, h);
+}
+
+// ─────────────────────────────────────────────────────────────
 // INIT
 // ─────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  // Pick a random preset on every load so repeat visitors see variety
+  const rndPreset = PRESETS[Math.floor(Math.random() * PRESETS.length)];
+  S.inks         = [...rndPreset.inks];
+  S.splitMode    = rndPreset.mode;
+  S.activePreset = rndPreset.name;
+
   buildPresets();
   renderInkSlots();
   setup();
+
+  document.getElementById('split-mode').value = rndPreset.mode;
+
+  // Render demo gradient immediately so first-time visitors see the effect
+  const imgData  = makeAutoImage();
+  S.imageData    = imgData;
+  S.imgW         = imgData.width;
+  S.imgH         = imgData.height;
+  S.paperTexture = makePaperTexture(imgData.width, imgData.height);
+  const cvs      = document.getElementById('output-canvas');
+  cvs.width      = imgData.width;
+  cvs.height     = imgData.height;
+  document.getElementById('drop-zone').style.display    = 'none';
+  document.getElementById('paper-frame').style.display  = 'block';
+  document.getElementById('reupload-btn').style.display = 'block';
+  document.getElementById('save-btn').disabled          = false;
+  render();
 });
 </script>
 </body>
