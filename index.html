@@ -1,1344 +1,957 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HEISEI VHS STUDIO — 平成レトロジェネレーター</title>
-<meta name="description" content="写真をアップロードするだけで本物そっくりのVHS映像風に変換。昭和・平成・令和・グリッチの4モード。無料・即完成。">
-<meta property="og:title" content="HEISEI VHS STUDIO — 平成レトロジェネレーター">
-<meta property="og:description" content="写真を昭和・平成VHS風に一瞬で変換。無料・ノーサインアップ。">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="HEISEI VHS STUDIO">
-<meta name="twitter:description" content="写真をVHS風に変換する無料ツール。昭和・平成・グリッチの4モード対応。">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23111'/><text y='70' font-size='60' text-anchor='middle' x='50'>📼</text></svg>">
-<style>
-@import url('https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap');
-
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-:root{
-  --bg:#0a0a0a;
-  --crt:#0d1a0d;
-  --green:#00ff41;
-  --amber:#ffb300;
-  --red:#ff3333;
-  --white:#e8ffe8;
-  --dim:#2a2a2a;
-  --border:#1a3a1a;
-}
-
-html,body{
-  height:100%;
-  background:var(--bg);
-  color:var(--white);
-  font-family:'Share Tech Mono',monospace;
-  overflow:hidden;
-}
-
-/* CRT scanline effect on entire page */
-body::before{
-  content:'';
-  position:fixed;inset:0;
-  background:repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.15) 2px,
-    rgba(0,0,0,0.15) 4px
-  );
-  pointer-events:none;
-  z-index:9999;
-}
-
-/* CRT flicker */
-body::after{
-  content:'';
-  position:fixed;inset:0;
-  background:radial-gradient(ellipse at 50% 50%,transparent 60%,rgba(0,0,0,0.4) 100%);
-  pointer-events:none;
-  z-index:9998;
-  animation:flicker 8s infinite;
-}
-
-@keyframes flicker{
-  0%,95%,100%{opacity:1}
-  97%{opacity:.92}
-  98%{opacity:.96}
-  99%{opacity:.88}
-}
-
-/* Header */
-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:.5rem 1.25rem;
-  border-bottom:1px solid var(--border);
-  background:var(--crt);
-  position:relative;
-  flex-shrink:0;
-}
-
-.logo-area{
-  display:flex;align-items:center;gap:.75rem;
-}
-
-.logo{
-  font-family:'VT323',monospace;
-  font-size:1.8rem;
-  color:var(--green);
-  text-shadow:0 0 20px rgba(0,255,65,0.8),0 0 40px rgba(0,255,65,0.4);
-  letter-spacing:.08em;
-  line-height:1;
-}
-
-.logo span{
-  color:var(--amber);
-  text-shadow:0 0 20px rgba(255,179,0,0.8);
-}
-
-.rec-badge{
-  display:flex;align-items:center;gap:.35rem;
-  font-size:.7rem;color:var(--red);
-  animation:blink 1.5s step-end infinite;
-}
-
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-
-.rec-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:var(--red);
-  box-shadow:0 0 6px var(--red);
-}
-
-.header-right{
-  display:flex;align-items:center;gap:1rem;
-}
-
-.mode-leds{
-  display:flex;gap:.4rem;
-}
-
-.led{
-  width:8px;height:8px;border-radius:50%;
-  background:#222;
-}
-.led.on-green{background:var(--green);box-shadow:0 0 6px var(--green)}
-.led.on-amber{background:var(--amber);box-shadow:0 0 6px var(--amber)}
-
-.timer{
-  font-family:'VT323',monospace;
-  font-size:1.1rem;
-  color:var(--amber);
-  text-shadow:0 0 10px rgba(255,179,0,0.6);
-  letter-spacing:.1em;
-  min-width:70px;
-}
-
-/* Main layout */
-.layout{
-  display:flex;
-  height:calc(100vh - 48px);
-  overflow:hidden;
-}
-
-/* Canvas zone */
-.canvas-zone{
-  flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:.75rem;
-  background:var(--bg);
-  position:relative;
-  min-width:0;
-}
-
-.screen{
-  position:relative;
-  background:#000;
-  border:3px solid #222;
-  box-shadow:
-    0 0 0 1px #333,
-    0 0 30px rgba(0,255,65,0.06),
-    inset 0 0 60px rgba(0,0,0,0.8);
-  border-radius:4px;
-  overflow:hidden;
-  max-width:100%;
-  max-height:100%;
-  aspect-ratio:4/3;
-}
-
-/* 4:3 canvas */
-#vhsCanvas{
-  display:block;
-  width:100%;
-  height:100%;
-  image-rendering:pixelated;
-}
-
-.screen-overlay{
-  position:absolute;inset:0;
-  pointer-events:none;
-}
-
-/* Drop zone */
-.drop-zone{
-  position:absolute;inset:0;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  gap:1rem;
-  cursor:pointer;
-  transition:background .2s;
-}
-
-.drop-zone:hover,.drop-zone.drag-over{
-  background:rgba(0,255,65,0.03);
-}
-
-.drop-icon{
-  font-size:4rem;
-  filter:drop-shadow(0 0 16px rgba(0,255,65,0.5));
-  animation:float 3s ease-in-out infinite;
-}
-
-@keyframes float{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-8px)}
-}
-
-.drop-text{
-  font-family:'VT323',monospace;
-  font-size:1.4rem;
-  color:var(--green);
-  text-shadow:0 0 10px rgba(0,255,65,0.5);
-  text-align:center;
-  line-height:1.4;
-}
-
-.drop-sub{
-  font-size:.75rem;
-  color:#4a4a4a;
-  text-align:center;
-}
-
-/* VHS timestamp overlay */
-.vhs-ui{
-  position:absolute;inset:0;
-  pointer-events:none;
-  font-family:'VT323',monospace;
-}
-
-.vhs-timestamp{
-  position:absolute;
-  bottom:8%;right:3%;
-  color:var(--amber);
-  font-size:clamp(.65rem,2vw,1rem);
-  text-shadow:0 0 8px rgba(255,140,0,0.9),1px 1px 0 rgba(0,0,0,0.8);
-  letter-spacing:.08em;
-  opacity:.9;
-}
-
-.vhs-ch{
-  position:absolute;
-  top:6%;left:3%;
-  color:var(--white);
-  font-size:clamp(.6rem,1.8vw,.9rem);
-  text-shadow:0 0 8px rgba(255,255,255,0.7),1px 1px 0 rgba(0,0,0,0.8);
-  opacity:.85;
-}
-
-.vhs-sp{
-  position:absolute;
-  top:6%;right:3%;
-  color:var(--green);
-  font-size:clamp(.6rem,1.8vw,.9rem);
-  text-shadow:0 0 8px rgba(0,255,65,0.7);
-}
-
-/* Pause bar */
-.pause-bar{
-  position:absolute;
-  left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);
-  pointer-events:none;
-  animation:pauseScroll 4s linear infinite;
-  display:none;
-}
-
-@keyframes pauseScroll{
-  from{top:0%}to{top:105%}
-}
-
-/* Right control panel */
-.panel{
-  width:280px;
-  flex-shrink:0;
-  background:var(--crt);
-  border-left:1px solid var(--border);
-  display:flex;flex-direction:column;
-  overflow-y:auto;
-  padding:.75rem;
-  gap:.75rem;
-}
-
-.panel::-webkit-scrollbar{width:3px}
-.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-
-.section{
-  border:1px solid var(--border);
-  border-radius:4px;
-  padding:.6rem .75rem;
-  background:rgba(0,20,0,0.3);
-}
-
-.section-title{
-  font-size:.65rem;
-  color:#3a5a3a;
-  letter-spacing:.18em;
-  text-transform:uppercase;
-  margin-bottom:.5rem;
-}
-
-/* Era selector */
-.era-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:.4rem;
-}
-
-.era-btn{
-  padding:.45rem .5rem;
-  background:#0a1a0a;
-  border:1px solid var(--border);
-  border-radius:3px;
-  color:#4a8a4a;
-  font-family:'Share Tech Mono',monospace;
-  font-size:.7rem;
-  cursor:pointer;
-  text-align:center;
-  transition:all .15s;
-  line-height:1.3;
-}
-
-.era-btn:hover{
-  border-color:var(--green);
-  color:var(--green);
-}
-
-.era-btn.active{
-  background:rgba(0,255,65,0.08);
-  border-color:var(--green);
-  color:var(--green);
-  text-shadow:0 0 8px rgba(0,255,65,0.5);
-  box-shadow:0 0 8px rgba(0,255,65,0.1) inset;
-}
-
-.era-name{
-  display:block;
-  font-size:.65rem;
-  color:inherit;
-}
-
-.era-year{
-  display:block;
-  font-size:.8rem;
-  font-family:'VT323',monospace;
-  color:var(--amber);
-}
-
-/* Sliders */
-.slider-row{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:.4rem;
-  gap:.5rem;
-}
-
-.slider-label{
-  font-size:.68rem;
-  color:#5a7a5a;
-  white-space:nowrap;
-  min-width:55px;
-}
-
-.slider-val{
-  font-size:.68rem;
-  color:var(--green);
-  min-width:30px;
-  text-align:right;
-  font-family:'VT323',monospace;
-}
-
-input[type=range]{
-  flex:1;
-  -webkit-appearance:none;
-  height:3px;
-  background:var(--border);
-  border-radius:2px;
-  outline:none;
-}
-
-input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;
-  width:12px;height:12px;
-  border-radius:2px;
-  background:var(--green);
-  box-shadow:0 0 6px rgba(0,255,65,0.5);
-  cursor:pointer;
-}
-
-/* Toggle row */
-.tog-row{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:.4rem;
-}
-
-.tog-label{font-size:.68rem;color:#5a7a5a}
-
-.tog{
-  position:relative;width:36px;height:18px;
-}
-
-.tog input{opacity:0;width:0;height:0;position:absolute}
-
-.tog-track{
-  position:absolute;inset:0;
-  background:#0a1a0a;
-  border:1px solid var(--border);
-  border-radius:2px;
-  cursor:pointer;transition:.2s;
-}
-
-.tog-track::after{
-  content:'';position:absolute;
-  width:12px;height:12px;
-  top:2px;left:2px;
-  background:#3a5a3a;
-  border-radius:1px;transition:.2s;
-}
-
-.tog input:checked~.tog-track{
-  background:rgba(0,255,65,0.1);
-  border-color:var(--green);
-}
-
-.tog input:checked~.tog-track::after{
-  transform:translateX(18px);
-  background:var(--green);
-  box-shadow:0 0 6px rgba(0,255,65,0.5);
-}
-
-/* Buttons */
-.action-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:.4rem;
-}
-
-.vhs-btn{
-  display:flex;align-items:center;justify-content:center;gap:.35rem;
-  padding:.6rem .5rem;
-  border-radius:3px;
-  border:1px solid var(--border);
-  background:#0a1a0a;
-  color:#4a8a4a;
-  font-family:'Share Tech Mono',monospace;
-  font-size:.7rem;
-  cursor:pointer;
-  transition:all .15s;
-  white-space:nowrap;
-}
-
-.vhs-btn:hover{
-  border-color:var(--green);
-  color:var(--green);
-  box-shadow:0 0 8px rgba(0,255,65,0.1);
-}
-
-.vhs-btn.primary{
-  grid-column:1/-1;
-  background:rgba(0,255,65,0.06);
-  border-color:rgba(0,255,65,0.4);
-  color:var(--green);
-  text-shadow:0 0 8px rgba(0,255,65,0.4);
-}
-
-.vhs-btn.primary:hover{
-  background:rgba(0,255,65,0.12);
-  box-shadow:0 0 16px rgba(0,255,65,0.15);
-}
-
-.vhs-btn.amber-btn{
-  border-color:rgba(255,179,0,0.3);
-  color:var(--amber);
-}
-
-.vhs-btn.amber-btn:hover{
-  border-color:var(--amber);
-  box-shadow:0 0 8px rgba(255,179,0,0.1);
-}
-
-/* Tape counter decoration */
-.tape-counter{
-  font-family:'VT323',monospace;
-  font-size:.9rem;
-  color:#2a4a2a;
-  text-align:center;
-  padding:.3rem 0;
-  letter-spacing:.2em;
-  border-top:1px solid var(--border);
-  margin-top:auto;
-}
-
-/* Hidden file input */
-#fileInput{display:none}
-
-/* Toast */
-.toast{
-  position:fixed;
-  bottom:1rem;left:50%;
-  transform:translateX(-50%) translateY(80px);
-  background:rgba(0,20,0,0.95);
-  border:1px solid var(--green);
-  border-radius:3px;
-  padding:.5rem 1.2rem;
-  font-size:.75rem;
-  color:var(--green);
-  text-shadow:0 0 8px rgba(0,255,65,0.5);
-  z-index:10000;
-  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
-  pointer-events:none;
-  letter-spacing:.05em;
-}
-
-.toast.show{transform:translateX(-50%) translateY(0)}
-
-/* Processing overlay */
-.processing{
-  display:none;
-  position:absolute;inset:0;
-  background:rgba(0,0,0,0.8);
-  align-items:center;justify-content:center;
-  font-family:'VT323',monospace;
-  font-size:1.5rem;
-  color:var(--green);
-  text-shadow:0 0 20px rgba(0,255,65,0.8);
-  animation:pulse 1s ease-in-out infinite;
-}
-
-.processing.show{display:flex}
-
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-
-/* Webcam active indicator */
-.webcam-active{
-  display:none;
-  align-items:center;gap:.4rem;
-  font-size:.65rem;
-  color:var(--red);
-  text-shadow:0 0 8px rgba(255,51,51,0.7);
-  animation:blink 1s step-end infinite;
-}
-.webcam-active.show{display:flex}
-.webcam-active::before{
-  content:'●';
-  font-size:.8rem;
-}
-
-/* Mobile responsive */
-@media(max-width:680px){
-  html,body{overflow:auto}
-  .layout{flex-direction:column;height:auto}
-  .canvas-zone{height:60vw;min-height:240px}
-  .screen{max-width:95vw}
-  .panel{width:100%;border-left:none;border-top:1px solid var(--border)}
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISO PRESS — Risograph Print Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --paper:      #F5F0E8;
+      --paper-dark: #EDE8DB;
+      --ink:        #1a1a1a;
+      --ink-mid:    #555;
+      --ink-light:  #999;
+      --border:     #D5CEC2;
+      --font:       'Space Grotesk', system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 28px 32px;
+    }
+
+    /* ── HEADER ────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+      margin-bottom: 22px;
+      padding-bottom: 18px;
+      border-bottom: 2px solid var(--ink);
+    }
+    .logo {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .tagline {
+      font-size: 11px;
+      color: var(--ink-light);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    /* ── PRESETS ───────────────────────────────── */
+    .presets-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .preset-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px 6px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 100px;
+      background: transparent;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--ink);
+      transition: all 0.13s ease;
+    }
+    .preset-btn:hover   { border-color: var(--ink); background: var(--paper-dark); }
+    .preset-btn.active  { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .preset-dots        { display: flex; gap: 3px; }
+    .preset-dot         { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
+    .preset-btn.active .preset-dot { border-color: rgba(255,255,255,0.25); }
+
+    /* ── LAYOUT ────────────────────────────────── */
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 288px;
+      gap: 28px;
+      align-items: start;
+    }
+
+    /* ── CANVAS AREA ───────────────────────────── */
+    .canvas-wrap {
+      position: relative;
+      box-shadow: 0 6px 32px rgba(0,0,0,0.1);
+    }
+    #output-canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: var(--paper);
+    }
+    .drop-zone {
+      aspect-ratio: 4/3;
+      border: 2px dashed var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+      background: var(--paper);
+    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--ink); }
+    .drop-icon { width: 44px; height: 44px; opacity: 0.25; }
+    .drop-text {
+      font-size: 13px;
+      color: var(--ink-light);
+      text-align: center;
+      line-height: 1.7;
+      font-weight: 500;
+    }
+    .drop-text strong { color: var(--ink-mid); }
+
+    .reupload-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      background: rgba(245,240,232,0.88);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--ink-mid);
+      display: none;
+      transition: all 0.13s;
+    }
+    .reupload-btn:hover { background: var(--paper); color: var(--ink); border-color: var(--ink); }
+
+    .render-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(245,240,232,0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+    }
+    .render-overlay.active { display: flex; }
+
+    /* ── CONTROLS ──────────────────────────────── */
+    .controls { display: flex; flex-direction: column; }
+
+    .control-section {
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .control-section:last-child { border-bottom: none; padding-bottom: 0; }
+
+    .section-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      margin-bottom: 14px;
+    }
+
+    .ink-slots { display: flex; flex-direction: column; gap: 9px; }
+
+    .ink-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .ink-index {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--border);
+      width: 12px;
+      flex-shrink: 0;
+    }
+    .ink-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 1.5px solid rgba(0,0,0,0.12);
+      transition: background 0.2s;
+    }
+    .ink-select {
+      flex: 1;
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink);
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 26px 6px 9px;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%23999'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 9px center;
+    }
+    .ink-select:focus { outline: none; border-color: var(--ink); }
+
+    .remove-ink-btn {
+      width: 22px; height: 22px;
+      border: none; background: none;
+      cursor: pointer; color: var(--border);
+      font-size: 17px; line-height: 1;
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      transition: all 0.13s;
+    }
+    .remove-ink-btn:hover { background: var(--paper-dark); color: var(--ink); }
+
+    .add-ink-btn {
+      font-family: var(--font);
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--ink-light);
+      background: none;
+      border: 1.5px dashed var(--border);
+      border-radius: 6px;
+      padding: 7px;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      margin-top: 8px;
+      transition: all 0.13s;
+    }
+    .add-ink-btn:hover { border-color: var(--ink-mid); color: var(--ink-mid); }
+
+    .slider-wrap { margin-bottom: 13px; }
+    .slider-wrap:last-child { margin-bottom: 0; }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+    .slider-label {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+    }
+    .slider-value {
+      font-size: 11px; font-weight: 700;
+      color: var(--ink);
+      min-width: 30px;
+      text-align: right;
+    }
+
+    .slider-row-inline {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    input[type="range"] {
+      appearance: none;
+      -webkit-appearance: none;
+      flex: 1;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--ink);
+      cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: var(--ink);
+      border: none;
+      cursor: pointer;
+    }
+
+    .regen-btn {
+      font-size: 14px;
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 5px;
+      width: 26px; height: 26px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--ink-mid);
+      transition: all 0.13s;
+    }
+    .regen-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+    .control-select {
+      font-family: var(--font);
+      font-size: 12px; font-weight: 500;
+      color: var(--ink);
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 28px 8px 10px;
+      width: 100%;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%23999'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+    .control-select:focus { outline: none; border-color: var(--ink); }
+
+    .btn-primary {
+      display: block; width: 100%;
+      padding: 13px;
+      background: var(--ink); color: var(--paper);
+      border: none; border-radius: 8px;
+      font-family: var(--font);
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.13s;
+      margin-bottom: 9px;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: 0.82; }
+    .btn-primary:disabled { opacity: 0.35; cursor: default; }
+
+    .btn-secondary {
+      display: block; width: 100%;
+      padding: 11px;
+      background: transparent; color: var(--ink);
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.13s;
+    }
+    .btn-secondary:hover { border-color: var(--ink); background: var(--paper-dark); }
+
+    @media (max-width: 720px) {
+      body { padding: 16px; }
+      .main { grid-template-columns: 1fr; }
+      .controls { margin-top: 20px; }
+    }
+  </style>
 </head>
 <body>
 
 <header>
-  <div class="logo-area">
-    <div class="logo">HEISEI <span>VHS</span> STUDIO</div>
-    <div class="rec-badge">
-      <div class="rec-dot"></div>
-      <span>REC</span>
-    </div>
-    <div class="webcam-active" id="webcamIndicator">LIVE CAM</div>
-  </div>
-  <div class="header-right">
-    <div class="mode-leds">
-      <div class="led on-green" id="led1"></div>
-      <div class="led on-amber" id="led2"></div>
-      <div class="led" id="led3"></div>
-    </div>
-    <div class="timer" id="timer">00:00:00</div>
-  </div>
+  <div class="logo">RISO PRESS</div>
+  <div class="tagline">Risograph Print Simulator</div>
 </header>
 
-<div class="layout">
-  <!-- Canvas area -->
-  <div class="canvas-zone">
-    <div class="screen" id="screen">
-      <canvas id="vhsCanvas" width="640" height="480"></canvas>
+<div class="presets-row" id="presets-row"></div>
 
-      <!-- Drop zone (shown when no image) -->
-      <div class="drop-zone" id="dropZone">
-        <div class="drop-icon">📼</div>
-        <div class="drop-text">
-          写真をドロップ<br>またはクリックして選択
-        </div>
-        <div class="drop-sub">JPG / PNG / WEBP 対応<br>PCカメラでリアルタイム変換も可</div>
+<div class="main">
+  <div class="canvas-wrap" id="canvas-wrap">
+    <div class="drop-zone" id="drop-zone">
+      <svg class="drop-icon" viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="10" width="36" height="28" rx="2"/>
+        <circle cx="15" cy="20" r="4"/>
+        <path d="M4 32 L13 23 20 29 29 19 40 32"/>
+      </svg>
+      <div class="drop-text">
+        <strong>Drop image here</strong><br>
+        or click to upload &nbsp;·&nbsp; paste (⌘V)
       </div>
-
-      <!-- VHS UI overlays (shown when image loaded) -->
-      <div class="vhs-ui" id="vhsUI" style="display:none">
-        <div class="vhs-ch" id="vhsCh">CH01 カメラ1</div>
-        <div class="vhs-sp" id="vhsSp">SP ■HI-FI</div>
-        <div class="vhs-timestamp" id="vhsTimestamp">1993.07.15  21:42:17</div>
-      </div>
-
-      <div class="pause-bar" id="pauseBar"></div>
-      <div class="processing" id="processingOverlay">PROCESSING...</div>
+      <input type="file" id="file-input" accept="image/*" style="display:none">
     </div>
+    <canvas id="output-canvas" style="display:none"></canvas>
+    <button class="reupload-btn" id="reupload-btn">↑ New Image</button>
+    <div class="render-overlay" id="render-overlay">Printing…</div>
   </div>
 
-  <!-- Control panel -->
-  <div class="panel">
+  <div class="controls">
+    <div class="control-section">
+      <div class="section-label">Ink Layers</div>
+      <div class="ink-slots" id="ink-slots"></div>
+      <button class="add-ink-btn" id="add-ink-btn">+ Add Third Ink</button>
+    </div>
 
-    <!-- Era selector -->
-    <div class="section">
-      <div class="section-title">▶ ERA / 時代</div>
-      <div class="era-grid" id="eraGrid">
-        <button class="era-btn" data-era="showa">
-          <span class="era-name">昭和</span>
-          <span class="era-year">SHOWA '70s</span>
-        </button>
-        <button class="era-btn active" data-era="heisei">
-          <span class="era-name">平成</span>
-          <span class="era-year">HEISEI '90s</span>
-        </button>
-        <button class="era-btn" data-era="2000s">
-          <span class="era-name">2000年代</span>
-          <span class="era-year">DIGITAL CAM</span>
-        </button>
-        <button class="era-btn" data-era="glitch">
-          <span class="era-name">グリッチ</span>
-          <span class="era-year">MAX DAMAGE</span>
-        </button>
+    <div class="control-section">
+      <div class="section-label">Color Split</div>
+      <select class="control-select" id="split-mode">
+        <option value="shadows-highlights">Shadows / Highlights</option>
+        <option value="warm-cool">Warm / Cool Tones</option>
+        <option value="channels">RGB Channels</option>
+      </select>
+    </div>
+
+    <div class="control-section">
+      <div class="section-label">Print Settings</div>
+
+      <div class="slider-wrap">
+        <div class="slider-header">
+          <span class="slider-label">Cell Size</span>
+          <span class="slider-value" id="cell-val">8 px</span>
+        </div>
+        <input type="range" id="cell-size" min="4" max="24" step="1" value="8">
+      </div>
+
+      <div class="slider-wrap">
+        <div class="slider-header">
+          <span class="slider-label">Misregistration</span>
+          <span class="slider-value" id="misreg-val">3 px</span>
+        </div>
+        <div class="slider-row-inline">
+          <input type="range" id="misregistration" min="0" max="14" step="0.5" value="3">
+          <button class="regen-btn" id="regen-btn" title="Randomize plate offsets">↺</button>
+        </div>
+      </div>
+
+      <div class="slider-wrap">
+        <div class="slider-header">
+          <span class="slider-label">Ink Bleed</span>
+          <span class="slider-value" id="blur-val">0.8</span>
+        </div>
+        <input type="range" id="blur-amount" min="0" max="3" step="0.1" value="0.8">
       </div>
     </div>
 
-    <!-- Effect controls -->
-    <div class="section">
-      <div class="section-title">▶ EFFECT / エフェクト</div>
-
-      <div class="slider-row">
-        <span class="slider-label">DAMAGE</span>
-        <input type="range" id="damageSlider" min="0" max="100" value="60">
-        <span class="slider-val" id="damageVal">60</span>
-      </div>
-
-      <div class="slider-row">
-        <span class="slider-label">TRACKING</span>
-        <input type="range" id="trackingSlider" min="0" max="100" value="40">
-        <span class="slider-val" id="trackingVal">40</span>
-      </div>
-
-      <div class="slider-row">
-        <span class="slider-label">CHROMA</span>
-        <input type="range" id="chromaSlider" min="0" max="100" value="50">
-        <span class="slider-val" id="chromaVal">50</span>
-      </div>
-
-      <div class="slider-row">
-        <span class="slider-label">NOISE</span>
-        <input type="range" id="noiseSlider" min="0" max="100" value="45">
-        <span class="slider-val" id="noiseVal">45</span>
-      </div>
-    </div>
-
-    <!-- Overlays -->
-    <div class="section">
-      <div class="section-title">▶ OVERLAY / オーバーレイ</div>
-
-      <div class="tog-row">
-        <span class="tog-label">日付スタンプ</span>
-        <label class="tog">
-          <input type="checkbox" id="dateToggle" checked>
-          <div class="tog-track"></div>
-        </label>
-      </div>
-
-      <div class="tog-row">
-        <span class="tog-label">スキャンライン</span>
-        <label class="tog">
-          <input type="checkbox" id="scanlineToggle" checked>
-          <div class="tog-track"></div>
-        </label>
-      </div>
-
-      <div class="tog-row">
-        <span class="tog-label">ビネット</span>
-        <label class="tog">
-          <input type="checkbox" id="vignetteToggle" checked>
-          <div class="tog-track"></div>
-        </label>
-      </div>
-
-      <div class="tog-row">
-        <span class="tog-label">VHSノイズライン</span>
-        <label class="tog">
-          <input type="checkbox" id="noiseBandToggle" checked>
-          <div class="tog-track"></div>
-        </label>
-      </div>
-    </div>
-
-    <!-- Date settings -->
-    <div class="section">
-      <div class="section-title">▶ DATE STAMP</div>
-      <div class="slider-row">
-        <span class="slider-label">YEAR</span>
-        <input type="range" id="yearSlider" min="1975" max="2009" value="1993">
-        <span class="slider-val" id="yearVal">1993</span>
-      </div>
-      <div class="slider-row">
-        <span class="slider-label">MONTH</span>
-        <input type="range" id="monthSlider" min="1" max="12" value="7">
-        <span class="slider-val" id="monthVal">07</span>
-      </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="section">
-      <div class="section-title">▶ ACTION</div>
-      <div class="action-grid">
-        <button class="vhs-btn primary" id="loadBtn">
-          <span>📁</span> 写真を読み込む
-        </button>
-        <button class="vhs-btn" id="webcamBtn">
-          <span>📷</span> カメラ
-        </button>
-        <button class="vhs-btn amber-btn" id="reprocessBtn">
-          <span>🎲</span> ランダム
-        </button>
-        <button class="vhs-btn" id="saveBtn">
-          <span>⬇</span> 保存
-        </button>
-        <button class="vhs-btn primary amber-btn" id="shareBtn">
-          <span>𝕏</span> Xでシェア
-        </button>
-      </div>
-    </div>
-
-    <div class="tape-counter" id="tapeCounter">
-      ◀◀ T-120  SP  ▶▶
+    <div class="control-section">
+      <button class="btn-primary" id="save-btn" disabled>Save PNG</button>
+      <button class="btn-secondary" id="share-btn">Share on X</button>
     </div>
   </div>
 </div>
 
-<input type="file" id="fileInput" accept="image/*">
-<div class="toast" id="toast"></div>
-
 <script>
-/* ==============================================
-   HEISEI VHS STUDIO — CORE ENGINE
-   ============================================== */
+// ─────────────────────────────────────────────────────────────
+// RISO INK PALETTE  (Riso Kagaku authentic colors + screen angles)
+// ─────────────────────────────────────────────────────────────
+const RISO_INKS = [
+  { name: 'Black',              hex: '#1a1a1a', angle: 45 },
+  { name: 'Fluorescent Pink',   hex: '#FF48B0', angle: 75 },
+  { name: 'Blue',               hex: '#0078BF', angle: 15 },
+  { name: 'Yellow',             hex: '#FFE800', angle:  0 },
+  { name: 'Bright Red',         hex: '#F15060', angle: 75 },
+  { name: 'Orange',             hex: '#FF6C2F', angle: 75 },
+  { name: 'Fluorescent Orange', hex: '#FF5B1D', angle: 75 },
+  { name: 'Green',              hex: '#00A95C', angle: 15 },
+  { name: 'Teal',               hex: '#00ABAC', angle: 15 },
+  { name: 'Medium Blue',        hex: '#3255A4', angle: 15 },
+  { name: 'Purple',             hex: '#765BA7', angle: 75 },
+  { name: 'Burgundy',           hex: '#914E72', angle: 45 },
+  { name: 'Gold',               hex: '#AC8B2C', angle:  0 },
+  { name: 'Light Gray',         hex: '#949494', angle: 45 },
+  { name: 'Fluorescent Green',  hex: '#69D84F', angle: 15 },
+  { name: 'Mint',               hex: '#82D8D5', angle: 15 },
+];
 
-const canvas     = document.getElementById('vhsCanvas');
-const ctx        = canvas.getContext('2d', { willReadFrequently: true });
-const dropZone   = document.getElementById('dropZone');
-const vhsUI      = document.getElementById('vhsUI');
-const fileInput  = document.getElementById('fileInput');
-const processing = document.getElementById('processingOverlay');
+const INK_MAP = Object.fromEntries(RISO_INKS.map(i => [i.hex.toLowerCase(), i]));
 
-const W = 640, H = 480;
+// ─────────────────────────────────────────────────────────────
+// PRESETS
+// ─────────────────────────────────────────────────────────────
+const PRESETS = [
+  { name: 'TOKYO NIGHT',  inks: ['#3255A4', '#FF48B0'],            mode: 'shadows-highlights' },
+  { name: 'SUMMER ZINE',  inks: ['#F15060', '#FFE800'],            mode: 'shadows-highlights' },
+  { name: 'LATE NIGHT',   inks: ['#1a1a1a', '#00ABAC'],            mode: 'shadows-highlights' },
+  { name: 'BOTANICAL',    inks: ['#914E72', '#00A95C'],            mode: 'shadows-highlights' },
+  { name: 'SUNSET',       inks: ['#FF6C2F', '#765BA7'],            mode: 'warm-cool'          },
+  { name: 'RISOTTO',      inks: ['#FF48B0', '#FFE800', '#0078BF'], mode: 'shadows-highlights' },
+];
 
-// — State —
-let currentEra   = 'heisei';
-let sourceImage  = null;
-let webcamStream = null;
-let webcamRaf    = null;
-let timerInterval;
-let timerSecs    = 0;
-
-// — Settings —
-const settings = {
-  damage:    60,
-  tracking:  40,
-  chroma:    50,
-  noise:     45,
-  date:      true,
-  scanline:  true,
-  vignette:  true,
-  noiseBand: true,
-  year:      1993,
-  month:     7,
+// ─────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────
+const S = {
+  imageData:    null,
+  imgW:         0,
+  imgH:         0,
+  inks:         ['#3255A4', '#FF48B0'],
+  splitMode:    'shadows-highlights',
+  cellSize:     8,
+  misreg:       3,
+  blurPx:       0.8,
+  paperTexture: null,
+  misregDirs:   null,
+  activePreset: 'TOKYO NIGHT',
 };
 
-// — Era presets —
-const ERA_PRESETS = {
-  showa: {
-    name:'SHOWA \'70s',
-    colorShift:{ r:18, g:8, b:-20 },
-    satMul:0.75,
-    brightness:0.88,
-    contrast:1.15,
-    damage:75, tracking:65, chroma:45, noise:60,
-    noiseBand:true,
-    tint:[30, 15, -25],
-    yearRange:[1975,1985],
-  },
-  heisei: {
-    name:'HEISEI \'90s',
-    colorShift:{ r:10, g:12, b:-8 },
-    satMul:0.88,
-    brightness:0.93,
-    contrast:1.08,
-    damage:55, tracking:40, chroma:55, noise:42,
-    noiseBand:true,
-    tint:[10, 12, -8],
-    yearRange:[1989,2000],
-  },
-  '2000s': {
-    name:'DIGITAL \'00s',
-    colorShift:{ r:5, g:5, b:0 },
-    satMul:0.95,
-    brightness:0.96,
-    contrast:1.03,
-    damage:25, tracking:15, chroma:25, noise:22,
-    noiseBand:false,
-    tint:[5, 5, 0],
-    yearRange:[2000,2009],
-  },
-  glitch: {
-    name:'MAX DAMAGE',
-    colorShift:{ r:25, g:-5, b:-25 },
-    satMul:0.6,
-    brightness:0.82,
-    contrast:1.3,
-    damage:95, tracking:90, chroma:80, noise:85,
-    noiseBand:true,
-    tint:[40, -10, -40],
-    yearRange:[1985,1995],
-  },
-};
+const MAX_DIM = 1000;
+let renderDebounce = null;
 
-// — Effect pipeline —
-function applyVHSEffect(imgEl) {
-  const era = ERA_PRESETS[currentEra];
-
-  // Draw image to canvas (letterbox 4:3)
-  ctx.fillStyle = '#000';
-  ctx.fillRect(0, 0, W, H);
-
-  const ir = imgEl.width / imgEl.height;
-  const cr = W / H;
-  let sw = W, sh = H, sx = 0, sy = 0;
-  if (ir > cr) { sh = W / ir; sy = (H - sh) / 2; }
-  else          { sw = H * ir; sx = (W - sw) / 2; }
-  ctx.drawImage(imgEl, sx, sy, sw, sh);
-
-  let imgData = ctx.getImageData(0, 0, W, H);
-
-  // 1. Color grade
-  imgData = colorGrade(imgData, era);
-
-  // 2. Chromatic aberration
-  const chromaAmt = Math.round((settings.chroma / 100) * 8);
-  if (chromaAmt > 0) imgData = chromaticAberration(imgData, chromaAmt);
-
-  // 3. Horizontal blur (color bleed)
-  const blurAmt = Math.round((settings.damage / 100) * 3);
-  if (blurAmt > 0) imgData = horizontalBlur(imgData, blurAmt);
-
-  // 4. VHS tracking glitch
-  if (settings.tracking > 0) {
-    imgData = vhsTracking(imgData, settings.tracking / 100);
+// ─────────────────────────────────────────────────────────────
+// PAPER TEXTURE — subtle grain via multiply-friendly near-white noise
+// ─────────────────────────────────────────────────────────────
+function makePaperTexture(w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  const d = ctx.createImageData(w, h);
+  for (let i = 0; i < d.data.length; i += 4) {
+    const v = 244 + Math.floor(Math.random() * 11);
+    d.data[i]   = v;
+    d.data[i+1] = Math.max(0, v - 1);
+    d.data[i+2] = Math.max(0, v - 3);
+    d.data[i+3] = 255;
   }
-
-  // 5. Noise bands
-  if (settings.noiseBand && era.noiseBand) {
-    imgData = addNoiseBand(imgData);
-  }
-
-  // 6. Film noise
-  if (settings.noise > 0) {
-    imgData = addNoise(imgData, settings.noise * 0.6);
-  }
-
-  ctx.putImageData(imgData, 0, 0);
-
-  // 7. Scanlines (CSS-like, fast)
-  if (settings.scanline) drawScanlines();
-
-  // 8. Vignette
-  if (settings.vignette) drawVignette();
-
-  // 9. Timestamp overlay
-  if (settings.date) drawTimestamp();
-
-  // 10. VHS head noise at top
-  drawHeadNoise();
+  ctx.putImageData(d, 0, 0);
+  return c;
 }
 
-// Color grading
-function colorGrade(imgData, era) {
-  const d = imgData.data;
-  const { r: rShift, g: gShift, b: bShift } = era.colorShift;
-  const bri = era.brightness;
-  const con = era.contrast;
-
-  for (let i = 0; i < d.length; i += 4) {
-    let r = d[i], g = d[i+1], b = d[i+2];
-
-    // Brightness + contrast
-    r = (r - 128) * con + 128 + (bri - 1) * 128;
-    g = (g - 128) * con + 128 + (bri - 1) * 128;
-    b = (b - 128) * con + 128 + (bri - 1) * 128;
-
-    // Color shift (VHS tint)
-    r += rShift;
-    g += gShift;
-    b += bShift;
-
-    // Desaturate slightly
-    const avg = (r + g + b) / 3;
-    r = avg + (r - avg) * era.satMul;
-    g = avg + (g - avg) * era.satMul;
-    b = avg + (b - avg) * era.satMul;
-
-    d[i]   = Math.max(0, Math.min(255, r));
-    d[i+1] = Math.max(0, Math.min(255, g));
-    d[i+2] = Math.max(0, Math.min(255, b));
+// ─────────────────────────────────────────────────────────────
+// MISREGISTRATION DIRECTIONS
+// ─────────────────────────────────────────────────────────────
+function regenMisregDirs(count) {
+  S.misregDirs = [{ dx: 0, dy: 0 }];
+  for (let i = 1; i < count; i++) {
+    S.misregDirs.push({
+      dx: (Math.random() - 0.5) * 2,
+      dy: (Math.random() - 0.5) * 2,
+    });
   }
-  return imgData;
 }
 
-// Chromatic aberration (RGB channel split)
-function chromaticAberration(imgData, amount) {
-  const src  = imgData.data;
-  const out  = ctx.createImageData(W, H);
-  const dst  = out.data;
-  const rOff = -amount;
-  const bOff = +amount;
+// ─────────────────────────────────────────────────────────────
+// PLATE CREATION — separate image into per-ink density maps
+// ─────────────────────────────────────────────────────────────
+function createPlates(imgData, w, h, mode, inkCount) {
+  const src = imgData.data;
+  const n   = w * h;
+  const lum = new Float32Array(n);
 
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const i = (y * W + x) * 4;
+  for (let i = 0; i < n; i++) {
+    const b = i * 4;
+    lum[i] = 0.299 * src[b] + 0.587 * src[b+1] + 0.114 * src[b+2];
+  }
 
-      // R from left-shifted
-      const rx = Math.max(0, Math.min(W-1, x + rOff));
-      const ri = (y * W + rx) * 4;
+  if (mode === 'warm-cool') {
+    const p1 = new Uint8Array(n);
+    const p2 = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      const b  = i * 4;
+      const r  = src[b], g = src[b+1], bl = src[b+2];
+      const warm = Math.max(0, r - (g + bl) * 0.5);
+      const cool = Math.max(0, bl - (r + g)  * 0.5);
+      const l    = lum[i];
+      p1[i] = Math.round(Math.min(255, warm * 0.7 + (255 - l) * 0.35));
+      p2[i] = Math.round(Math.min(255, cool * 0.7 + l          * 0.35));
+    }
+    if (inkCount === 2) return [p1, p2];
+    const p3 = new Uint8Array(n);
+    for (let i = 0; i < n; i++) p3[i] = Math.round(255 - lum[i]);
+    return [p1, p2, p3];
+  }
 
-      // B from right-shifted
-      const bx = Math.max(0, Math.min(W-1, x + bOff));
-      const bi = (y * W + bx) * 4;
+  if (mode === 'channels') {
+    const p1 = new Uint8Array(n);
+    const p2 = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      p1[i] = 255 - src[i * 4];
+      p2[i] = 255 - src[i * 4 + 2];
+    }
+    if (inkCount === 2) return [p1, p2];
+    const p3 = new Uint8Array(n);
+    for (let i = 0; i < n; i++) p3[i] = 255 - src[i * 4 + 1];
+    return [p1, p2, p3];
+  }
 
-      dst[i]   = src[ri];
-      dst[i+1] = src[i+1];
-      dst[i+2] = src[bi+2];
-      dst[i+3] = 255;
+  // shadows-highlights (default)
+  const p1 = new Uint8Array(n);
+  const p2 = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const l = lum[i];
+    p1[i] = Math.round(255 - l);
+    p2[i] = Math.round(Math.pow(l / 255, 0.38) * 255);
+  }
+  if (inkCount === 2) return [p1, p2];
+
+  const p3 = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = lum[i] / 255;
+    p3[i] = Math.round(Math.sin(t * Math.PI) * 255);
+  }
+  return [p1, p3, p2];
+}
+
+// ─────────────────────────────────────────────────────────────
+// SAMPLE PLATE — box average around (cx,cy) with radius r
+// ─────────────────────────────────────────────────────────────
+function samplePlate(plate, w, h, cx, cy, r) {
+  const x0 = Math.max(0,   Math.floor(cx - r));
+  const x1 = Math.min(w-1, Math.ceil (cx + r));
+  const y0 = Math.max(0,   Math.floor(cy - r));
+  const y1 = Math.min(h-1, Math.ceil (cy + r));
+  let sum = 0, cnt = 0;
+  for (let y = y0; y <= y1; y++) {
+    const row = y * w;
+    for (let x = x0; x <= x1; x++) { sum += plate[row + x]; cnt++; }
+  }
+  return cnt > 0 ? sum / cnt : 0;
+}
+
+// ─────────────────────────────────────────────────────────────
+// HALFTONE LAYER — AM halftone on angled grid, single ink color
+// Dot radius = sqrt(density/255) * maxRadius  preserves tonal area
+// ─────────────────────────────────────────────────────────────
+function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
+  const angle  = angleDeg * Math.PI / 180;
+  const cosA   = Math.cos(-angle);
+  const sinA   = Math.sin(-angle);
+  const halfC  = cellSize / 2;
+  const maxR   = halfC * 0.97;
+  const TWO_PI = Math.PI * 2;
+  const diag   = Math.ceil(Math.sqrt(w * w + h * h));
+  const ocx    = w / 2;
+  const ocy    = h / 2;
+
+  const dc   = document.createElement('canvas');
+  dc.width   = w;
+  dc.height  = h;
+  const dctx = dc.getContext('2d');
+  dctx.fillStyle = '#FFFFFF';
+  dctx.fillRect(0, 0, w, h);
+  dctx.fillStyle = inkHex;
+
+  // Batch all arcs into one path for performance
+  dctx.beginPath();
+  for (let gy = -diag; gy < diag + cellSize; gy += cellSize) {
+    for (let gx = -diag; gx < diag + cellSize; gx += cellSize) {
+      const rcx = gx + halfC;
+      const rcy = gy + halfC;
+      const scx = ocx + rcx * cosA - rcy * sinA;
+      const scy = ocy + rcx * sinA + rcy * cosA;
+
+      if (scx < -cellSize || scx > w + cellSize) continue;
+      if (scy < -cellSize || scy > h + cellSize) continue;
+
+      const density = samplePlate(plate, w, h, scx, scy, halfC);
+      if (density < 1) continue;
+
+      const radius = Math.sqrt(density / 255) * maxR;
+      if (radius < 0.25) continue;
+
+      dctx.moveTo(scx + radius, scy);
+      dctx.arc(scx, scy, radius, 0, TWO_PI);
     }
   }
-  return out;
+  dctx.fill();
+
+  if (blurPx < 0.1) return dc;
+
+  // Ink bleed: Gaussian blur simulates dot gain / paper absorption
+  const bc   = document.createElement('canvas');
+  bc.width   = w;
+  bc.height  = h;
+  const bctx = bc.getContext('2d');
+  bctx.filter = `blur(${blurPx}px)`;
+  bctx.drawImage(dc, 0, 0);
+  return bc;
 }
 
-// Horizontal blur (color bleed)
-function horizontalBlur(imgData, radius) {
-  const d   = imgData.data;
-  const tmp = new Uint8ClampedArray(d);
+// ─────────────────────────────────────────────────────────────
+// COMPOSITE — layers → paper background via Multiply blend
+// ─────────────────────────────────────────────────────────────
+function compositeRiso(layers) {
+  const canvas = document.getElementById('output-canvas');
+  const ctx    = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
 
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      let r=0,g=0,b=0,tw=0;
-      for (let dx = -radius; dx <= radius; dx++) {
-        const xx = Math.max(0, Math.min(W-1, x+dx));
-        const i2 = (y*W + xx)*4;
-        const w  = 1 - Math.abs(dx)/(radius+1);
-        r += tmp[i2]   * w;
-        g += tmp[i2+1] * w;
-        b += tmp[i2+2] * w;
-        tw += w;
-      }
-      const i = (y*W + x)*4;
-      d[i]   = r/tw;
-      d[i+1] = g/tw;
-      d[i+2] = b/tw;
-    }
-  }
-  return imgData;
-}
+  ctx.fillStyle = '#F5F0E8';
+  ctx.fillRect(0, 0, w, h);
 
-// VHS tracking glitch
-function vhsTracking(imgData, intensity) {
-  const d   = imgData.data;
-  const tmp = new Uint8ClampedArray(d);
-
-  // Whole-frame slight wave distortion
-  const waveAmp = intensity * 3;
-  for (let y = 0; y < H; y++) {
-    const wave = Math.sin(y * 0.05 + Math.random() * 0.3) * waveAmp * 0.5;
-    const rowOff = Math.round(wave);
-    if (rowOff === 0) continue;
-    for (let x = 0; x < W; x++) {
-      const sx = (x - rowOff + W) % W;
-      const di = (y*W + x)*4;
-      const si = (y*W + sx)*4;
-      d[di]   = tmp[si];
-      d[di+1] = tmp[si+1];
-      d[di+2] = tmp[si+2];
-    }
+  ctx.globalCompositeOperation = 'multiply';
+  for (let i = 0; i < layers.length; i++) {
+    const dir = S.misregDirs ? S.misregDirs[i] : { dx: 0, dy: 0 };
+    ctx.drawImage(layers[i], dir.dx * S.misreg, dir.dy * S.misreg);
   }
 
-  // Random glitch bands
-  let y = 0;
-  const rng = Math.random;
-  while (y < H) {
-    if (rng() < intensity * 0.03) {
-      const bandH = Math.floor(rng() * 20 * intensity) + 2;
-      const off   = Math.floor((rng() - 0.4) * 40 * intensity);
-      for (let by = y; by < Math.min(y + bandH, H); by++) {
-        for (let x = 0; x < W; x++) {
-          const sx = (x - off + W) % W;
-          const di = (by*W + x)*4;
-          const si = (by*W + sx)*4;
-          // Slight brightness boost on glitch band
-          d[di]   = Math.min(255, tmp[si]   + 20);
-          d[di+1] = Math.min(255, tmp[si+1] + 20);
-          d[di+2] = Math.min(255, tmp[si+2] + 20);
-        }
-      }
-      y += bandH;
-    } else {
-      y++;
-    }
+  // Paper grain (near-white texture, multiply keeps it barely visible)
+  if (S.paperTexture) ctx.drawImage(S.paperTexture, 0, 0, w, h);
+
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+// ─────────────────────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────────────────────
+function render() {
+  if (!S.imageData) return;
+
+  const overlay = document.getElementById('render-overlay');
+  overlay.classList.add('active');
+
+  setTimeout(() => {
+    if (!S.misregDirs || S.misregDirs.length !== S.inks.length) regenMisregDirs(S.inks.length);
+
+    const plates = createPlates(S.imageData, S.imgW, S.imgH, S.splitMode, S.inks.length);
+
+    const layers = S.inks.map((hex, i) => {
+      const info = INK_MAP[hex.toLowerCase()] || { angle: [45, 15, 75][i % 3] };
+      return createHalftoneLayer(
+        plates[i] || plates[0],
+        S.imgW, S.imgH,
+        S.cellSize, info.angle,
+        hex, S.blurPx
+      );
+    });
+
+    compositeRiso(layers);
+    overlay.classList.remove('active');
+  }, 20);
+}
+
+function scheduleRender() {
+  clearTimeout(renderDebounce);
+  renderDebounce = setTimeout(render, 90);
+}
+
+// ─────────────────────────────────────────────────────────────
+// IMAGE LOADING
+// ─────────────────────────────────────────────────────────────
+function loadImageElement(img) {
+  let sw = img.naturalWidth;
+  let sh = img.naturalHeight;
+  if (sw > MAX_DIM || sh > MAX_DIM) {
+    const r = Math.min(MAX_DIM / sw, MAX_DIM / sh);
+    sw = Math.round(sw * r);
+    sh = Math.round(sh * r);
   }
 
-  return imgData;
+  const tmp = document.createElement('canvas');
+  tmp.width = sw; tmp.height = sh;
+  tmp.getContext('2d').drawImage(img, 0, 0, sw, sh);
+
+  S.imageData    = tmp.getContext('2d').getImageData(0, 0, sw, sh);
+  S.imgW         = sw;
+  S.imgH         = sh;
+  S.paperTexture = makePaperTexture(sw, sh);
+  S.misregDirs   = null;
+
+  const canvas  = document.getElementById('output-canvas');
+  canvas.width  = sw;
+  canvas.height = sh;
+
+  document.getElementById('drop-zone').style.display    = 'none';
+  canvas.style.display                                   = 'block';
+  document.getElementById('reupload-btn').style.display  = 'block';
+  document.getElementById('save-btn').disabled           = false;
+
+  render();
 }
 
-// Noise band (horizontal bright/dark band that scrolls)
-let noiseBandY = 0;
-function addNoiseBand(imgData) {
-  const d = imgData.data;
-  noiseBandY = (noiseBandY + 1.5) % H;
-  const bandY = Math.floor(noiseBandY);
-  const bh    = 8 + Math.floor(Math.random() * 15);
-
-  for (let y = bandY; y < Math.min(bandY + bh, H); y++) {
-    const fade = 1 - Math.abs((y - bandY) / bh - 0.5) * 2;
-    for (let x = 0; x < W; x++) {
-      const i = (y * W + x) * 4;
-      const boost = fade * 45;
-      d[i]   = Math.min(255, d[i]   + boost);
-      d[i+1] = Math.min(255, d[i+1] + boost);
-      d[i+2] = Math.min(255, d[i+2] + boost);
-    }
-  }
-  return imgData;
-}
-
-// Film noise/grain
-function addNoise(imgData, amount) {
-  const d = imgData.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const n = (Math.random() - 0.5) * amount;
-    d[i]   = Math.max(0, Math.min(255, d[i]   + n));
-    d[i+1] = Math.max(0, Math.min(255, d[i+1] + n));
-    d[i+2] = Math.max(0, Math.min(255, d[i+2] + n));
-  }
-  return imgData;
-}
-
-// Scanlines overlay
-function drawScanlines() {
-  ctx.fillStyle = 'rgba(0,0,0,0.18)';
-  for (let y = 0; y < H; y += 2) {
-    ctx.fillRect(0, y, W, 1);
-  }
-}
-
-// Vignette
-function drawVignette() {
-  const grad = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H/2, H*0.85);
-  grad.addColorStop(0, 'rgba(0,0,0,0)');
-  grad.addColorStop(1, 'rgba(0,0,0,0.72)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, W, H);
-}
-
-// VHS head noise at top of frame
-function drawHeadNoise() {
-  if (Math.random() > 0.3) return;
-  const lines = Math.floor(Math.random() * 4) + 1;
-  for (let i = 0; i < lines; i++) {
-    const y = Math.floor(Math.random() * 12);
-    ctx.fillStyle = `rgba(${Math.random()*255|0},${Math.random()*255|0},${Math.random()*255|0},0.6)`;
-    ctx.fillRect(0, y, W, 1 + Math.floor(Math.random() * 2));
-  }
-}
-
-// Timestamp overlay on canvas
-function drawTimestamp() {
-  const y  = settings.year;
-  const m  = String(settings.month).padStart(2, '0');
-  const d  = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');
-  const hh = String(Math.floor(Math.random() * 24)).padStart(2, '0');
-  const mm = String(Math.floor(Math.random() * 60)).padStart(2, '0');
-  const ss = String(Math.floor(Math.random() * 60)).padStart(2, '0');
-
-  const ts = `${y}.${m}.${d}  ${hh}:${mm}:${ss}`;
-
-  ctx.font = 'bold 18px "VT323", monospace';
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'bottom';
-
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.8)';
-  ctx.fillText(ts, W - 14, H - 12);
-
-  // Amber glow
-  ctx.shadowColor = 'rgba(255,140,0,0.9)';
-  ctx.shadowBlur  = 8;
-  ctx.fillStyle   = '#ffb300';
-  ctx.fillText(ts, W - 15, H - 13);
-  ctx.shadowBlur = 0;
-
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-}
-
-// — Image loading —
-function loadImageFile(file) {
+function loadFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
-  stopWebcam();
   const reader = new FileReader();
   reader.onload = e => {
-    const img = new Image();
-    img.onload = () => {
-      sourceImage = img;
-      dropZone.style.display = 'none';
-      vhsUI.style.display = 'block';
-      processing.classList.add('show');
-      setTimeout(() => {
-        applyVHSEffect(img);
-        processing.classList.remove('show');
-      }, 50);
-    };
-    img.src = e.target.result;
+    const img   = new Image();
+    img.onload  = () => loadImageElement(img);
+    img.src     = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-// — Webcam —
-async function startWebcam() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { width:640, height:480 } });
-    webcamStream = stream;
-    const video = document.createElement('video');
-    video.srcObject = stream;
-    video.play();
-    video.addEventListener('playing', () => {
-      sourceImage = null;
-      dropZone.style.display = 'none';
-      vhsUI.style.display = 'block';
-      document.getElementById('webcamIndicator').classList.add('show');
+// ─────────────────────────────────────────────────────────────
+// UI
+// ─────────────────────────────────────────────────────────────
+function inkOptions() {
+  return RISO_INKS.map(i => `<option value="${i.hex}">${i.name}</option>`).join('');
+}
 
-      const frame = () => {
-        if (!webcamStream) return;
-        applyVHSEffect(video);
-        webcamRaf = requestAnimationFrame(frame);
-      };
-      webcamRaf = requestAnimationFrame(frame);
-      showToast('LIVE CAMERA: カメラ起動');
+function renderInkSlots() {
+  const slots  = document.getElementById('ink-slots');
+  const addBtn = document.getElementById('add-ink-btn');
+  slots.innerHTML = '';
+
+  S.inks.forEach((hex, i) => {
+    const row = document.createElement('div');
+    row.className = 'ink-row';
+    row.innerHTML = `
+      <span class="ink-index">${i + 1}</span>
+      <div class="ink-swatch" style="background:${hex}"></div>
+      <select class="ink-select" data-idx="${i}">${inkOptions()}</select>
+      ${S.inks.length > 2
+        ? `<button class="remove-ink-btn" data-idx="${i}">×</button>`
+        : `<div style="width:22px"></div>`}
+    `;
+    const sel = row.querySelector('select');
+    sel.value = hex;
+    sel.addEventListener('change', e => {
+      S.inks[i]      = e.target.value;
+      S.misregDirs   = null;
+      S.activePreset = null;
+      row.querySelector('.ink-swatch').style.background = e.target.value;
+      updatePresetBtns();
+      scheduleRender();
     });
-    document.getElementById('webcamBtn').textContent = '⏹ 停止';
-  } catch (err) {
-    showToast('カメラにアクセスできませんでした');
-  }
+    const rm = row.querySelector('.remove-ink-btn');
+    if (rm) rm.addEventListener('click', () => {
+      S.inks.splice(i, 1);
+      S.misregDirs   = null;
+      S.activePreset = null;
+      renderInkSlots();
+      updatePresetBtns();
+      scheduleRender();
+    });
+    slots.appendChild(row);
+  });
+
+  addBtn.style.display = S.inks.length >= 3 ? 'none' : 'block';
 }
 
-function stopWebcam() {
-  if (webcamStream) {
-    webcamStream.getTracks().forEach(t => t.stop());
-    webcamStream = null;
-  }
-  if (webcamRaf) { cancelAnimationFrame(webcamRaf); webcamRaf = null; }
-  document.getElementById('webcamIndicator').classList.remove('show');
-  document.getElementById('webcamBtn').innerHTML = '<span>📷</span> カメラ';
+function buildPresets() {
+  const row = document.getElementById('presets-row');
+  row.innerHTML = '';
+  PRESETS.forEach(p => {
+    const btn       = document.createElement('button');
+    btn.className   = `preset-btn${S.activePreset === p.name ? ' active' : ''}`;
+    btn.dataset.name = p.name;
+    const dots = p.inks.map(h => {
+      const info = INK_MAP[h.toLowerCase()];
+      return `<span class="preset-dot" style="background:${info ? info.hex : h}"></span>`;
+    }).join('');
+    btn.innerHTML = `<span class="preset-dots">${dots}</span>${p.name}`;
+    btn.addEventListener('click', () => applyPreset(p.name));
+    row.appendChild(btn);
+  });
 }
 
-// — Controls —
-document.getElementById('eraGrid').addEventListener('click', e => {
-  const btn = e.target.closest('.era-btn');
-  if (!btn) return;
-  currentEra = btn.dataset.era;
-  document.querySelectorAll('.era-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-
-  // Apply era presets to sliders
-  const era = ERA_PRESETS[currentEra];
-  ['damage','tracking','chroma','noise'].forEach(k => {
-    const el = document.getElementById(k + 'Slider');
-    el.value = era[k];
-    settings[k] = era[k];
-    document.getElementById(k + 'Val').textContent = era[k];
-  });
-
-  // Set year range
-  const [y1, y2] = era.yearRange;
-  const ySlider = document.getElementById('yearSlider');
-  ySlider.min = y1;
-  ySlider.max = y2;
-  const midY = Math.floor((y1 + y2) / 2);
-  ySlider.value = midY;
-  settings.year = midY;
-  document.getElementById('yearVal').textContent = midY;
-
-  if (sourceImage) applyVHSEffect(sourceImage);
-});
-
-// Sliders
-['damage','tracking','chroma','noise'].forEach(key => {
-  document.getElementById(key + 'Slider').addEventListener('input', e => {
-    settings[key] = +e.target.value;
-    document.getElementById(key + 'Val').textContent = e.target.value;
-    if (sourceImage && !webcamStream) applyVHSEffect(sourceImage);
-  });
-});
-
-document.getElementById('yearSlider').addEventListener('input', e => {
-  settings.year = +e.target.value;
-  document.getElementById('yearVal').textContent = e.target.value;
-  if (sourceImage && !webcamStream) applyVHSEffect(sourceImage);
-});
-
-document.getElementById('monthSlider').addEventListener('input', e => {
-  settings.month = +e.target.value;
-  document.getElementById('monthVal').textContent = String(e.target.value).padStart(2,'0');
-  if (sourceImage && !webcamStream) applyVHSEffect(sourceImage);
-});
-
-// Toggles
-['date','scanline','vignette','noiseBand'].forEach((key, i) => {
-  const ids = ['dateToggle','scanlineToggle','vignetteToggle','noiseBandToggle'];
-  document.getElementById(ids[i]).addEventListener('change', e => {
-    settings[key] = e.target.checked;
-    if (sourceImage && !webcamStream) applyVHSEffect(sourceImage);
-  });
-});
-
-// Action buttons
-document.getElementById('loadBtn').addEventListener('click', () => fileInput.click());
-document.getElementById('fileInput').addEventListener('change', e => {
-  loadImageFile(e.target.files[0]);
-  e.target.value = '';
-});
-
-document.getElementById('webcamBtn').addEventListener('click', () => {
-  if (webcamStream) { stopWebcam(); if (sourceImage) applyVHSEffect(sourceImage); }
-  else startWebcam();
-});
-
-document.getElementById('reprocessBtn').addEventListener('click', () => {
-  if (!sourceImage && !webcamStream) { showToast('先に写真を読み込んでください'); return; }
-  // Randomize settings
-  settings.damage   = 20 + Math.floor(Math.random() * 80);
-  settings.tracking = 10 + Math.floor(Math.random() * 80);
-  settings.chroma   = 10 + Math.floor(Math.random() * 80);
-  settings.noise    = 10 + Math.floor(Math.random() * 70);
-  ['damage','tracking','chroma','noise'].forEach(k => {
-    document.getElementById(k+'Slider').value = settings[k];
-    document.getElementById(k+'Val').textContent = settings[k];
-  });
-  if (sourceImage) applyVHSEffect(sourceImage);
-});
-
-document.getElementById('saveBtn').addEventListener('click', () => {
-  if (!sourceImage && !webcamStream) { showToast('先に写真を読み込んでください'); return; }
-  const link = document.createElement('a');
-  link.download = `vhs-${currentEra}-${Date.now()}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-  showToast('SAVED: 保存しました ✓');
-});
-
-document.getElementById('shareBtn').addEventListener('click', () => {
-  const era = ERA_PRESETS[currentEra];
-  const text = encodeURIComponent(
-    `${era.name}風VHSエフェクトで懐かしすぎる映像に変換してもらった🎞️📼\n無料で使えるHEISEI VHS STUDIO、最高すぎる\n\n`
+function updatePresetBtns() {
+  document.querySelectorAll('.preset-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.name === S.activePreset)
   );
-  const url = encodeURIComponent(window.location.href);
-  window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank', 'noopener');
-});
+}
 
-// Drag & drop
-const screen = document.getElementById('screen');
-screen.addEventListener('dragover', e => {
-  e.preventDefault();
-  dropZone.classList.add('drag-over');
-});
-screen.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-screen.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
-  loadImageFile(e.dataTransfer.files[0]);
-});
-dropZone.addEventListener('click', () => fileInput.click());
+function applyPreset(name) {
+  const p = PRESETS.find(x => x.name === name);
+  if (!p) return;
+  S.inks         = [...p.inks];
+  S.splitMode    = p.mode;
+  S.activePreset = name;
+  S.misregDirs   = null;
+  document.getElementById('split-mode').value = p.mode;
+  renderInkSlots();
+  updatePresetBtns();
+  scheduleRender();
+}
 
-// Paste image
-document.addEventListener('paste', e => {
-  const items = e.clipboardData?.items;
-  if (!items) return;
-  for (const item of items) {
-    if (item.type.startsWith('image/')) {
-      loadImageFile(item.getAsFile());
-      break;
+// ─────────────────────────────────────────────────────────────
+// EVENTS
+// ─────────────────────────────────────────────────────────────
+function setup() {
+  const dz = document.getElementById('drop-zone');
+  const fi = document.getElementById('file-input');
+
+  dz.addEventListener('click',     () => fi.click());
+  fi.addEventListener('change',    e  => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+  dz.addEventListener('dragover',  e  => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', ()  => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',      e  => {
+    e.preventDefault(); dz.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+  });
+
+  document.getElementById('reupload-btn').addEventListener('click', () => {
+    document.getElementById('drop-zone').style.display    = 'flex';
+    document.getElementById('output-canvas').style.display = 'none';
+    document.getElementById('reupload-btn').style.display  = 'none';
+    document.getElementById('save-btn').disabled           = true;
+    fi.value = '';
+    fi.click();
+  });
+
+  document.addEventListener('paste', e => {
+    for (const item of e.clipboardData.items) {
+      if (item.type.startsWith('image/')) { loadFile(item.getAsFile()); break; }
     }
-  }
+  });
+
+  document.getElementById('cell-size').addEventListener('input', e => {
+    S.cellSize = parseInt(e.target.value);
+    document.getElementById('cell-val').textContent = S.cellSize + ' px';
+    scheduleRender();
+  });
+
+  document.getElementById('misregistration').addEventListener('input', e => {
+    S.misreg = parseFloat(e.target.value);
+    document.getElementById('misreg-val').textContent = S.misreg + ' px';
+    scheduleRender();
+  });
+
+  document.getElementById('regen-btn').addEventListener('click', () => {
+    S.misregDirs = null;
+    render();
+  });
+
+  document.getElementById('blur-amount').addEventListener('input', e => {
+    S.blurPx = parseFloat(e.target.value);
+    document.getElementById('blur-val').textContent = S.blurPx.toFixed(1);
+    scheduleRender();
+  });
+
+  document.getElementById('split-mode').addEventListener('change', e => {
+    S.splitMode    = e.target.value;
+    S.activePreset = null;
+    updatePresetBtns();
+    scheduleRender();
+  });
+
+  document.getElementById('add-ink-btn').addEventListener('click', () => {
+    if (S.inks.length >= 3) return;
+    const used = new Set(S.inks.map(h => h.toLowerCase()));
+    const next = RISO_INKS.find(ink => !used.has(ink.hex.toLowerCase()));
+    S.inks.push(next ? next.hex : RISO_INKS[3].hex);
+    S.misregDirs   = null;
+    S.activePreset = null;
+    renderInkSlots();
+    updatePresetBtns();
+    scheduleRender();
+  });
+
+  document.getElementById('save-btn').addEventListener('click', () => {
+    const a  = document.createElement('a');
+    a.download = 'riso-press.png';
+    a.href     = document.getElementById('output-canvas').toDataURL('image/png');
+    a.click();
+  });
+
+  document.getElementById('share-btn').addEventListener('click', () => {
+    const url  = encodeURIComponent('https://sokihayashi.github.io/free-space/');
+    const text = encodeURIComponent('Made with RISO PRESS — free risograph print simulator');
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  buildPresets();
+  renderInkSlots();
+  setup();
 });
-
-// — Timer —
-function startTimer() {
-  const timerEl = document.getElementById('timer');
-  timerInterval = setInterval(() => {
-    timerSecs++;
-    const h = String(Math.floor(timerSecs/3600)).padStart(2,'0');
-    const m = String(Math.floor((timerSecs%3600)/60)).padStart(2,'0');
-    const s = String(timerSecs%60).padStart(2,'0');
-    timerEl.textContent = `${h}:${m}:${s}`;
-  }, 1000);
-}
-
-// — Toast —
-let toastTimer;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// — Init —
-startTimer();
-
-// Draw idle static noise on canvas
-(function drawStatic() {
-  const id   = ctx.createImageData(W, H);
-  const d    = id.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const v = Math.random() * 40;
-    d[i] = d[i+1] = d[i+2] = v;
-    d[i+3] = 255;
-  }
-  ctx.putImageData(id, 0, 0);
-
-  // Scanlines on idle
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  for (let y = 0; y < H; y += 2) ctx.fillRect(0, y, W, 1);
-})();
 </script>
 </body>
 </html>
