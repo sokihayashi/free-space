@@ -666,13 +666,13 @@ function samplePlate(plate, w, h, cx, cy, r) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// HALFTONE LAYER — AM halftone on angled grid per ink
+// HALFTONE LAYER — async AM halftone on angled grid per ink
 // dot radius = √(density/255) × maxR  preserves tonal area exactly
 // Rendered on a padded canvas so edge dots are not clipped.
-// _pad stores the bleed offset so compositeInksOnly can correct for it.
+// Row-batched with yields so the scan bar animation stays fluid.
 // ─────────────────────────────────────────────────────────────
-function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
-  const pad    = Math.ceil(cellSize + blurPx + 1); // bleed: full dot + blur radius
+async function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
+  const pad    = Math.ceil(cellSize + blurPx + 1);
   const W      = w + pad * 2;
   const H      = h + pad * 2;
   const angle  = angleDeg * Math.PI / 180;
@@ -682,7 +682,7 @@ function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
   const maxR   = halfC * 0.97;
   const TWO_PI = Math.PI * 2;
   const diag   = Math.ceil(Math.sqrt(W * W + H * H));
-  const ocx    = W / 2, ocy = H / 2;   // centre of padded canvas
+  const ocx    = W / 2, ocy = H / 2;
 
   const dc   = document.createElement('canvas');
   dc.width   = W; dc.height = H;
@@ -691,28 +691,28 @@ function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
   dctx.fillRect(0, 0, W, H);
   dctx.fillStyle = inkHex;
 
+  // Pre-build row list so we can batch without recomputing bounds
+  const gyStart = -diag, gyEnd = diag + cellSize;
+  const BATCH = 35;   // yield every N grid rows — keeps scan bar animating
   dctx.beginPath();
-  for (let gy = -diag; gy < diag + cellSize; gy += cellSize) {
+  let rowIdx = 0;
+  for (let gy = gyStart; gy < gyEnd; gy += cellSize) {
     for (let gx = -diag; gx < diag + cellSize; gx += cellSize) {
       const rcx = gx + halfC, rcy = gy + halfC;
       const scx = ocx + rcx * cosA - rcy * sinA;
       const scy = ocy + rcx * sinA + rcy * cosA;
-
       if (scx < -cellSize || scx > W + cellSize) continue;
       if (scy < -cellSize || scy > H + cellSize) continue;
-
-      // Map padded coords back to original plate coords for density sampling
       const density = samplePlate(plate, w, h, scx - pad, scy - pad, halfC);
       if (density < 1) continue;
-
-      // Per-dot radius jitter: ±4% simulates paper surface micro-roughness
       const jitter = 0.96 + Math.random() * 0.08;
       const radius = Math.sqrt(density / 255) * maxR * jitter;
       if (radius < 0.25) continue;
-
       dctx.moveTo(scx + radius, scy);
       dctx.arc(scx, scy, radius, 0, TWO_PI);
     }
+    // Canvas path state persists across awaits — yielding here is safe
+    if (++rowIdx % BATCH === 0) await new Promise(r => setTimeout(r, 0));
   }
   dctx.fill();
 
@@ -725,7 +725,7 @@ function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
     bctx.drawImage(dc, 0, 0);
     result = bc;
   }
-  result._pad = pad;   // bleed offset used by compositeInksOnly
+  result._pad = pad;
   return result;
 }
 
@@ -820,13 +820,14 @@ async function render() {
   const layers = [];
   for (let i = 0; i < S.inks.length; i++) {
     const pct = Math.round(12 + (i / S.inks.length) * 74);
-    setOverlayState(pct, `PLATE ${i + 1} / ${S.inks.length}`);
-    await tick();   // yield → scan bar animates
-    const info = INK_MAP[S.inks[i].toLowerCase()] || { angle: [45, 15, 75][i % 3] };
-    layers.push(createHalftoneLayer(plates[i] || plates[0], S.imgW, S.imgH, S.cellSize, info.angle, S.inks[i], S.blurPx));
-    // Progressive: reveal each plate as it prints
-    compositeInksOnly(layers);
+    const info = INK_MAP[S.inks[i].toLowerCase()] || { angle: [45, 15, 75][i % 3], name: 'Ink' };
+    setOverlayState(pct, `PRINTING ${(info.name || 'INK').toUpperCase()}`);
     await tick();
+    // async halftone: yields every BATCH rows so scan bar stays animated
+    layers.push(await createHalftoneLayer(plates[i] || plates[0], S.imgW, S.imgH, S.cellSize, info.angle, S.inks[i], S.blurPx));
+    compositeInksOnly(layers);
+    // Brief pause — lets the viewer see each plate layer before the next prints
+    if (i < S.inks.length - 1) await new Promise(r => setTimeout(r, 140));
   }
 
   setOverlayState(94, 'FINISHING…');
@@ -1162,6 +1163,10 @@ function makeAutoImage() {
   sho.addColorStop(1,    'rgba(  0,   0,   0, 0)');
   ctx.fillStyle = sho;
   ctx.fillRect(0, h * 0.74, w, h * 0.26);
+
+  // Horizontal band at very bottom — bold poster geometry
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  ctx.fillRect(0, h * 0.88, w, h * 0.02);
 
   // Deep vignette to punch contrast
   const vig = ctx.createRadialGradient(w / 2, h / 2, w * 0.22, w / 2, h / 2, w * 0.84);
