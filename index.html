@@ -324,10 +324,10 @@
       <div class="slider-wrap">
         <div class="slider-header">
           <span class="slider-label">Misregistration</span>
-          <span class="slider-value" id="misreg-val">4 px</span>
+          <span class="slider-value" id="misreg-val">1 px</span>
         </div>
         <div class="slider-row-inline">
-          <input type="range" id="misregistration" min="0" max="20" step="0.5" value="4">
+          <input type="range" id="misregistration" min="0" max="14" step="0.5" value="1">
           <button class="regen-btn" id="regen-btn" title="Re-roll plate offsets">↺</button>
         </div>
       </div>
@@ -403,7 +403,7 @@ const S = {
   inks:         ['#3255A4', '#FF48B0'],
   splitMode:    'shadows-highlights',
   cellSize:     6,       // fine halftone by default
-  misreg:       4,       // visible Riso plate offset
+  misreg:       1,       // slider-controlled additional offset (baseline always-on)
   blurPx:       0.5,
   grainAmount:  0.55,
   paperTexture: null,
@@ -459,14 +459,19 @@ function loadOverlayTexture(url) {
 
 // ─────────────────────────────────────────────────────────────
 // MISREGISTRATION DIRECTIONS
-// Real Riso paper-feed mostly drifts in Y (feed direction).
+// Plate 0 is the anchor. Other plates get:
+//   base  — always-on tiny offset (~0.6px X, ~1.1px Y) even at slider=0
+//   norm  — normalised direction scaled by the slider
+// This mirrors real Riso: every print job has some baseline drift.
 // ─────────────────────────────────────────────────────────────
 function regenMisregDirs(count) {
-  S.misregDirs = [{ dx: 0, dy: 0 }];
+  S.misregDirs = [{ baseX: 0, baseY: 0, nx: 0, ny: 0 }];
   for (let i = 1; i < count; i++) {
     S.misregDirs.push({
-      dx: (Math.random() - 0.5) * 1.2,   // narrow X spread
-      dy: (Math.random() - 0.5) * 2.0,   // wider Y spread (feed direction)
+      baseX: (Math.random() - 0.5) * 1.2,   // ±0.6 px always-on X drift
+      baseY: (Math.random() - 0.5) * 2.2,   // ±1.1 px always-on Y drift (feed direction)
+      nx:    (Math.random() - 0.5) * 1.2,   // normalized direction for slider
+      ny:    (Math.random() - 0.5) * 2.0,
     });
   }
 }
@@ -514,18 +519,19 @@ function createPlates(imgData, w, h, mode, inkCount) {
   }
 
   // shadows-highlights (default)
-  // Gamma-0.75 curves: shadow and highlight plates only overlap in midtones,
-  // creating the characteristic Riso mixed color at midrange tones.
+  // γ=1.3: shadow plate fades quickly in highlights, highlight plate fades quickly in shadows.
+  // Midtones get modest coverage from both → characteristic Riso overlap color.
+  // Pure whites and pure blacks get only one plate → paper breathes through the halftone.
   const p1 = new Uint8Array(n);   // shadow  → ink 1
   const p2 = new Uint8Array(n);   // highlight → ink 2
   for (let i = 0; i < n; i++) {
     const t = lum[i] / 255;
-    p1[i] = Math.round(Math.pow(1 - t, 0.75) * 255);
-    p2[i] = Math.round(Math.pow(t,     0.75) * 255);
+    p1[i] = Math.round(Math.pow(1 - t, 1.3) * 255);
+    p2[i] = Math.round(Math.pow(t,     1.3) * 255);
   }
   if (inkCount === 2) return [p1, p2];
 
-  // 3rd plate: midtone bell curve
+  // 3rd plate: midtone bell curve (peaks at 50% luminance)
   const p3 = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
     const t = lum[i] / 255;
@@ -585,7 +591,12 @@ function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
       const density = samplePlate(plate, w, h, scx, scy, halfC);
       if (density < 1) continue;
 
-      const radius = Math.sqrt(density / 255) * maxR;
+      // Ink starvation: ~0.4% of dots skip entirely (uneven ink feed)
+      if (Math.random() < 0.004) continue;
+
+      // Per-dot radius jitter: ±9% simulates drum/paper surface variation
+      const jitter = 0.91 + Math.random() * 0.18;
+      const radius = Math.sqrt(density / 255) * maxR * jitter;
       if (radius < 0.25) continue;
 
       dctx.moveTo(scx + radius, scy);
@@ -615,11 +626,18 @@ function compositeRiso(layers) {
   ctx.fillStyle = '#F5F0E8';
   ctx.fillRect(0, 0, w, h);
 
+  // Ink transparency: globalAlpha < 1 with multiply makes inks semi-transparent.
+  // White pixels (between dots) → no effect on paper. Ink pixels → lighter than full multiply.
+  // Mimics real Riso ink which is soy-based and translucent — paper always shows through.
   ctx.globalCompositeOperation = 'multiply';
+  ctx.globalAlpha = 0.82;
   for (let i = 0; i < layers.length; i++) {
-    const dir = S.misregDirs ? S.misregDirs[i] : { dx: 0, dy: 0 };
-    ctx.drawImage(layers[i], dir.dx * S.misreg, dir.dy * S.misreg);
+    const dir = S.misregDirs ? S.misregDirs[i] : { baseX: 0, baseY: 0, nx: 0, ny: 0 };
+    const ox = dir.baseX + dir.nx * S.misreg;
+    const oy = dir.baseY + dir.ny * S.misreg;
+    ctx.drawImage(layers[i], ox, oy);
   }
+  ctx.globalAlpha = 1;
 
   // Paper grain via multiply at controlled intensity
   if (S.paperTexture && S.grainAmount > 0.01) {
