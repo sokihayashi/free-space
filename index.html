@@ -36,14 +36,21 @@
       padding-bottom: 18px;
       border-bottom: 2px solid var(--ink);
     }
-    .logo   { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+    .logo {
+      font-size: 26px; font-weight: 700; letter-spacing: -0.5px;
+      display: flex; align-items: center; gap: 9px;
+    }
+    .logo-reg {
+      width: 15px; height: 15px; opacity: 0.28; flex-shrink: 0;
+    }
     .tagline {
       font-size: 11px; color: var(--ink-light);
       letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500;
     }
 
     /* ── PRESETS ───────────────────────────────── */
-    .presets-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .presets-bar { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 24px; }
+    .presets-row { flex: 1; display: flex; gap: 8px; flex-wrap: wrap; }
     .preset-btn {
       display: flex; align-items: center; gap: 7px;
       padding: 6px 14px 6px 10px;
@@ -58,6 +65,16 @@
     .preset-dots { display: flex; gap: 3px; }
     .preset-dot  { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
     .preset-btn.active .preset-dot { border-color: rgba(255,255,255,0.25); }
+    .shuffle-btn {
+      display: flex; align-items: center; gap: 5px;
+      padding: 6px 14px;
+      border: 1.5px dashed var(--border); border-radius: 100px;
+      background: transparent; cursor: pointer;
+      font-family: var(--font); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-light);
+      transition: all 0.15s ease; white-space: nowrap; flex-shrink: 0;
+    }
+    .shuffle-btn:hover { border-color: var(--ink-mid); color: var(--ink-mid); border-style: solid; }
 
     /* ── LAYOUT ────────────────────────────────── */
     .main { display: grid; grid-template-columns: 1fr 288px; gap: 28px; align-items: start; }
@@ -103,22 +120,31 @@
     .reg-mark.bl { bottom: 8px; left: 8px;  }
     .reg-mark.br { bottom: 8px; right: 8px; }
 
-    /* Re-upload */
-    .reupload-btn {
-      position: absolute; top: 10px; left: 10px;
-      font-family: var(--font); font-size: 10px; font-weight: 700;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      padding: 5px 10px;
-      background: rgba(248,244,237,0.9); border: 1px solid var(--border);
-      border-radius: 4px; cursor: pointer; color: var(--ink-mid);
-      display: none; transition: all 0.13s;
+    /* Edition mark — bottom-right paper margin, like a signed print */
+    .edition-mark {
+      position: absolute; bottom: 11px; right: 18px;
+      font-size: 8.5px; font-weight: 600; letter-spacing: 0.14em;
+      text-transform: uppercase; color: rgba(26,26,26,0.22);
+      font-family: var(--font); pointer-events: none;
     }
-    .reupload-btn:hover { background: #F8F4ED; color: var(--ink); border-color: var(--ink); }
+
+    /* Re-upload / upload CTA */
+    .reupload-btn {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      font-family: var(--font); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;
+      padding: 6px 14px;
+      background: var(--ink); color: var(--paper);
+      border: none; border-radius: 100px; cursor: pointer;
+      display: none; transition: opacity 0.13s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    .reupload-btn:hover { opacity: 0.8; }
 
     /* ── RENDER OVERLAY ────────────────────────── */
     .render-overlay {
       position: absolute; inset: 0;
-      background: rgba(245,240,232,0.72);
+      background: rgba(245,240,232,0.08);
       display: none; overflow: hidden;
       pointer-events: none;
     }
@@ -126,33 +152,35 @@
 
     /* Scan bar — simulates the Riso print drum sweeping across the page */
     @keyframes riso-scan {
-      0%   { transform: translateX(-15%); }
-      100% { transform: translateX(115%); }
+      0%   { transform: translateX(-20%); }
+      100% { transform: translateX(120%); }
     }
     .scan-bar {
       position: absolute; top: 0; left: 0;
-      width: 14%; height: 100%;
-      animation: riso-scan 1.4s linear infinite;
-      background: linear-gradient(90deg, transparent, rgba(26,26,26,.05) 30%, rgba(26,26,26,.16) 50%, rgba(26,26,26,.05) 70%, transparent);
+      width: 12%; height: 100%;
+      animation: riso-scan 1.1s linear infinite;
+      background: linear-gradient(90deg, transparent, rgba(26,26,26,.10) 25%, rgba(26,26,26,.38) 50%, rgba(26,26,26,.10) 75%, transparent);
     }
 
-    /* Progress info */
+    /* Progress info — pinned to bottom so it doesn't obscure the canvas */
     .overlay-info {
-      position: absolute; bottom: 18px;
-      left: 0; right: 0; text-align: center;
+      position: absolute; bottom: 0; left: 0; right: 0;
+      padding: 10px 0 12px;
+      background: linear-gradient(transparent, rgba(245,240,232,0.72));
+      text-align: center;
     }
     .overlay-label {
       font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
-      text-transform: uppercase; color: var(--ink-mid); margin-bottom: 7px;
+      text-transform: uppercase; color: var(--ink-mid); margin-bottom: 6px;
     }
     .progress-track {
-      width: 96px; height: 2px;
+      width: 80px; height: 2px;
       background: rgba(0,0,0,0.1); border-radius: 1px;
       margin: 0 auto; overflow: hidden;
     }
     .progress-fill {
       height: 100%; background: var(--ink);
-      width: 0%; transition: width 0.25s ease;
+      width: 0%; transition: width 0.3s ease;
     }
 
     /* ── CONTROLS ──────────────────────────────── */
@@ -235,6 +263,15 @@
     }
     .control-select:focus { outline: none; border-color: var(--ink); }
 
+    /* Controls panel subtle texture */
+    .controls {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0 18px;
+    }
+    .control-section { padding: 16px 0; }
+
     /* Action buttons */
     .btn-primary {
       display: block; width: 100%; padding: 13px;
@@ -261,16 +298,17 @@
       .tagline { display: none; }
 
       /* Preset chips: hide wrapping, scroll horizontally */
+      .presets-bar { margin-bottom: 16px; align-items: center; }
       .presets-row {
         flex-wrap: nowrap;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        padding-bottom: 6px;
-        margin-bottom: 16px;
+        padding-bottom: 2px;
         scrollbar-width: none;
       }
       .presets-row::-webkit-scrollbar { display: none; }
       .preset-btn { flex-shrink: 0; font-size: 10px; padding: 5px 12px 5px 9px; }
+      .shuffle-btn { font-size: 10px; padding: 5px 12px; }
 
       /* Stack canvas → controls */
       .main { grid-template-columns: 1fr; gap: 16px; }
@@ -311,11 +349,17 @@
 <body>
 
 <header>
-  <div class="logo">RISO PRESS</div>
+  <div class="logo">
+    <svg class="logo-reg" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7.5" cy="7.5" r="5.5" stroke="#1a1a1a" stroke-width="1"/><line x1="7.5" y1="0" x2="7.5" y2="15" stroke="#1a1a1a" stroke-width="0.7"/><line x1="0" y1="7.5" x2="15" y2="7.5" stroke="#1a1a1a" stroke-width="0.7"/></svg>
+    RISO PRESS
+  </div>
   <div class="tagline">Risograph Print Simulator</div>
 </header>
 
-<div class="presets-row" id="presets-row"></div>
+<div class="presets-bar">
+  <div class="presets-row" id="presets-row"></div>
+  <button class="shuffle-btn" id="shuffle-btn">↻ RAND</button>
+</div>
 
 <div class="main">
   <div class="canvas-wrap" id="canvas-wrap">
@@ -328,7 +372,7 @@
       </svg>
       <div class="drop-text">
         <strong>Drop your photo here</strong><br>
-        or click to upload
+        or click to upload · paste from clipboard
       </div>
       <input type="file" id="file-input" accept="image/*" style="display:none">
     </div>
@@ -336,6 +380,7 @@
     <!-- Paper frame — the printed output with margin -->
     <div class="paper-frame" id="paper-frame">
       <canvas id="output-canvas"></canvas>
+      <div class="edition-mark" id="edition-mark"></div>
       <div class="reg-marks" aria-hidden="true">
         <svg class="reg-mark tl" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="6" stroke="#1a1a1a" stroke-width="0.8"/><line x1="9" y1="0" x2="9" y2="18" stroke="#1a1a1a" stroke-width="0.6"/><line x1="0" y1="9" x2="18" y2="9" stroke="#1a1a1a" stroke-width="0.6"/></svg>
         <svg class="reg-mark tr" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="6" stroke="#1a1a1a" stroke-width="0.8"/><line x1="9" y1="0" x2="9" y2="18" stroke="#1a1a1a" stroke-width="0.6"/><line x1="0" y1="9" x2="18" y2="9" stroke="#1a1a1a" stroke-width="0.6"/></svg>
@@ -344,7 +389,7 @@
       </div>
     </div>
 
-    <button class="reupload-btn" id="reupload-btn">↑ New Image</button>
+    <button class="reupload-btn" id="reupload-btn">↑ Upload Your Photo</button>
 
     <!-- Printing animation overlay -->
     <div class="render-overlay" id="render-overlay">
@@ -380,9 +425,9 @@
       <div class="slider-wrap">
         <div class="slider-header">
           <span class="slider-label">Cell Size</span>
-          <span class="slider-value" id="cell-val">4 px</span>
+          <span class="slider-value" id="cell-val">6 px</span>
         </div>
-        <input type="range" id="cell-size" min="2" max="20" step="1" value="4">
+        <input type="range" id="cell-size" min="2" max="20" step="1" value="6">
       </div>
 
       <div class="slider-wrap">
@@ -466,7 +511,7 @@ const S = {
   imgH:         0,
   inks:         ['#3255A4', '#FF48B0'],
   splitMode:    'shadows-highlights',
-  cellSize:     4,       // ~71 LPI visual equivalent at 96 dpi on a 1000 px canvas
+  cellSize:     6,       // ~71 LPI visual equivalent at 96 dpi on a 1000 px canvas
   misreg:       1,       // slider-controlled additional offset (baseline always-on)
   blurPx:       0.4,     // ink absorption into uncoated paper
   grainAmount:  0.55,
@@ -699,7 +744,7 @@ function compositeInksOnly(layers) {
   ctx.fillRect(0, 0, w, h);
 
   ctx.globalCompositeOperation = 'multiply';
-  ctx.globalAlpha = 0.82;
+  ctx.globalAlpha = 0.88;
   for (let i = 0; i < layers.length; i++) {
     const dir = S.misregDirs ? S.misregDirs[i] : { baseX: 0, baseY: 0, nx: 0, ny: 0 };
     const ox  = dir.baseX + dir.nx * S.misreg;
@@ -839,6 +884,8 @@ function loadImageElement(img) {
   document.getElementById('paper-frame').style.display  = 'block';
   document.getElementById('reupload-btn').style.display = 'block';
   document.getElementById('save-btn').disabled          = false;
+  document.getElementById('edition-mark').textContent   =
+    'ED. ' + (Math.floor(Math.random() * 49) + 1) + '/50  ·  RISO PRESS';
 
   render();
 }
@@ -935,6 +982,22 @@ function applyPreset(name) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// SHUFFLE — pick random Riso inks for instant surprise
+// ─────────────────────────────────────────────────────────────
+function shuffleInks() {
+  const inkCount = Math.random() < 0.22 ? 3 : 2;
+  const pool = [...RISO_INKS].sort(() => Math.random() - 0.5);
+  S.inks         = pool.slice(0, inkCount).map(i => i.hex);
+  S.splitMode    = Math.random() < 0.3 ? 'warm-cool' : 'shadows-highlights';
+  S.activePreset = null;
+  S.misregDirs   = null;
+  document.getElementById('split-mode').value = S.splitMode;
+  renderInkSlots();
+  updatePresetBtns();
+  if (S.imageData) scheduleRender();
+}
+
+// ─────────────────────────────────────────────────────────────
 // EVENTS
 // ─────────────────────────────────────────────────────────────
 function setup() {
@@ -980,6 +1043,8 @@ function setup() {
   document.getElementById('regen-btn').addEventListener('click', () => {
     S.misregDirs = null; render();
   });
+
+  document.getElementById('shuffle-btn').addEventListener('click', shuffleInks);
 
   document.getElementById('blur-amount').addEventListener('input', e => {
     S.blurPx = parseFloat(e.target.value);
@@ -1036,9 +1101,9 @@ function setup() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// DEMO IMAGE — synthetic portrait-lighting gradient
-// Bright warm center → rich midtones → deep cool shadows.
-// Gives immediate visual result before the user uploads anything.
+// DEMO IMAGE — portrait-lighting sphere composition
+// Clear tonal zones: bright highlight → warm midtone → deep shadow.
+// Shows halftone dot gradient dramatically on first load.
 // ─────────────────────────────────────────────────────────────
 function makeAutoImage() {
   const w = 540, h = 540;
@@ -1046,32 +1111,62 @@ function makeAutoImage() {
   c.width = w; c.height = h;
   const ctx = c.getContext('2d');
 
-  // Deep dark base
-  ctx.fillStyle = '#060812';
+  // Near-black background
+  ctx.fillStyle = '#070810';
   ctx.fillRect(0, 0, w, h);
 
-  // Main key light: warm spotlight upper-left (classic portrait setup)
-  const key = ctx.createRadialGradient(w * 0.38, h * 0.32, 0, w * 0.38, h * 0.32, w * 0.62);
-  key.addColorStop(0,    'rgba(255, 248, 220, 1)');
-  key.addColorStop(0.18, 'rgba(250, 200, 80,  0.9)');
-  key.addColorStop(0.42, 'rgba(180, 90,  30,  0.65)');
-  key.addColorStop(0.7,  'rgba(60,  20,  50,  0.3)');
-  key.addColorStop(1,    'rgba(0,   0,   0,   0)');
+  const cx = w * 0.5, cy = h * 0.44;
+  const r  = w * 0.31;
+
+  // Sphere base — dark warm clay
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#18120a';
+  ctx.fill();
+
+  // Key light: warm directional from upper-left → creates dramatic tonal range
+  const key = ctx.createRadialGradient(cx - r * 0.28, cy - r * 0.32, 0, cx, cy, r * 1.08);
+  key.addColorStop(0,    'rgba(255, 252, 228, 1)');
+  key.addColorStop(0.22, 'rgba(250, 210, 110, 0.92)');
+  key.addColorStop(0.48, 'rgba(180,  95,  28, 0.62)');
+  key.addColorStop(0.76, 'rgba( 55,  18,   5, 0.25)');
+  key.addColorStop(1,    'rgba(  0,   0,   0, 0)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fillStyle = key;
-  ctx.fillRect(0, 0, w, h);
+  ctx.fill();
 
-  // Cool rim light from the right edge
-  const rim = ctx.createRadialGradient(w * 0.95, h * 0.5, 0, w * 0.95, h * 0.5, w * 0.5);
-  rim.addColorStop(0,   'rgba(80, 130, 220, 0.45)');
-  rim.addColorStop(0.5, 'rgba(40,  70, 160, 0.15)');
-  rim.addColorStop(1,   'rgba(0,   0,   0,  0)');
+  // Cool rim light from right
+  const rim = ctx.createRadialGradient(cx + r * 0.82, cy + r * 0.1, 0, cx + r * 0.55, cy, r * 0.62);
+  rim.addColorStop(0,   'rgba(90, 145, 240, 0.42)');
+  rim.addColorStop(0.6, 'rgba(40,  70, 160, 0.12)');
+  rim.addColorStop(1,   'rgba(0,    0,   0, 0)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fillStyle = rim;
-  ctx.fillRect(0, 0, w, h);
+  ctx.fill();
 
-  // Subtle vignette to deepen corners
-  const vig = ctx.createRadialGradient(w / 2, h / 2, w * 0.3, w / 2, h / 2, w * 0.85);
+  // Neck / body shape beneath sphere
+  const neck = ctx.createLinearGradient(0, cy + r * 0.6, 0, h);
+  neck.addColorStop(0,   'rgba(190, 150,  75, 0.72)');
+  neck.addColorStop(0.3, 'rgba( 90,  50,  15, 0.40)');
+  neck.addColorStop(1,   'rgba(  0,   0,   0, 0)');
+  ctx.fillStyle = neck;
+  const nw = r * 0.52;
+  ctx.fillRect(cx - nw, cy + r * 0.6, nw * 2, h - (cy + r * 0.6));
+
+  // Shoulder plane at bottom
+  const sho = ctx.createRadialGradient(cx, h * 0.88, 0, cx, h * 0.88, w * 0.58);
+  sho.addColorStop(0,    'rgba(210, 170,  90, 0.68)');
+  sho.addColorStop(0.45, 'rgba(100,  58,  18, 0.35)');
+  sho.addColorStop(1,    'rgba(  0,   0,   0, 0)');
+  ctx.fillStyle = sho;
+  ctx.fillRect(0, h * 0.74, w, h * 0.26);
+
+  // Deep vignette to punch contrast
+  const vig = ctx.createRadialGradient(w / 2, h / 2, w * 0.22, w / 2, h / 2, w * 0.84);
   vig.addColorStop(0, 'rgba(0,0,0,0)');
-  vig.addColorStop(1, 'rgba(0,0,0,0.55)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.78)');
   ctx.fillStyle = vig;
   ctx.fillRect(0, 0, w, h);
 
@@ -1107,6 +1202,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('paper-frame').style.display  = 'block';
   document.getElementById('reupload-btn').style.display = 'block';
   document.getElementById('save-btn').disabled          = false;
+  document.getElementById('edition-mark').textContent   =
+    'ED. ' + (Math.floor(Math.random() * 49) + 1) + '/50  ·  RISO PRESS';
   render();
 });
 </script>
