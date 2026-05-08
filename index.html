@@ -27,7 +27,7 @@
       padding: 28px 32px;
     }
 
-    /* ── HEADER ──────────────────────────────────────────── */
+    /* ── HEADER ────────────────────────────────── */
     header {
       display: flex;
       align-items: baseline;
@@ -42,7 +42,7 @@
       letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500;
     }
 
-    /* ── PRESETS ───────────────────────────────────────────── */
+    /* ── PRESETS ───────────────────────────────── */
     .presets-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
     .preset-btn {
       display: flex; align-items: center; gap: 7px;
@@ -59,10 +59,10 @@
     .preset-dot  { width: 10px; height: 10px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
     .preset-btn.active .preset-dot { border-color: rgba(255,255,255,0.25); }
 
-    /* ── LAYOUT ──────────────────────────────────────────── */
+    /* ── LAYOUT ────────────────────────────────── */
     .main { display: grid; grid-template-columns: 1fr 288px; gap: 28px; align-items: start; }
 
-    /* ── CANVAS AREA ─────────────────────────────────────────── */
+    /* ── CANVAS AREA ───────────────────────────── */
     .canvas-wrap { position: relative; }
 
     /* Drop zone */
@@ -85,12 +85,23 @@
       display: none;
       background: #F8F4ED;
       padding: 36px;
+      position: relative;
       box-shadow:
         inset 0 0 0 1px rgba(0,0,0,0.04),
         0 2px 8px rgba(0,0,0,0.07),
         0 16px 56px rgba(0,0,0,0.13);
     }
     #output-canvas { display: block; width: 100%; height: auto; }
+
+    /* Registration marks — printed in every plate margin on real riso output */
+    .reg-marks { position: absolute; inset: 0; pointer-events: none; }
+    .reg-mark {
+      position: absolute; width: 18px; height: 18px; opacity: 0.18;
+    }
+    .reg-mark.tl { top: 8px;  left: 8px;  }
+    .reg-mark.tr { top: 8px;  right: 8px; }
+    .reg-mark.bl { bottom: 8px; left: 8px;  }
+    .reg-mark.br { bottom: 8px; right: 8px; }
 
     /* Re-upload */
     .reupload-btn {
@@ -104,7 +115,7 @@
     }
     .reupload-btn:hover { background: #F8F4ED; color: var(--ink); border-color: var(--ink); }
 
-    /* ── RENDER OVERLAY ────────────────────────────────────────── */
+    /* ── RENDER OVERLAY ────────────────────────── */
     .render-overlay {
       position: absolute; inset: 0;
       background: rgba(245,240,232,0.72);
@@ -122,8 +133,7 @@
       position: absolute; top: 0; left: 0;
       width: 14%; height: 100%;
       animation: riso-scan 1.4s linear infinite;
-      /* color set dynamically per ink via JS */
-      background: linear-gradient(90deg, transparent, rgba(50,85,164,.18) 30%, rgba(50,85,164,.45) 50%, rgba(50,85,164,.18) 70%, transparent);
+      background: linear-gradient(90deg, transparent, rgba(26,26,26,.05) 30%, rgba(26,26,26,.16) 50%, rgba(26,26,26,.05) 70%, transparent);
     }
 
     /* Progress info */
@@ -145,7 +155,7 @@
       width: 0%; transition: width 0.25s ease;
     }
 
-    /* ── CONTROLS ────────────────────────────────────────────── */
+    /* ── CONTROLS ──────────────────────────────── */
     .controls { display: flex; flex-direction: column; }
     .control-section { padding: 18px 0; border-bottom: 1px solid var(--border); }
     .control-section:last-child { border-bottom: none; padding-bottom: 0; }
@@ -283,6 +293,18 @@
       .btn-secondary { padding: 13px; }
 
       .control-section { padding: 14px 0; }
+      .paper-frame { padding: 18px; }
+      .reg-mark { width: 14px; height: 14px; }
+    }
+
+    /* Analog paper grain overlay — subtle noise that makes the UI feel physical */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      pointer-events: none; z-index: 9000;
+      opacity: 0.038;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 250px 250px;
     }
   </style>
 </head>
@@ -314,6 +336,12 @@
     <!-- Paper frame — the printed output with margin -->
     <div class="paper-frame" id="paper-frame">
       <canvas id="output-canvas"></canvas>
+      <div class="reg-marks" aria-hidden="true">
+        <svg class="reg-mark tl" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="6" stroke="#1a1a1a" stroke-width="0.8"/><line x1="9" y1="0" x2="9" y2="18" stroke="#1a1a1a" stroke-width="0.6"/><line x1="0" y1="9" x2="18" y2="9" stroke="#1a1a1a" stroke-width="0.6"/></svg>
+        <svg class="reg-mark tr" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="6" stroke="#1a1a1a" stroke-width="0.8"/><line x1="9" y1="0" x2="9" y2="18" stroke="#1a1a1a" stroke-width="0.6"/><line x1="0" y1="9" x2="18" y2="9" stroke="#1a1a1a" stroke-width="0.6"/></svg>
+        <svg class="reg-mark bl" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="6" stroke="#1a1a1a" stroke-width="0.8"/><line x1="9" y1="0" x2="9" y2="18" stroke="#1a1a1a" stroke-width="0.6"/><line x1="0" y1="9" x2="18" y2="9" stroke="#1a1a1a" stroke-width="0.6"/></svg>
+        <svg class="reg-mark br" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="6" stroke="#1a1a1a" stroke-width="0.8"/><line x1="9" y1="0" x2="9" y2="18" stroke="#1a1a1a" stroke-width="0.6"/><line x1="0" y1="9" x2="18" y2="9" stroke="#1a1a1a" stroke-width="0.6"/></svg>
+      </div>
     </div>
 
     <button class="reupload-btn" id="reupload-btn">↑ New Image</button>
@@ -371,9 +399,9 @@
       <div class="slider-wrap">
         <div class="slider-header">
           <span class="slider-label">Ink Bleed</span>
-          <span class="slider-value" id="blur-val">0.8</span>
+          <span class="slider-value" id="blur-val">0.4</span>
         </div>
-        <input type="range" id="blur-amount" min="0" max="3" step="0.1" value="0.8">
+        <input type="range" id="blur-amount" min="0" max="3" step="0.1" value="0.4">
       </div>
 
       <div class="slider-wrap">
@@ -440,7 +468,7 @@ const S = {
   splitMode:    'shadows-highlights',
   cellSize:     4,       // ~71 LPI visual equivalent at 96 dpi on a 1000 px canvas
   misreg:       1,       // slider-controlled additional offset (baseline always-on)
-  blurPx:       0.8,     // ink absorption into uncoated paper
+  blurPx:       0.4,     // ink absorption into uncoated paper
   grainAmount:  0.55,
   paperTexture: null,
   overlayTex:   null,    // slot for user-provided burn texture asset
@@ -595,25 +623,29 @@ function samplePlate(plate, w, h, cx, cy, r) {
 // ─────────────────────────────────────────────────────────────
 // HALFTONE LAYER — AM halftone on angled grid per ink
 // dot radius = √(density/255) × maxR  preserves tonal area exactly
+// Rendered on a padded canvas so edge dots are not clipped.
+// _pad stores the bleed offset so compositeInksOnly can correct for it.
 // ─────────────────────────────────────────────────────────────
 function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
+  const pad    = Math.ceil(cellSize + blurPx + 1); // bleed: full dot + blur radius
+  const W      = w + pad * 2;
+  const H      = h + pad * 2;
   const angle  = angleDeg * Math.PI / 180;
   const cosA   = Math.cos(-angle);
   const sinA   = Math.sin(-angle);
   const halfC  = cellSize / 2;
   const maxR   = halfC * 0.97;
   const TWO_PI = Math.PI * 2;
-  const diag   = Math.ceil(Math.sqrt(w * w + h * h));
-  const ocx    = w / 2, ocy = h / 2;
+  const diag   = Math.ceil(Math.sqrt(W * W + H * H));
+  const ocx    = W / 2, ocy = H / 2;   // centre of padded canvas
 
   const dc   = document.createElement('canvas');
-  dc.width   = w; dc.height = h;
+  dc.width   = W; dc.height = H;
   const dctx = dc.getContext('2d');
   dctx.fillStyle = '#FFFFFF';
-  dctx.fillRect(0, 0, w, h);
+  dctx.fillRect(0, 0, W, H);
   dctx.fillStyle = inkHex;
 
-  // Single batched path for performance
   dctx.beginPath();
   for (let gy = -diag; gy < diag + cellSize; gy += cellSize) {
     for (let gx = -diag; gx < diag + cellSize; gx += cellSize) {
@@ -621,10 +653,11 @@ function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
       const scx = ocx + rcx * cosA - rcy * sinA;
       const scy = ocy + rcx * sinA + rcy * cosA;
 
-      if (scx < -cellSize || scx > w + cellSize) continue;
-      if (scy < -cellSize || scy > h + cellSize) continue;
+      if (scx < -cellSize || scx > W + cellSize) continue;
+      if (scy < -cellSize || scy > H + cellSize) continue;
 
-      const density = samplePlate(plate, w, h, scx, scy, halfC);
+      // Map padded coords back to original plate coords for density sampling
+      const density = samplePlate(plate, w, h, scx - pad, scy - pad, halfC);
       if (density < 1) continue;
 
       // Per-dot radius jitter: ±4% simulates paper surface micro-roughness
@@ -638,49 +671,58 @@ function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
   }
   dctx.fill();
 
-  if (blurPx < 0.1) return dc;
-
-  const bc   = document.createElement('canvas');
-  bc.width   = w; bc.height = h;
-  const bctx = bc.getContext('2d');
-  bctx.filter = `blur(${blurPx}px)`;
-  bctx.drawImage(dc, 0, 0);
-  return bc;
+  let result = dc;
+  if (blurPx >= 0.1) {
+    const bc   = document.createElement('canvas');
+    bc.width   = W; bc.height = H;
+    const bctx = bc.getContext('2d');
+    bctx.filter = `blur(${blurPx}px)`;
+    bctx.drawImage(dc, 0, 0);
+    result = bc;
+  }
+  result._pad = pad;   // bleed offset used by compositeInksOnly
+  return result;
 }
 
 // ─────────────────────────────────────────────────────────────
-// COMPOSITE — ink layers → paper via Multiply, then grain
+// COMPOSITE — split into ink-only pass + grain pass so
+// progressive layer display works (shows plates building up).
 // ─────────────────────────────────────────────────────────────
-function compositeRiso(layers) {
+function compositeInksOnly(layers) {
   const canvas = document.getElementById('output-canvas');
   const ctx    = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
 
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#F5F0E8';
   ctx.fillRect(0, 0, w, h);
 
-  // Ink transparency: globalAlpha < 1 with multiply makes inks semi-transparent.
-  // White pixels (between dots) → no effect on paper. Ink pixels → lighter than full multiply.
-  // Mimics real Riso ink which is soy-based and translucent — paper always shows through.
   ctx.globalCompositeOperation = 'multiply';
   ctx.globalAlpha = 0.82;
   for (let i = 0; i < layers.length; i++) {
     const dir = S.misregDirs ? S.misregDirs[i] : { baseX: 0, baseY: 0, nx: 0, ny: 0 };
-    const ox = dir.baseX + dir.nx * S.misreg;
-    const oy = dir.baseY + dir.ny * S.misreg;
-    ctx.drawImage(layers[i], ox, oy);
+    const ox  = dir.baseX + dir.nx * S.misreg;
+    const oy  = dir.baseY + dir.ny * S.misreg;
+    const pad = layers[i]._pad || 0;
+    ctx.drawImage(layers[i], Math.round(ox) - pad, Math.round(oy) - pad);
   }
   ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+}
 
-  // Paper grain via multiply at controlled intensity
+function applyPaperGrain() {
+  const canvas = document.getElementById('output-canvas');
+  const ctx    = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+
   if (S.paperTexture && S.grainAmount > 0.01) {
+    ctx.globalCompositeOperation = 'multiply';
     ctx.globalAlpha = S.grainAmount;
     ctx.drawImage(S.paperTexture, 0, 0, w, h);
     ctx.globalAlpha = 1;
   }
 
-  // User-supplied overlay texture (paper fiber / hair grain asset)
-  // Applied with color-burn for deep, organic integration
   if (S.overlayTex) {
     ctx.globalCompositeOperation = 'color-burn';
     ctx.globalAlpha = 0.18;
@@ -691,23 +733,21 @@ function compositeRiso(layers) {
   ctx.globalCompositeOperation = 'source-over';
 }
 
+function compositeRiso(layers) {
+  compositeInksOnly(layers);
+  applyPaperGrain();
+}
+
 // ─────────────────────────────────────────────────────────────
 // RENDER ANIMATION HELPERS
 // ─────────────────────────────────────────────────────────────
 function tick() { return new Promise(r => setTimeout(r, 0)); }
 
-function setOverlayState(pct, label, inkHex) {
+function setOverlayState(pct, label) {
   const fill = document.getElementById('progress-fill');
   const lbl  = document.getElementById('overlay-label');
-  const bar  = document.getElementById('scan-bar');
   if (fill) fill.style.width = pct + '%';
   if (lbl && label) lbl.textContent = label;
-  if (bar && inkHex) {
-    const r = parseInt(inkHex.slice(1,3), 16);
-    const g = parseInt(inkHex.slice(3,5), 16);
-    const b = parseInt(inkHex.slice(5,7), 16);
-    bar.style.background = `linear-gradient(90deg,transparent,rgba(${r},${g},${b},.18) 30%,rgba(${r},${g},${b},.48) 50%,rgba(${r},${g},${b},.18) 70%,transparent)`;
-  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -718,26 +758,36 @@ async function render() {
 
   const overlay = document.getElementById('render-overlay');
   overlay.classList.add('active');
-  setOverlayState(0, 'SEPARATING', S.inks[0]);
+  setOverlayState(5, 'SEPARATING…');
   await tick();
 
   if (!S.misregDirs || S.misregDirs.length !== S.inks.length) regenMisregDirs(S.inks.length);
-
   const plates = createPlates(S.imageData, S.imgW, S.imgH, S.splitMode, S.inks.length);
+
+  // Show paper immediately so the frame isn't blank during rendering
+  const cvs = document.getElementById('output-canvas');
+  const ctx  = cvs.getContext('2d');
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#F5F0E8';
+  ctx.fillRect(0, 0, cvs.width, cvs.height);
 
   const layers = [];
   for (let i = 0; i < S.inks.length; i++) {
-    const pct = Math.round(10 + (i / S.inks.length) * 75);
-    setOverlayState(pct, `INK ${i + 1} / ${S.inks.length}`, S.inks[i]);
-    await tick();   // yield → browser repaints, scan bar animates
+    const pct = Math.round(12 + (i / S.inks.length) * 74);
+    setOverlayState(pct, `PLATE ${i + 1} / ${S.inks.length}`);
+    await tick();   // yield → scan bar animates
     const info = INK_MAP[S.inks[i].toLowerCase()] || { angle: [45, 15, 75][i % 3] };
     layers.push(createHalftoneLayer(plates[i] || plates[0], S.imgW, S.imgH, S.cellSize, info.angle, S.inks[i], S.blurPx));
+    // Progressive: reveal each plate as it prints
+    compositeInksOnly(layers);
+    await tick();
   }
 
-  setOverlayState(92, 'PRESSING', null);
+  setOverlayState(94, 'FINISHING…');
   await tick();
-  compositeRiso(layers);
-  setOverlayState(100, 'DONE', null);
+  applyPaperGrain();
+  setOverlayState(100, 'DONE');
   await tick();
 
   overlay.classList.remove('active');
@@ -751,18 +801,33 @@ function scheduleRender() {
 // ─────────────────────────────────────────────────────────────
 // IMAGE LOADING
 // ─────────────────────────────────────────────────────────────
+const MIN_DIM = 800;   // upscale small images: more detail in dot density map
+
 function loadImageElement(img) {
   let sw = img.naturalWidth, sh = img.naturalHeight;
   if (sw > MAX_DIM || sh > MAX_DIM) {
     const r = Math.min(MAX_DIM / sw, MAX_DIM / sh);
     sw = Math.round(sw * r); sh = Math.round(sh * r);
   }
+  // Upscale small images so halftone dots have richer source detail
+  if (Math.max(sw, sh) < MIN_DIM) {
+    const r = MIN_DIM / Math.max(sw, sh);
+    sw = Math.round(sw * r); sh = Math.round(sh * r);
+    // Cap at MAX_DIM after upscale
+    if (sw > MAX_DIM || sh > MAX_DIM) {
+      const r2 = Math.min(MAX_DIM / sw, MAX_DIM / sh);
+      sw = Math.round(sw * r2); sh = Math.round(sh * r2);
+    }
+  }
 
-  const tmp = document.createElement('canvas');
-  tmp.width = sw; tmp.height = sh;
-  tmp.getContext('2d').drawImage(img, 0, 0, sw, sh);
+  const tmp    = document.createElement('canvas');
+  tmp.width    = sw; tmp.height = sh;
+  const tmpCtx = tmp.getContext('2d');
+  tmpCtx.imageSmoothingEnabled  = true;
+  tmpCtx.imageSmoothingQuality  = 'high';
+  tmpCtx.drawImage(img, 0, 0, sw, sh);
 
-  S.imageData    = tmp.getContext('2d').getImageData(0, 0, sw, sh);
+  S.imageData    = tmpCtx.getImageData(0, 0, sw, sh);
   S.imgW         = sw; S.imgH = sh;
   S.paperTexture = makePaperTexture(sw, sh);
   S.misregDirs   = null;
@@ -981,20 +1046,33 @@ function makeAutoImage() {
   c.width = w; c.height = h;
   const ctx = c.getContext('2d');
 
-  const radial = ctx.createRadialGradient(w * 0.41, h * 0.37, w * 0.02, w * 0.52, h * 0.52, w * 0.78);
-  radial.addColorStop(0,    '#F8F0DC');
-  radial.addColorStop(0.20, '#E8C070');
-  radial.addColorStop(0.42, '#A87040');
-  radial.addColorStop(0.65, '#503858');
-  radial.addColorStop(1,    '#080818');
-  ctx.fillStyle = radial;
+  // Deep dark base
+  ctx.fillStyle = '#060812';
   ctx.fillRect(0, 0, w, h);
 
-  const sweep = ctx.createLinearGradient(0, h * 0.1, w, h * 0.9);
-  sweep.addColorStop(0,    'rgba(18, 8, 50, 0.30)');
-  sweep.addColorStop(0.55, 'rgba(255, 240, 180, 0)');
-  sweep.addColorStop(1,    'rgba(8, 38, 10, 0.24)');
-  ctx.fillStyle = sweep;
+  // Main key light: warm spotlight upper-left (classic portrait setup)
+  const key = ctx.createRadialGradient(w * 0.38, h * 0.32, 0, w * 0.38, h * 0.32, w * 0.62);
+  key.addColorStop(0,    'rgba(255, 248, 220, 1)');
+  key.addColorStop(0.18, 'rgba(250, 200, 80,  0.9)');
+  key.addColorStop(0.42, 'rgba(180, 90,  30,  0.65)');
+  key.addColorStop(0.7,  'rgba(60,  20,  50,  0.3)');
+  key.addColorStop(1,    'rgba(0,   0,   0,   0)');
+  ctx.fillStyle = key;
+  ctx.fillRect(0, 0, w, h);
+
+  // Cool rim light from the right edge
+  const rim = ctx.createRadialGradient(w * 0.95, h * 0.5, 0, w * 0.95, h * 0.5, w * 0.5);
+  rim.addColorStop(0,   'rgba(80, 130, 220, 0.45)');
+  rim.addColorStop(0.5, 'rgba(40,  70, 160, 0.15)');
+  rim.addColorStop(1,   'rgba(0,   0,   0,  0)');
+  ctx.fillStyle = rim;
+  ctx.fillRect(0, 0, w, h);
+
+  // Subtle vignette to deepen corners
+  const vig = ctx.createRadialGradient(w / 2, h / 2, w * 0.3, w / 2, h / 2, w * 0.85);
+  vig.addColorStop(0, 'rgba(0,0,0,0)');
+  vig.addColorStop(1, 'rgba(0,0,0,0.55)');
+  ctx.fillStyle = vig;
   ctx.fillRect(0, 0, w, h);
 
   return ctx.getImageData(0, 0, w, h);
