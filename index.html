@@ -272,6 +272,19 @@
     }
     .control-section { padding: 16px 0; }
 
+    /* Advanced settings collapsible */
+    .advanced-details { border-top: 1px solid var(--border); }
+    .advanced-toggle {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 13px 0; list-style: none; cursor: pointer;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--ink-light);
+    }
+    .advanced-toggle::-webkit-details-marker { display: none; }
+    .toggle-arrow { display: inline-block; transition: transform 0.18s; }
+    .advanced-details[open] .toggle-arrow { transform: rotate(90deg); }
+    .advanced-details .control-section:first-of-type { border-top: none; padding-top: 0; }
+
     /* Action buttons */
     .btn-primary {
       display: block; width: 100%; padding: 13px;
@@ -372,7 +385,7 @@
       </svg>
       <div class="drop-text">
         <strong>Drop your photo here</strong><br>
-        or click to upload · paste from clipboard
+        click to browse — it prints plate by plate
       </div>
       <input type="file" id="file-input" accept="image/*" style="display:none">
     </div>
@@ -410,55 +423,62 @@
       <button class="add-ink-btn" id="add-ink-btn">+ Add Third Ink</button>
     </div>
 
-    <div class="control-section">
-      <div class="section-label">Ink Separation</div>
-      <select class="control-select" id="split-mode">
-        <option value="shadows-highlights">Shadows / Highlights</option>
-        <option value="warm-cool">Warm / Cool Tones</option>
-        <option value="channels">RGB Channels</option>
-      </select>
-    </div>
+    <details class="advanced-details" id="advanced-details">
+      <summary class="advanced-toggle">
+        <span>Advanced Settings</span>
+        <span class="toggle-arrow">▸</span>
+      </summary>
 
-    <div class="control-section">
-      <div class="section-label">Print Settings</div>
-
-      <div class="slider-wrap">
-        <div class="slider-header">
-          <span class="slider-label">Dot Size</span>
-          <span class="slider-value" id="cell-val">6 px</span>
-        </div>
-        <input type="range" id="cell-size" min="2" max="20" step="1" value="6">
+      <div class="control-section">
+        <div class="section-label">Ink Separation</div>
+        <select class="control-select" id="split-mode">
+          <option value="shadows-highlights">Shadows / Highlights</option>
+          <option value="warm-cool">Warm / Cool Tones</option>
+          <option value="channels">RGB Channels</option>
+        </select>
       </div>
 
-      <div class="slider-wrap">
-        <div class="slider-header">
-          <span class="slider-label">Plate Drift</span>
-          <span class="slider-value" id="misreg-val">1 px</span>
+      <div class="control-section">
+        <div class="section-label">Print Settings</div>
+
+        <div class="slider-wrap">
+          <div class="slider-header">
+            <span class="slider-label">Dot Size</span>
+            <span class="slider-value" id="cell-val">6 px</span>
+          </div>
+          <input type="range" id="cell-size" min="2" max="20" step="1" value="6">
         </div>
-        <div class="slider-row-inline">
-          <input type="range" id="misregistration" min="0" max="14" step="0.5" value="1">
-          <button class="regen-btn" id="regen-btn" title="Re-roll plate offsets">↺</button>
+
+        <div class="slider-wrap">
+          <div class="slider-header">
+            <span class="slider-label">Plate Drift</span>
+            <span class="slider-value" id="misreg-val">1 px</span>
+          </div>
+          <div class="slider-row-inline">
+            <input type="range" id="misregistration" min="0" max="14" step="0.5" value="1">
+            <button class="regen-btn" id="regen-btn" title="Re-roll plate offsets">↺</button>
+          </div>
+        </div>
+
+        <div class="slider-wrap">
+          <div class="slider-header">
+            <span class="slider-label">Ink Bleed</span>
+            <span class="slider-value" id="blur-val">0.4</span>
+          </div>
+          <input type="range" id="blur-amount" min="0" max="3" step="0.1" value="0.4">
+        </div>
+
+        <div class="slider-wrap">
+          <div class="slider-header">
+            <span class="slider-label">Paper Grain</span>
+            <span class="slider-value" id="grain-val">55%</span>
+          </div>
+          <input type="range" id="grain-amount" min="0" max="100" step="5" value="55">
         </div>
       </div>
+    </details>
 
-      <div class="slider-wrap">
-        <div class="slider-header">
-          <span class="slider-label">Ink Bleed</span>
-          <span class="slider-value" id="blur-val">0.4</span>
-        </div>
-        <input type="range" id="blur-amount" min="0" max="3" step="0.1" value="0.4">
-      </div>
-
-      <div class="slider-wrap">
-        <div class="slider-header">
-          <span class="slider-label">Paper Grain</span>
-          <span class="slider-value" id="grain-val">55%</span>
-        </div>
-        <input type="range" id="grain-amount" min="0" max="100" step="5" value="55">
-      </div>
-    </div>
-
-    <div class="control-section">
+    <div class="control-section" style="border-top: 1px solid var(--border);">
       <button class="btn-primary" id="save-btn" disabled>Save PNG</button>
       <button class="btn-secondary" id="share-btn">Share on X</button>
     </div>
@@ -500,6 +520,10 @@ const PRESETS = [
   { name: 'BOTANICAL',    inks: ['#914E72', '#00A95C'],            mode: 'shadows-highlights' },
   { name: 'SUNSET',       inks: ['#FF6C2F', '#765BA7'],            mode: 'warm-cool'          },
   { name: 'RISOTTO',      inks: ['#FF48B0', '#FFE800', '#0078BF'], mode: 'shadows-highlights' },
+  { name: 'NEON CITY',    inks: ['#FF48B0', '#00ABAC'],            mode: 'warm-cool'          },
+  { name: 'HARVEST',      inks: ['#FF6C2F', '#914E72'],            mode: 'shadows-highlights' },
+  { name: 'GHOST',        inks: ['#949494', '#3255A4'],            mode: 'shadows-highlights' },
+  { name: 'FOREST',       inks: ['#00A95C', '#1a1a1a'],            mode: 'shadows-highlights' },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -600,6 +624,18 @@ function createPlates(imgData, w, h, mode, inkCount) {
     lum[i] = 0.299 * src[b] + 0.587 * src[b+1] + 0.114 * src[b+2];
   }
 
+  // Auto-levels: stretch 3rd–97th percentile to fill 0–255.
+  // Makes flat illustrations pop; near-white areas stay near-white (no clipping).
+  {
+    const sorted = lum.slice().sort();
+    const lo  = sorted[Math.floor(n * 0.03)];
+    const hi  = sorted[Math.min(n - 1, Math.floor(n * 0.97))];
+    const rng = Math.max(1, hi - lo);
+    for (let i = 0; i < n; i++) {
+      lum[i] = Math.max(0, Math.min(255, (lum[i] - lo) / rng * 255));
+    }
+  }
+
   if (mode === 'warm-cool') {
     const p1 = new Uint8Array(n), p2 = new Uint8Array(n);
     for (let i = 0; i < n; i++) {
@@ -608,12 +644,17 @@ function createPlates(imgData, w, h, mode, inkCount) {
       const warm = Math.max(0, r - (g + bl) * 0.5);
       const cool = Math.max(0, bl - (r + g)  * 0.5);
       const l    = lum[i];
-      p1[i] = Math.round(Math.min(255, warm * 0.7 + (255 - l) * 0.35));
-      p2[i] = Math.round(Math.min(255, cool * 0.7 + l          * 0.35));
+      // ws: suppress ink on near-white pixels so paper shows through
+      const ws   = 1 - Math.pow(l / 255, 2.5);
+      p1[i] = Math.round(Math.min(255, warm * 0.7 + (255 - l) * 0.35) * ws);
+      p2[i] = Math.round(Math.min(255, cool * 0.7 + l          * 0.35) * ws);
     }
     if (inkCount === 2) return [p1, p2];
     const p3 = new Uint8Array(n);
-    for (let i = 0; i < n; i++) p3[i] = Math.round(255 - lum[i]);
+    for (let i = 0; i < n; i++) {
+      const l = lum[i];
+      p3[i] = Math.round(255 - l);
+    }
     return [p1, p2, p3];
   }
 
@@ -630,23 +671,24 @@ function createPlates(imgData, w, h, mode, inkCount) {
   }
 
   // shadows-highlights (default)
-  // γ=0.9: near-linear density curve keeps midtones well-covered.
-  // Both plates have ~53% density at t=0.5 → Riso color overlap in midtones.
-  // Highlights and shadows each dominated by one plate → paper shows through cleanly.
-  const p1 = new Uint8Array(n);   // shadow  → ink 1
-  const p2 = new Uint8Array(n);   // highlight → ink 2
+  // Plate 1: shadow ink — dense at dark, fades at light (1-t)^0.9
+  // Plate 2: color ink  — sin(t·π)^0.65: peaks at midtone, ZERO at both black
+  //   and white. This keeps paper visible in near-white areas (white background
+  //   images show paper instead of a sea of ink 2 dots).
+  const p1 = new Uint8Array(n);
+  const p2 = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
     const t = lum[i] / 255;
     p1[i] = Math.round(Math.pow(1 - t, 0.9) * 255);
-    p2[i] = Math.round(Math.pow(t,     0.9) * 255);
+    p2[i] = Math.round(Math.pow(Math.sin(t * Math.PI), 0.65) * 255);
   }
   if (inkCount === 2) return [p1, p2];
 
-  // 3rd plate: midtone bell curve (peaks at 50% luminance)
+  // 3rd plate: highlight bell shifted toward light tones
   const p3 = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
     const t = lum[i] / 255;
-    p3[i] = Math.round(Math.sin(t * Math.PI) * 255);
+    p3[i] = Math.round(Math.pow(Math.sin(Math.min(1, t * 1.4) * Math.PI), 0.7) * 255);
   }
   return [p1, p3, p2];
 }
