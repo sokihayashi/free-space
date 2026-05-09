@@ -118,7 +118,8 @@
         0 2px 8px rgba(0,0,0,0.07),
         0 16px 56px rgba(0,0,0,0.13);
     }
-    #output-canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
+    #output-canvas { display: block; width: 100%; height: auto; }
+    #output-canvas.halftone-mode { image-rendering: pixelated; image-rendering: crisp-edges; }
 
     /* Registration marks — hidden by default, activated via toggle */
     .reg-marks { position: absolute; inset: 0; pointer-events: none; display: none; }
@@ -1025,6 +1026,9 @@ async function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blur
 }
 
 function createSolidLayer(plate, w, h, inkHex) {
+  // ベタ: hard threshold — below THRESH = paper white, above = solid ink
+  // Slight edge blur simulates ink spread (ドットゲイン相当)
+  const THRESH = 110;
   const dc   = document.createElement('canvas');
   dc.width   = w; dc.height = h;
   const ctx  = dc.getContext('2d');
@@ -1033,17 +1037,22 @@ function createSolidLayer(plate, w, h, inkHex) {
   const gi   = parseInt(inkHex.slice(3, 5), 16);
   const bi   = parseInt(inkHex.slice(5, 7), 16);
   for (let i = 0; i < plate.length; i++) {
-    const v   = plate[i];
-    const t   = Math.min(1, v / 180);  // threshold curve
-    const b   = i * 4;
-    imgD.data[b]     = Math.round(ri + (255 - ri) * (1 - t));
-    imgD.data[b + 1] = Math.round(gi + (255 - gi) * (1 - t));
-    imgD.data[b + 2] = Math.round(bi + (255 - bi) * (1 - t));
+    const inked = plate[i] >= THRESH;
+    const b = i * 4;
+    imgD.data[b]     = inked ? ri : 255;
+    imgD.data[b + 1] = inked ? gi : 255;
+    imgD.data[b + 2] = inked ? bi : 255;
     imgD.data[b + 3] = 255;
   }
   ctx.putImageData(imgD, 0, 0);
-  dc._pad = 0;
-  return dc;
+  // Soft edge blur — ink bleeding at plate boundaries
+  const bc   = document.createElement('canvas');
+  bc.width   = w; bc.height = h;
+  const bctx = bc.getContext('2d');
+  bctx.filter = 'blur(0.9px)';
+  bctx.drawImage(dc, 0, 0);
+  bc._pad = 0;
+  return bc;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1497,22 +1506,46 @@ function renderTombo() {
     svg.appendChild(mk('line', { x1: x + dx*bld,      y1: y + dy*n,   x2: x + dx*bld,     y2: y + dy*(n+arm), stroke: col, 'stroke-width': sw }));
   });
 
-  // ── センタートンボ + 見当マーク (⊕) ──
-  // 全マーク同色 (トンボ・見当は印刷上同じ版で刷られる)
-  const cArm = 12;
-  const regR = 5;
+  // ── 見当マーク (⊕) — 版ごとにずれた位置に描く ──
+  // 各版の版ズレオフセットをキャンバス座標から表示座標に変換して重ね合わせる。
+  // misregDirsがなければ全版同位置。
+  const cArm = 10;
+  const regR = 4.5;
   const mOff = Math.max(8, Math.round(pad * 0.5));
-  [
-    { cx: tx + tw/2, cy: ty,       ox: 0,     oy: -mOff },
-    { cx: tx + tw/2, cy: ty + th,  ox: 0,     oy:  mOff },
-    { cx: tx,        cy: ty + th/2, ox: -mOff, oy: 0    },
-    { cx: tx + tw,   cy: ty + th/2, ox:  mOff, oy: 0    },
-  ].forEach(({ cx, cy, ox, oy }) => {
-    const mx = cx + ox, my = cy + oy;
-    svg.appendChild(mk('line',   { x1: mx - cArm, y1: my,        x2: mx + cArm, y2: my,        stroke: col, 'stroke-width': sw }));
-    svg.appendChild(mk('line',   { x1: mx,        y1: my - cArm, x2: mx,        y2: my + cArm, stroke: col, 'stroke-width': sw }));
-    svg.appendChild(mk('circle', { cx: mx, cy: my, r: regR, stroke: col, 'stroke-width': sw, fill: 'none' }));
-  });
+
+  // Canvas→frame scale: canvas pixels → SVG display pixels (within trim area)
+  const cvs    = document.getElementById('output-canvas');
+  const scaleX = S.imgW > 0 ? tw / S.imgW : 1;
+  const scaleY = S.imgH > 0 ? th / S.imgH : 1;
+
+  // Ink order same as render loop
+  const displayInks = S.splitMode === 'shadows-highlights'
+    ? [...S.inks].reverse() : [...S.inks];
+
+  const regPositions = [
+    { cx: tx + tw/2, cy: ty,        ox: 0,     oy: -mOff },
+    { cx: tx + tw/2, cy: ty + th,   ox: 0,     oy:  mOff },
+    { cx: tx,        cy: ty + th/2, ox: -mOff, oy: 0     },
+    { cx: tx + tw,   cy: ty + th/2, ox:  mOff, oy: 0     },
+  ];
+
+  for (let i = 0; i < displayInks.length; i++) {
+    const dir  = S.misregDirs ? S.misregDirs[i] : { baseX: 0, baseY: 0, nx: 0, ny: 0 };
+    const dox  = (dir.baseX + dir.nx * S.misreg) * scaleX;
+    const doy  = (dir.baseY + dir.ny * S.misreg) * scaleY;
+    const hex  = displayInks[i] || '#1a1a1a';
+    const r    = parseInt(hex.slice(1, 3), 16);
+    const g    = parseInt(hex.slice(3, 5), 16);
+    const b    = parseInt(hex.slice(5, 7), 16);
+    const inkC = `rgba(${r},${g},${b},0.75)`;
+    const rsw  = 0.65;
+    regPositions.forEach(({ cx, cy, ox, oy }) => {
+      const mx = cx + ox + dox, my = cy + oy + doy;
+      svg.appendChild(mk('line',   { x1: mx - cArm, y1: my,        x2: mx + cArm, y2: my,        stroke: inkC, 'stroke-width': rsw }));
+      svg.appendChild(mk('line',   { x1: mx,        y1: my - cArm, x2: mx,        y2: my + cArm, stroke: inkC, 'stroke-width': rsw }));
+      svg.appendChild(mk('circle', { cx: mx, cy: my, r: regR, stroke: inkC, 'stroke-width': rsw, fill: 'none' }));
+    });
+  }
 
   frame.appendChild(svg);
 }
@@ -1600,12 +1633,14 @@ function setup() {
     S.solid = false;
     document.getElementById('dot-mode-halftone').classList.add('active');
     document.getElementById('dot-mode-solid').classList.remove('active');
+    document.getElementById('output-canvas').classList.add('halftone-mode');
     scheduleRender();
   });
   document.getElementById('dot-mode-solid').addEventListener('click', () => {
     S.solid = true;
     document.getElementById('dot-mode-solid').classList.add('active');
     document.getElementById('dot-mode-halftone').classList.remove('active');
+    document.getElementById('output-canvas').classList.remove('halftone-mode');
     scheduleRender();
   });
 
@@ -1758,6 +1793,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setup();
 
   syncSplitUI();
+  document.getElementById('output-canvas').classList.add('halftone-mode'); // dot mode is default
 
   // Load paper.jpg first, then show demo
   loadPaperTexture().then(() => {
