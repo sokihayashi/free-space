@@ -49,6 +49,12 @@
       font-family: var(--font); font-size: 10px; color: var(--ink-light);
       letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500;
     }
+    .process-tag {
+      font-family: var(--font); font-size: 9px; color: var(--border);
+      letter-spacing: 0.08em; font-weight: 400; margin-left: auto;
+      white-space: nowrap;
+    }
+    @media (max-width: 720px) { .process-tag { display: none; } }
 
     /* ── PRESETS ───────────────────────────────── */
     .presets-bar { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 24px; }
@@ -86,7 +92,7 @@
 
     /* Drop zone */
     .drop-zone {
-      aspect-ratio: 1/1;
+      aspect-ratio: 4/3;
       border: 2px dashed var(--border);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 14px; cursor: pointer; transition: border-color 0.15s; background: var(--paper);
@@ -393,7 +399,8 @@
     <svg class="logo-reg" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7.5" cy="7.5" r="5.5" stroke="#1a1a1a" stroke-width="1"/><line x1="7.5" y1="0" x2="7.5" y2="15" stroke="#1a1a1a" stroke-width="0.7"/><line x1="0" y1="7.5" x2="15" y2="7.5" stroke="#1a1a1a" stroke-width="0.7"/></svg>
     RISO PRESS
   </div>
-  <div class="tagline">Risograph Print Simulator</div>
+  <div class="tagline">Halftone Simulator</div>
+  <div class="process-tag">版分解 · AMハーフトーン · インクMultiply · 版ずれ</div>
 </header>
 
 <div class="presets-bar">
@@ -411,8 +418,8 @@
         <path d="M4 32 L13 23 20 29 29 19 40 32"/>
       </svg>
       <div class="drop-text">
-        <strong>写真をドロップ</strong><br>
-        クリックで選択 — 版ごとに印刷していきます
+        <strong>写真をドロップ</strong>
+        版に分解して1色ずつ印刷します
       </div>
       <input type="file" id="file-input" accept="image/*" style="display:none">
     </div>
@@ -845,7 +852,7 @@ async function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blur
 
   // Pre-build row list so we can batch without recomputing bounds
   const gyStart = -diag, gyEnd = diag + cellSize;
-  const BATCH = 8;    // yield every N grid rows — keeps scan bar animating smoothly
+  const BATCH = 20;   // yield every N grid rows — larger = faster, scan bar still smooth
   dctx.beginPath();
   let rowIdx = 0;
   for (let gy = gyStart; gy < gyEnd; gy += cellSize) {
@@ -1018,14 +1025,14 @@ async function render() {
     await tick();
     layers.push(await createHalftoneLayer(usePlates[i] || usePlates[0], S.imgW, S.imgH, S.cellSize, info.angle, ink, S.blurPx));
     compositeInksOnly(layers);
-    if (i < useInks.length - 1) await new Promise(r => setTimeout(r, 140));
+    if (i < useInks.length - 1) await new Promise(r => setTimeout(r, 50));
   }
 
   setOverlayState(94, '仕上げ中…');
   await tick();
   compositeRiso(layers);   // final pass adds overlayTex if present
   setOverlayState(100, '完成');
-  await new Promise(r => setTimeout(r, 420));  // hold so the user reads "PRINTED"
+  await new Promise(r => setTimeout(r, 200));  // hold so the user reads "完成"
 
   overlay.classList.remove('active');
   renderLock = false;
@@ -1344,82 +1351,76 @@ function setup() {
 // dots; cream moon → paper shows through. Classically "Riso".
 // ─────────────────────────────────────────────────────────────
 function makeAutoImage() {
-  const w = 560, h = 560;
+  const w = 600, h = 450;  // 4:3 — classic photo / zine proportion
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   const ctx = c.getContext('2d');
 
-  // ── 4-TONE ZINE POSTER ──
-  // Tonal strategy (channels mode):
-  //   Sky (dark)    → dense dots on BOTH plates  → rich bi-color
-  //   Moon (bright) → sparse dots on both plates → paper shows through
-  //   Water (mid)   → medium density             → halftone grid visible
-  //   Horizon line  → bright rule, max contrast
-  // These four tones create the full halftone dynamic range.
+  // 4-TONE NOCTURNAL ZINE POSTER (4:3)
+  // Each zone is a distinct luminance level → halftone reads clearly:
+  //   Sky (near-black) → dense dots   Moon (cream) → sparse dots
+  //   Water (mid-gray) → medium dots  Horizon (bright rule) → max contrast
 
   // Dark sky
   ctx.fillStyle = '#0b0c16';
   ctx.fillRect(0, 0, w, h);
 
-  // ── STARS — deterministic bright points ──
+  // Stars — deterministic positions scaled to 4:3
   const starSeed = [0.14,0.87,0.33,0.62,0.09,0.71,0.45,0.28,0.93,0.55,
                     0.18,0.76,0.41,0.66,0.05,0.83,0.37,0.59,0.22,0.97,
                     0.50,0.13,0.79,0.35,0.68,0.03,0.91,0.47,0.26,0.84];
-  for (let s = 0; s < 30; s++) {
-    const sx  = starSeed[s]           * w;
-    const sy  = starSeed[(s+7)  % 30] * h * 0.58;
-    const sr  = 0.9 + starSeed[(s+14) % 30] * 2.0;
-    const bri = Math.round(150 + starSeed[(s+21) % 30] * 105);
+  for (let s = 0; s < 36; s++) {
+    const sx  = starSeed[s % 30]           * w;
+    const sy  = starSeed[(s + 7)  % 30]   * h * 0.65;
+    const sr  = 0.7 + starSeed[(s + 14) % 30] * 1.8;
+    const bri = Math.round(140 + starSeed[(s + 21) % 30] * 115);
     ctx.beginPath();
     ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-    ctx.fillStyle = `rgb(${bri},${bri-8},${bri-20})`;
+    ctx.fillStyle = `rgb(${bri},${bri-6},${bri-18})`;
     ctx.fill();
   }
 
-  // ── MOON (crescent) ──
+  // Moon (crescent) — upper-right quadrant, natural for landscape
+  const mx = w * 0.72, my = h * 0.30, mr = h * 0.22;
   ctx.beginPath();
-  ctx.arc(w * 0.52, h * 0.34, h * 0.25, 0, Math.PI * 2);
+  ctx.arc(mx, my, mr, 0, Math.PI * 2);
   ctx.fillStyle = '#E0D8C0';
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(w * 0.60, h * 0.31, h * 0.225, 0, Math.PI * 2);
+  ctx.arc(mx + mr * 0.32, my - mr * 0.10, mr * 0.88, 0, Math.PI * 2);
   ctx.fillStyle = '#0b0c16';
   ctx.fill();
 
-  // ── HORIZON LINE ──
+  // Horizon line
   ctx.fillStyle = '#C8C2B0';
-  ctx.fillRect(0, h * 0.64, w, 3);
+  ctx.fillRect(0, h * 0.62, w, 2);
 
-  // ── WATER / GROUND — MID-GRAY so halftone dot grid is visible ──
-  // Mid-tone base: channels plate densities ~130/255 → dot radius ~73% of max
-  // This is the sweet spot where individual dots are clearly readable.
+  // Water / ground — mid-gray for visible halftone grid
   ctx.fillStyle = '#6e6880';
-  ctx.fillRect(0, h * 0.643, w, h * 0.357);
+  ctx.fillRect(0, h * 0.622, w, h * 0.378);
 
-  // Horizontal water ripple bands — lighter bands = moon reflection
-  // Each lighter strip has lower channel density → smaller dots → brighter
+  // Moon reflection ripples on water — perspective-tapered
   const ripples = [
-    { y: 0.675, h: 0.032, col: '#c8c0d8' },  // bright reflection: lum ~198
-    { y: 0.722, h: 0.022, col: '#a89ab8' },  // medium reflection: lum ~166
-    { y: 0.762, h: 0.016, col: '#8c7ea0' },  // fading: lum ~138
-    { y: 0.796, h: 0.010, col: '#7c7090' },  // hint: lum ~116
+    { y: 0.648, rh: 0.038, col: '#c8c0d8' },
+    { y: 0.698, rh: 0.026, col: '#a89ab8' },
+    { y: 0.738, rh: 0.018, col: '#8c7ea0' },
+    { y: 0.772, rh: 0.012, col: '#7c7090' },
   ];
   ripples.forEach(r => {
-    // taper width to simulate perspective
-    const margin = (r.y - 0.64) * w * 0.25;
+    const margin = (r.y - 0.62) * w * 0.28;
     ctx.fillStyle = r.col;
-    ctx.fillRect(margin, h * r.y, w - margin * 2, h * r.h);
+    ctx.fillRect(margin, h * r.y, w - margin * 2, h * r.rh);
   });
 
-  // ── DISTANT SHORELINE / RIDGE (dark, sits at horizon) ──
+  // Distant shoreline / ridge
   ctx.fillStyle = '#1a1824';
   ctx.beginPath();
-  ctx.moveTo(0, h * 0.64);
-  ctx.bezierCurveTo(w * 0.12, h * 0.59, w * 0.30, h * 0.61, w * 0.42, h * 0.625);
-  ctx.bezierCurveTo(w * 0.55, h * 0.64, w * 0.68, h * 0.60, w * 0.82, h * 0.615);
-  ctx.bezierCurveTo(w * 0.92, h * 0.625, w * 0.97, h * 0.615, w, h * 0.62);
-  ctx.lineTo(w, h * 0.64);
-  ctx.lineTo(0, h * 0.64);
+  ctx.moveTo(0, h * 0.62);
+  ctx.bezierCurveTo(w * 0.10, h * 0.565, w * 0.28, h * 0.585, w * 0.42, h * 0.600);
+  ctx.bezierCurveTo(w * 0.56, h * 0.615, w * 0.70, h * 0.575, w * 0.84, h * 0.592);
+  ctx.bezierCurveTo(w * 0.93, h * 0.602, w * 0.97, h * 0.595, w, h * 0.60);
+  ctx.lineTo(w, h * 0.622);
+  ctx.lineTo(0, h * 0.622);
   ctx.closePath();
   ctx.fill();
 
