@@ -118,7 +118,7 @@
         0 2px 8px rgba(0,0,0,0.07),
         0 16px 56px rgba(0,0,0,0.13);
     }
-    #output-canvas { display: block; width: 100%; height: auto; }
+    #output-canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
 
     /* Registration marks — hidden by default, activated via toggle */
     .reg-marks { position: absolute; inset: 0; pointer-events: none; display: none; }
@@ -369,6 +369,36 @@
     .feel-chip.active .feel-name { color: var(--paper); }
     .feel-chip.active .feel-sub  { color: rgba(245,240,232,0.62); }
 
+    .split-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .split-chip {
+      font-family: var(--font); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 5px 12px; border-radius: 100px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+    }
+    .split-chip:hover { border-color: var(--ink); color: var(--ink); }
+    .split-chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .cmyk-btn {
+      width: 100%; font-family: var(--font); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 6px 12px; border-radius: 6px;
+      border: 1px dashed var(--border); background: transparent;
+      color: var(--ink-mid); cursor: pointer; transition: all 0.15s; text-align: left;
+    }
+    .cmyk-btn:hover { border-color: var(--ink); color: var(--ink); }
+    .cmyk-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); border-style: solid; }
+    .dot-mode-row { display: flex; gap: 6px; margin-top: 8px; }
+    .dot-mode-btn {
+      flex: 1; font-family: var(--font); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 5px 8px; border-radius: 100px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+    }
+    .dot-mode-btn:hover { border-color: var(--ink); color: var(--ink); }
+    .dot-mode-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
     /* Advanced settings collapsible */
     .advanced-details { border-top: 1px solid var(--border); }
     .advanced-toggle {
@@ -523,6 +553,20 @@
     <div class="control-section">
       <div class="section-label">印刷の質感</div>
       <div class="feel-chips" id="feel-chips"></div>
+      <div class="dot-mode-row">
+        <button class="dot-mode-btn active" id="dot-mode-halftone">ドット</button>
+        <button class="dot-mode-btn" id="dot-mode-solid">ベタ</button>
+      </div>
+    </div>
+
+    <div class="control-section">
+      <div class="section-label">分版モード</div>
+      <div class="split-chips" id="split-chips">
+        <button class="split-chip active" data-mode="shadows-highlights">明暗</button>
+        <button class="split-chip" data-mode="warm-cool">暖寒</button>
+        <button class="split-chip" data-mode="channels">RGB</button>
+      </div>
+      <button class="cmyk-btn" id="cmyk-btn">CMYK写真分版</button>
     </div>
 
     <details class="advanced-details" id="advanced-details">
@@ -532,30 +576,20 @@
       </summary>
 
       <div class="control-section">
-        <div class="section-label">分版モード</div>
-        <select class="control-select" id="split-mode">
-          <option value="shadows-highlights">明暗分版</option>
-          <option value="warm-cool">暖色 / 寒色</option>
-          <option value="channels">RGBチャンネル</option>
-          <option value="cmyk">CMYK写真分版</option>
-        </select>
-      </div>
-
-      <div class="control-section">
         <div class="section-label">プリント設定</div>
 
         <div class="slider-wrap">
           <div class="slider-header">
             <span class="slider-label">ドットサイズ</span>
-            <span class="slider-value" id="cell-val">3 px</span>
+            <span class="slider-value" id="cell-val">3</span>
           </div>
-          <input type="range" id="cell-size" min="2" max="20" step="1" value="3">
+          <input type="range" id="cell-size" min="3" max="20" step="1" value="3">
         </div>
 
         <div class="slider-wrap">
           <div class="slider-header">
             <span class="slider-label">版ズレ</span>
-            <span class="slider-value" id="misreg-val">0.5 px</span>
+            <span class="slider-value" id="misreg-val">0.5</span>
           </div>
           <div class="slider-row-inline">
             <input type="range" id="misregistration" min="0" max="14" step="0.5" value="0.5">
@@ -566,9 +600,9 @@
         <div class="slider-wrap">
           <div class="slider-header">
             <span class="slider-label">インクにじみ</span>
-            <span class="slider-value" id="blur-val">0.1</span>
+            <span class="slider-value" id="blur-val">0</span>
           </div>
-          <input type="range" id="blur-amount" min="0" max="3" step="0.1" value="0.1">
+          <input type="range" id="blur-amount" min="0" max="3" step="0.1" value="0">
         </div>
 
       </div>
@@ -646,7 +680,7 @@ const PRESETS = [
   // ink[0]=影板, ink[last]=ハイライト板。崩壊系は異物色を影(ink[0])に。
   { name: '真面目なギャル',          inks: ['#FF48B0', '#1a1a1a'],                                  mode: 'shadows-highlights' }, // 蛍光ピンクが制服の影に潜む、表面は真面目な黒
   { name: '正義と割り勘',            inks: ['#2B6342', '#FF8C7A'],                                  mode: 'shadows-highlights' }, // 深緑の暗部、温かいサーモンが浮上
-  { name: '警備員とヴィーナス',      inks: ['#F4AEBF', '#444444'],                                  mode: 'shadows-highlights' }, // 大理石のような淡いピンク（ヴィーナス）が暗部に、表面は制服グレー
+  { name: '警備員とヴィーナス',      inks: ['#F4AEBF', '#444444'],                                  mode: 'shadows-highlights', swap: true }, // 淡いピンクがハイライト、ダークグレーが影
   { name: '赤電話',                  inks: ['#CF2854', '#E51400'],                                  mode: 'shadows-highlights' }, // 深いクリムゾン×スカーレット、画面全体が赤に染まる
   { name: '口紅',                    inks: ['#5A2D82', '#FF8C7A'],                                  mode: 'shadows-highlights' }, // 深い紫の影から、サーモンが唇に浮かぶ
   { name: '紫式部',                  inks: ['#5A2D82', '#BEB3D4'],                                  mode: 'shadows-highlights' }, // 紫=名前そのもの。深い紫から薄いラベンダーへ
@@ -662,7 +696,7 @@ const PRESETS = [
   { name: 'ミス非常階段',            inks: ['#E51400', '#444444', '#9AC7E8'],                      mode: 'shadows-highlights' }, // 危険の赤が暗部に潜伏、表層に空の青
   { name: '赤提灯',                  inks: ['#CF2854', '#FF6C2F', '#B6AD1C'],                      mode: 'shadows-highlights' }, // クリムゾンの核、オレンジの炎、オリーブの煙
   { name: '団地妻',                  inks: ['#CF2854', '#D461B0', '#BEB3D4'],                      mode: 'shadows-highlights' }, // 深いクリムゾンが妖艶に暗部を占める→オーキッド→淡いラベンダー
-  { name: '風邪の日のピアニスト',    inks: ['#C5BEB4', '#BEB3D4', '#444444'],                      mode: 'shadows-highlights' }, // 彩度ゼロ近く。ストーン→ラベンダー→ダークグレー。鍵盤と病床の色
+  { name: '風邪の日のピアニスト',    inks: ['#C5BEB4', '#BEB3D4', '#444444'],                      mode: 'shadows-highlights', swap: true }, // 最暗部にダークグレー、明部はストーン。病床と鍵盤の無彩色
   { name: 'ラムネ瓶',                inks: ['#69D84F', '#62A9E4', '#C5BEB4'],                      mode: 'shadows-highlights' }, // 瓶底に蛍光緑、コーンフラワーが中間、表面はストーン
   { name: 'クリームソーダ',          inks: ['#69D84F', '#F4AEBF', '#FFE800'],                      mode: 'shadows-highlights' }, // メロンソーダの蛍光緑→バニラクリームのピンク→レモンの黄
   { name: 'レーダー姉妹',            inks: ['#444444', '#69D84F', '#62A9E4'],                      mode: 'channels'           },
@@ -678,10 +712,10 @@ const PRESETS = [
 // PRINT FEEL — experiential presets that set multiple params at once
 // ─────────────────────────────────────────────────────────────
 const PRINT_FEELS = {
-  FRESH: { cellSize: 3, misreg: 0.5, blurPx: 0.1,  desc: '細かい・きれい' },
-  WORN:  { cellSize: 5, misreg: 3.5, blurPx: 1.0,  desc: 'にじみ・ヴィンテージ' },
-  GHOST: { cellSize: 3, misreg: 4.5, blurPx: 0.15, desc: '版ズレ大・うすずり' },
-  BOLD:  { cellSize: 9, misreg: 2.5, blurPx: 1.8,  desc: '粗い・インク濃め' },
+  FRESH: { cellSize: 3, misreg: 0.5, blurPx: 0,    desc: '細かい・きれい' },
+  ROUGH: { cellSize: 7, misreg: 2.0, blurPx: 0.4,  desc: '荒い・手刷り感' },
+  GHOST: { cellSize: 3, misreg: 4.5, blurPx: 0,    desc: '版ズレ大・うすずり' },
+  BOLD:  { cellSize: 9, misreg: 1.5, blurPx: 0.6,  desc: '粗い・インク濃め' },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -695,13 +729,14 @@ const S = {
   splitMode:   'shadows-highlights',
   cellSize:    3,
   misreg:      0.5,
-  blurPx:      0.1,
+  blurPx:      0,
   paperCanvas: null,   // paper.jpg loaded as canvas for background
   overlayTex:  null,
   misregDirs:  null,
   activePreset:'TOKYO NIGHT',
   activeFeel:  'FRESH',
   tombo:       false,
+  solid:       false,
 };
 
 const MAX_DIM = 650;
@@ -989,6 +1024,28 @@ async function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blur
   return result;
 }
 
+function createSolidLayer(plate, w, h, inkHex) {
+  const dc   = document.createElement('canvas');
+  dc.width   = w; dc.height = h;
+  const ctx  = dc.getContext('2d');
+  const imgD = ctx.createImageData(w, h);
+  const ri   = parseInt(inkHex.slice(1, 3), 16);
+  const gi   = parseInt(inkHex.slice(3, 5), 16);
+  const bi   = parseInt(inkHex.slice(5, 7), 16);
+  for (let i = 0; i < plate.length; i++) {
+    const v   = plate[i];
+    const t   = Math.min(1, v / 180);  // threshold curve
+    const b   = i * 4;
+    imgD.data[b]     = Math.round(ri + (255 - ri) * (1 - t));
+    imgD.data[b + 1] = Math.round(gi + (255 - gi) * (1 - t));
+    imgD.data[b + 2] = Math.round(bi + (255 - bi) * (1 - t));
+    imgD.data[b + 3] = 255;
+  }
+  ctx.putImageData(imgD, 0, 0);
+  dc._pad = 0;
+  return dc;
+}
+
 // ─────────────────────────────────────────────────────────────
 // COMPOSITE — split into ink-only pass + grain pass so
 // progressive layer display works (shows plates building up).
@@ -1098,19 +1155,13 @@ async function render() {
   if (!S.misregDirs || S.misregDirs.length !== S.inks.length) regenMisregDirs(S.inks.length);
   const plates = createPlates(S.imageData, S.imgW, S.imgH, S.splitMode, S.inks.length);
 
-  // Show paper immediately so the frame isn't blank during rendering
-  const cvs = document.getElementById('output-canvas');
-  const ctx  = cvs.getContext('2d');
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = '#F5F0E8';
-  ctx.fillRect(0, 0, cvs.width, cvs.height);
-
   // Riso print order: light inks first, dark inks last (dark anchors the print).
-  // For shadows-highlights mode: preset ink order is [dark→light], so reverse both
-  // plates and inks for rendering. For channels/warm-cool: natural order is fine.
+  // For shadows-highlights mode: preset ink order is [dark→light], so reverse both.
+  // Preset swap:true means ink[0] goes to highlights (traditional order — dark in shadows).
+  const activePreset = PRESETS.find(p => p.name === S.activePreset);
+  const swapSH = !!(activePreset?.swap) && S.splitMode === 'shadows-highlights';
   const useInks   = S.splitMode === 'shadows-highlights'
-    ? [...S.inks].reverse()
+    ? (swapSH ? [...S.inks] : [...S.inks].reverse())
     : [...S.inks];
   const usePlates = S.splitMode === 'shadows-highlights'
     ? [...plates].reverse()
@@ -1123,7 +1174,10 @@ async function render() {
     const info = INK_MAP[ink.toLowerCase()] || { angle: [45, 15, 75][i % 3], name: 'Ink' };
     setOverlayState(pct, `${info.name || 'INK'} 印刷中`);
     await tick();
-    layers.push(await createHalftoneLayer(usePlates[i] || usePlates[0], S.imgW, S.imgH, S.cellSize, info.angle, ink, S.blurPx));
+    const layer = S.solid
+      ? createSolidLayer(usePlates[i] || usePlates[0], S.imgW, S.imgH, ink)
+      : await createHalftoneLayer(usePlates[i] || usePlates[0], S.imgW, S.imgH, S.cellSize, info.angle, ink, S.blurPx);
+    layers.push(layer);
     compositeInksOnly(layers);
     renderTombo();
     if (i < useInks.length - 1) await new Promise(r => setTimeout(r, 50));
@@ -1262,7 +1316,6 @@ function renderInkSlots() {
         opt.addEventListener('click', e => {
           e.stopPropagation();
           S.inks[i]      = opt.dataset.hex;
-          S.misregDirs   = null;
           S.activePreset = null;
           popup.classList.add('hidden');
           renderInkSlots(); updatePresetBtns(); scheduleRender();
@@ -1314,8 +1367,17 @@ function applyPreset(name) {
   S.splitMode    = p.mode;
   S.activePreset = name;
   S.misregDirs   = null;
-  document.getElementById('split-mode').value = p.mode;
+  syncSplitUI();
   renderInkSlots(); updatePresetBtns(); scheduleRender();
+}
+
+function syncSplitUI() {
+  const isCmyk = S.splitMode === 'cmyk';
+  document.querySelectorAll('.split-chip').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === S.splitMode);
+  });
+  const cmykBtn = document.getElementById('cmyk-btn');
+  if (cmykBtn) cmykBtn.classList.toggle('active', isCmyk);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1345,8 +1407,8 @@ function applyFeel(name) {
   const cs = document.getElementById('cell-size');
   const mr = document.getElementById('misregistration');
   const bl = document.getElementById('blur-amount');
-  if (cs) { cs.value = f.cellSize;  document.getElementById('cell-val').textContent  = f.cellSize + ' px'; }
-  if (mr) { mr.value = f.misreg;    document.getElementById('misreg-val').textContent = f.misreg + ' px'; }
+  if (cs) { cs.value = f.cellSize;  document.getElementById('cell-val').textContent  = f.cellSize; }
+  if (mr) { mr.value = f.misreg;    document.getElementById('misreg-val').textContent = f.misreg; }
   if (bl) { bl.value = f.blurPx;    document.getElementById('blur-val').textContent   = f.blurPx.toFixed(1); }
   document.querySelectorAll('.feel-chip').forEach(b => {
     const isActive = b.dataset.feel === name;
@@ -1366,7 +1428,7 @@ function shuffleInks() {
   S.splitMode    = r < 0.45 ? 'channels' : r < 0.75 ? 'shadows-highlights' : 'warm-cool';
   S.activePreset = null;
   S.misregDirs   = null;
-  document.getElementById('split-mode').value = S.splitMode;
+  syncSplitUI();
   renderInkSlots();
   updatePresetBtns();
   if (S.imageData) scheduleRender();
@@ -1488,13 +1550,13 @@ function setup() {
 
   document.getElementById('cell-size').addEventListener('input', e => {
     S.cellSize = parseInt(e.target.value);
-    document.getElementById('cell-val').textContent = S.cellSize + ' px';
+    document.getElementById('cell-val').textContent = S.cellSize;
     scheduleRender();
   });
 
   document.getElementById('misregistration').addEventListener('input', e => {
     S.misreg = parseFloat(e.target.value);
-    document.getElementById('misreg-val').textContent = S.misreg + ' px';
+    document.getElementById('misreg-val').textContent = S.misreg;
     scheduleRender();
   });
 
@@ -1510,14 +1572,41 @@ function setup() {
     scheduleRender();
   });
 
-  document.getElementById('split-mode').addEventListener('change', e => {
-    S.splitMode    = e.target.value;
+  // Split mode chips (明暗 / 暖寒 / RGB)
+  document.querySelectorAll('.split-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      S.splitMode    = btn.dataset.mode;
+      S.activePreset = null;
+      document.querySelectorAll('.split-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('cmyk-btn').classList.remove('active');
+      renderInkSlots(); updatePresetBtns(); scheduleRender();
+    });
+  });
+
+  // CMYK mode button
+  document.getElementById('cmyk-btn').addEventListener('click', () => {
+    S.splitMode    = 'cmyk';
+    S.inks         = [...CMYK_INKS];
+    S.misregDirs   = null;
     S.activePreset = null;
-    if (S.splitMode === 'cmyk') {
-      S.inks = [...CMYK_INKS];
-      S.misregDirs = null;
-    }
+    document.querySelectorAll('.split-chip').forEach(b => b.classList.remove('active'));
+    document.getElementById('cmyk-btn').classList.add('active');
     renderInkSlots(); updatePresetBtns(); scheduleRender();
+  });
+
+  // ベタ/ドット mode buttons
+  document.getElementById('dot-mode-halftone').addEventListener('click', () => {
+    S.solid = false;
+    document.getElementById('dot-mode-halftone').classList.add('active');
+    document.getElementById('dot-mode-solid').classList.remove('active');
+    scheduleRender();
+  });
+  document.getElementById('dot-mode-solid').addEventListener('click', () => {
+    S.solid = true;
+    document.getElementById('dot-mode-solid').classList.add('active');
+    document.getElementById('dot-mode-halftone').classList.remove('active');
+    scheduleRender();
   });
 
   document.getElementById('add-ink-btn').addEventListener('click', () => {
@@ -1668,7 +1757,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderInkSlots();
   setup();
 
-  document.getElementById('split-mode').value = S.splitMode;
+  syncSplitUI();
 
   // Load paper.jpg first, then show demo
   loadPaperTexture().then(() => {
