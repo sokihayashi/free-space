@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RISO PRESS — Risograph Print Simulator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -16,7 +17,8 @@
       --ink-mid:    #555;
       --ink-light:  #999;
       --border:     #D5CEC2;
-      --font:       'Space Grotesk', system-ui, sans-serif;
+      --font:         'DM Mono', 'Courier New', monospace;
+      --font-display: 'Syne', system-ui, sans-serif;
     }
 
     body {
@@ -37,15 +39,15 @@
       border-bottom: 2px solid var(--ink);
     }
     .logo {
-      font-size: 26px; font-weight: 700; letter-spacing: -0.5px;
-      display: flex; align-items: center; gap: 9px;
+      font-family: var(--font-display); font-size: 28px; font-weight: 800;
+      letter-spacing: -0.5px; display: flex; align-items: center; gap: 9px;
     }
     .logo-reg {
       width: 15px; height: 15px; opacity: 0.28; flex-shrink: 0;
     }
     .tagline {
-      font-size: 11px; color: var(--ink-light);
-      letter-spacing: 0.12em; text-transform: uppercase; font-weight: 500;
+      font-family: var(--font); font-size: 10px; color: var(--ink-light);
+      letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500;
     }
 
     /* ── PRESETS ───────────────────────────────── */
@@ -56,8 +58,8 @@
       padding: 6px 14px 6px 10px;
       border: 1.5px solid var(--border); border-radius: 100px;
       background: transparent; cursor: pointer;
-      font-family: var(--font); font-size: 11px; font-weight: 700;
-      letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink);
+      font-family: var(--font-display); font-size: 10.5px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink);
       transition: all 0.13s ease;
     }
     .preset-btn:hover  { border-color: var(--ink); background: var(--paper-dark); }
@@ -70,7 +72,7 @@
       padding: 6px 14px;
       border: 1.5px dashed var(--border); border-radius: 100px;
       background: transparent; cursor: pointer;
-      font-family: var(--font); font-size: 11px; font-weight: 700;
+      font-family: var(--font-display); font-size: 10.5px; font-weight: 700;
       letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-light);
       transition: all 0.15s ease; white-space: nowrap; flex-shrink: 0;
     }
@@ -84,7 +86,7 @@
 
     /* Drop zone */
     .drop-zone {
-      aspect-ratio: 4/3;
+      aspect-ratio: 1/1;
       border: 2px dashed var(--border);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 14px; cursor: pointer; transition: border-color 0.15s; background: var(--paper);
@@ -92,10 +94,10 @@
     .drop-zone:hover, .drop-zone.drag-over { border-color: var(--ink); }
     .drop-icon { width: 44px; height: 44px; opacity: 0.25; }
     .drop-text {
-      font-size: 13px; color: var(--ink-light);
-      text-align: center; line-height: 1.7; font-weight: 500;
+      font-family: var(--font); font-size: 11px; color: var(--ink-light);
+      text-align: center; line-height: 1.9; font-weight: 400;
     }
-    .drop-text strong { color: var(--ink-mid); }
+    .drop-text strong { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--ink-mid); display: block; margin-bottom: 2px; }
 
     /* Paper frame — gives the Riso print its signature white margin */
     .paper-frame {
@@ -123,15 +125,15 @@
     /* Edition mark — bottom-right paper margin, like a signed print */
     .edition-mark {
       position: absolute; bottom: 11px; right: 18px;
-      font-size: 8.5px; font-weight: 600; letter-spacing: 0.14em;
-      text-transform: uppercase; color: rgba(26,26,26,0.22);
-      font-family: var(--font); pointer-events: none;
+      font-family: var(--font); font-size: 8px; font-weight: 400;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      color: rgba(26,26,26,0.22); pointer-events: none;
     }
 
     /* Re-upload / upload CTA */
     .reupload-btn {
       position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-      font-family: var(--font); font-size: 10px; font-weight: 700;
+      font-family: var(--font-display); font-size: 10px; font-weight: 700;
       letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap;
       padding: 6px 14px;
       background: var(--ink); color: var(--paper);
@@ -172,8 +174,8 @@
       text-align: center;
     }
     .overlay-label {
-      font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
-      text-transform: uppercase; color: var(--ink-mid); margin-bottom: 6px;
+      font-family: var(--font); font-size: 9px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 6px;
     }
     .progress-track {
       width: 80px; height: 2px;
@@ -190,20 +192,21 @@
     .control-section { padding: 18px 0; border-bottom: 1px solid var(--border); }
     .control-section:last-child { border-bottom: none; padding-bottom: 0; }
     .section-label {
-      font-size: 9px; font-weight: 700; letter-spacing: 0.15em;
-      text-transform: uppercase; color: var(--ink-light); margin-bottom: 14px;
+      font-family: var(--font-display); font-size: 9.5px; font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--ink-light); margin-bottom: 14px;
     }
 
     /* Ink slots */
     .ink-slots { display: flex; flex-direction: column; gap: 9px; }
     .ink-row   { display: flex; align-items: center; gap: 8px; }
-    .ink-index { font-size: 10px; font-weight: 700; color: var(--border); width: 12px; flex-shrink: 0; }
+    .ink-index { font-family: var(--font); font-size: 10px; font-weight: 400; color: var(--border); width: 12px; flex-shrink: 0; }
     .ink-swatch {
       width: 22px; height: 22px; border-radius: 50%;
       flex-shrink: 0; border: 1.5px solid rgba(0,0,0,0.12); transition: background 0.2s;
     }
     .ink-select {
-      flex: 1; font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--ink);
+      flex: 1; font-family: var(--font); font-size: 11px; font-weight: 400; color: var(--ink);
       background: transparent; border: 1.5px solid var(--border); border-radius: 6px;
       padding: 6px 26px 6px 9px; cursor: pointer;
       appearance: none; -webkit-appearance: none;
@@ -219,7 +222,7 @@
     }
     .remove-ink-btn:hover { background: var(--paper-dark); color: var(--ink); }
     .add-ink-btn {
-      font-family: var(--font); font-size: 11px; font-weight: 600;
+      font-family: var(--font-display); font-size: 11px; font-weight: 600;
       letter-spacing: 0.05em; color: var(--ink-light); background: none;
       border: 1.5px dashed var(--border); border-radius: 6px;
       padding: 7px; cursor: pointer; width: 100%; text-align: center;
@@ -231,8 +234,8 @@
     .slider-wrap { margin-bottom: 13px; }
     .slider-wrap:last-child { margin-bottom: 0; }
     .slider-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-    .slider-label  { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-mid); }
-    .slider-value  { font-size: 11px; font-weight: 700; color: var(--ink); min-width: 30px; text-align: right; }
+    .slider-label  { font-family: var(--font); font-size: 10px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-mid); }
+    .slider-value  { font-family: var(--font); font-size: 11px; font-weight: 400; color: var(--ink); min-width: 36px; text-align: right; }
     .slider-row-inline { display: flex; align-items: center; gap: 8px; }
     input[type="range"] {
       appearance: none; -webkit-appearance: none;
@@ -256,7 +259,7 @@
 
     /* Select */
     .control-select {
-      font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--ink);
+      font-family: var(--font); font-size: 11px; font-weight: 400; color: var(--ink);
       background: transparent; border: 1.5px solid var(--border); border-radius: 6px;
       padding: 8px 28px 8px 10px; width: 100%; cursor: pointer;
       appearance: none; -webkit-appearance: none;
@@ -286,11 +289,11 @@
     .feel-chip:hover  { border-color: var(--ink-mid); background: var(--paper-dark); }
     .feel-chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
     .feel-name {
-      font-size: 10px; font-weight: 700; letter-spacing: 0.09em;
-      text-transform: uppercase; color: var(--ink-mid);
+      font-family: var(--font-display); font-size: 10.5px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid);
     }
     .feel-sub {
-      font-size: 9.5px; font-weight: 400; color: var(--ink-light);
+      font-family: var(--font); font-size: 9px; font-weight: 400; color: var(--ink-light);
       letter-spacing: 0; text-transform: none; line-height: 1.3; text-align: center;
     }
     .feel-chip.active .feel-name { color: var(--paper); }
@@ -301,8 +304,8 @@
     .advanced-toggle {
       display: flex; justify-content: space-between; align-items: center;
       padding: 13px 0; list-style: none; cursor: pointer;
-      font-size: 9px; font-weight: 700; letter-spacing: 0.15em;
-      text-transform: uppercase; color: var(--ink-light);
+      font-family: var(--font-display); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-light);
     }
     .advanced-toggle::-webkit-details-marker { display: none; }
     .toggle-arrow { display: inline-block; transition: transform 0.18s; }
@@ -313,7 +316,7 @@
     .btn-primary {
       display: block; width: 100%; padding: 13px;
       background: var(--ink); color: var(--paper); border: none; border-radius: 8px;
-      font-family: var(--font); font-size: 12px; font-weight: 700;
+      font-family: var(--font-display); font-size: 12px; font-weight: 700;
       letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
       transition: opacity 0.13s; margin-bottom: 9px;
     }
@@ -322,7 +325,7 @@
     .btn-secondary {
       display: block; width: 100%; padding: 11px;
       background: transparent; color: var(--ink); border: 1.5px solid var(--border);
-      border-radius: 8px; font-family: var(--font); font-size: 12px; font-weight: 600;
+      border-radius: 8px; font-family: var(--font-display); font-size: 12px; font-weight: 600;
       letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.13s;
     }
     .btn-secondary:hover { border-color: var(--ink); background: var(--paper-dark); }
