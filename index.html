@@ -678,10 +678,10 @@ const PRESETS = [
 // PRINT FEEL — experiential presets that set multiple params at once
 // ─────────────────────────────────────────────────────────────
 const PRINT_FEELS = {
-  FRESH: { cellSize: 3, misreg: 1.5, blurPx: 0.1,  desc: '細かい・きれい' },
-  WORN:  { cellSize: 5, misreg: 4.5, blurPx: 1.0,  desc: 'にじみ・ヴィンテージ' },
-  GHOST: { cellSize: 3, misreg: 8,   blurPx: 0.15, desc: '版ズレ大・うすずり' },
-  BOLD:  { cellSize: 9, misreg: 3.0, blurPx: 1.8,  desc: '粗い・インク濃め' },
+  FRESH: { cellSize: 3, misreg: 0.5, blurPx: 0.1,  desc: '細かい・きれい' },
+  WORN:  { cellSize: 5, misreg: 3.5, blurPx: 1.0,  desc: 'にじみ・ヴィンテージ' },
+  GHOST: { cellSize: 3, misreg: 4.5, blurPx: 0.15, desc: '版ズレ大・うすずり' },
+  BOLD:  { cellSize: 9, misreg: 2.5, blurPx: 1.8,  desc: '粗い・インク濃め' },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -694,7 +694,7 @@ const S = {
   inks:        ['#1a1a1a', '#F15060', '#FFE800'],
   splitMode:   'shadows-highlights',
   cellSize:    3,
-  misreg:      1.5,
+  misreg:      0.5,
   blurPx:      0.1,
   paperCanvas: null,   // paper.jpg loaded as canvas for background
   overlayTex:  null,
@@ -1023,7 +1023,6 @@ function compositeInksOnly(layers) {
 
 function compositeRiso(layers) {
   compositeInksOnly(layers);
-  applyEdgeFade(document.getElementById('output-canvas'), S.cellSize);
   // overlayTex slot kept for optional burn-layer asset
   if (S.overlayTex) {
     const canvas = document.getElementById('output-canvas');
@@ -1126,6 +1125,7 @@ async function render() {
     await tick();
     layers.push(await createHalftoneLayer(usePlates[i] || usePlates[0], S.imgW, S.imgH, S.cellSize, info.angle, ink, S.blurPx));
     compositeInksOnly(layers);
+    renderTombo();
     if (i < useInks.length - 1) await new Promise(r => setTimeout(r, 50));
   }
 
@@ -1186,11 +1186,12 @@ function loadImageElement(img) {
   document.getElementById('paper-frame').style.display  = 'block';
   document.getElementById('reupload-btn').style.display = 'block';
   document.getElementById('save-btn').disabled          = false;
-  document.getElementById('edition-mark').textContent   =
-    'ED. ' + (Math.floor(Math.random() * 49) + 1) + '/50  ·  RISO PRESS';
+  const edMark = document.getElementById('edition-mark');
+  edMark.textContent   = 'ED. ' + (Math.floor(Math.random() * 49) + 1) + '/50  ·  RISO PRESS';
+  edMark.style.display = 'none';  // hidden until tombo is on
 
   // Ensure paper texture is loaded before rendering
-  const go = () => { render(); renderTombo(); };
+  const go = () => { render(); };
   S.paperCanvas ? go() : loadPaperTexture().then(go);
 }
 
@@ -1376,9 +1377,14 @@ function shuffleInks() {
 // Drawn as an SVG overlay on top of the paper-frame.
 // ─────────────────────────────────────────────────────────────
 function renderTombo() {
-  const old = document.getElementById('tombo-overlay');
+  const old    = document.getElementById('tombo-overlay');
   if (old) old.remove();
-  if (!S.tombo) return;
+  const edMark = document.getElementById('edition-mark');
+  if (!S.tombo) {
+    if (edMark) edMark.style.display = 'none';
+    return;
+  }
+  if (edMark) edMark.style.display = '';
 
   const frame = document.getElementById('paper-frame');
   if (frame.style.display === 'none' || !frame.offsetWidth) return;
@@ -1405,63 +1411,46 @@ function renderTombo() {
     return el;
   };
 
-  const col = 'rgba(26,26,26,0.52)';
-  const sw  = 0.65;
-  const arm = 13;   // アームの長さ
-  const bld = 5;    // 塗り足し幅 (≈3mm)
+  const col   = 'rgba(26,26,26,0.55)';
+  const sw    = 0.7;
+  const arm   = 13;   // アームの長さ
+  const bld   = 5;    // 塗り足し幅 (≈3mm)
+  const notch = 3;    // 切り欠き: コーナー点からアーム開始までの空白
 
   // ── 角トンボ: 二重L字 (日本式) ──
-  // 内側L: 仕上がり線のコーナーから各アームを余白方向へ伸ばす
-  // 外側L: 各アームを塗り足し幅(bld)だけ平行にオフセット (対角ではなく垂直方向に)
-  //   内H → 外Hはy方向にbld, 内V → 外VはX方向にbld — これで正しい平行二重L字になる
+  // トンボは角に直接つく。各アームはコーナー点から notch px 離れて始まる (切り欠き)。
+  // 内L(仕上がり線) と 外L(塗り足し線) は平行 — 外Lは内Lの各アームを bld px 垂直にオフセット。
   [
     { x: tx,      y: ty,      dx: -1, dy: -1 },  // TL
     { x: tx + tw, y: ty,      dx:  1, dy: -1 },  // TR
     { x: tx,      y: ty + th, dx: -1, dy:  1 },  // BL
     { x: tx + tw, y: ty + th, dx:  1, dy:  1 },  // BR
   ].forEach(({ x, y, dx, dy }) => {
-    // 内側L (仕上がり線)
-    svg.appendChild(mk('line', { x1: x,          y1: y,          x2: x + dx*arm, y2: y,          stroke: col, 'stroke-width': sw }));
-    svg.appendChild(mk('line', { x1: x,          y1: y,          x2: x,          y2: y + dy*arm, stroke: col, 'stroke-width': sw }));
-    // 外側L (塗り足し線): 各アームを垂直方向にbldだけ平行移動 — 対角オフセットは誤り
-    svg.appendChild(mk('line', { x1: x,          y1: y + dy*bld, x2: x + dx*arm, y2: y + dy*bld, stroke: col, 'stroke-width': sw }));
-    svg.appendChild(mk('line', { x1: x + dx*bld, y1: y,          x2: x + dx*bld, y2: y + dy*arm, stroke: col, 'stroke-width': sw }));
+    const n = notch;
+    // 内側L (仕上がり線): notch分空けてアーム開始
+    svg.appendChild(mk('line', { x1: x + dx*n,        y1: y,          x2: x + dx*(n+arm), y2: y,          stroke: col, 'stroke-width': sw }));
+    svg.appendChild(mk('line', { x1: x,               y1: y + dy*n,   x2: x,              y2: y + dy*(n+arm), stroke: col, 'stroke-width': sw }));
+    // 外側L (塗り足し線): 各アームをそれぞれ垂直方向に bld だけ平行移動
+    svg.appendChild(mk('line', { x1: x + dx*n,        y1: y + dy*bld, x2: x + dx*(n+arm), y2: y + dy*bld,     stroke: col, 'stroke-width': sw }));
+    svg.appendChild(mk('line', { x1: x + dx*bld,      y1: y + dy*n,   x2: x + dx*bld,     y2: y + dy*(n+arm), stroke: col, 'stroke-width': sw }));
   });
 
   // ── センタートンボ + 見当マーク (⊕) ──
-  // 各辺中央: 十字線 + 見当サークル。インク色×版ズレを重ねて色ズレを可視化。
-  const cArm = 13;
+  // 全マーク同色 (トンボ・見当は印刷上同じ版で刷られる)
+  const cArm = 12;
   const regR = 5;
   const mOff = Math.max(8, Math.round(pad * 0.5));
-  const centers = [
+  [
     { cx: tx + tw/2, cy: ty,       ox: 0,     oy: -mOff },
     { cx: tx + tw/2, cy: ty + th,  ox: 0,     oy:  mOff },
     { cx: tx,        cy: ty + th/2, ox: -mOff, oy: 0    },
     { cx: tx + tw,   cy: ty + th/2, ox:  mOff, oy: 0    },
-  ];
-
-  // 版ズレがある場合: 各インク色で⊕を描いて色ズレを可視化 (リソの見当確認マークを再現)
-  if (S.misregDirs && S.inks && S.inks.length > 1) {
-    centers.forEach(({ cx, cy, ox, oy }) => {
-      const bx = cx + ox, by = cy + oy;
-      S.inks.forEach((inkHex, i) => {
-        const dir = S.misregDirs[i] || { baseX: 0, baseY: 0, nx: 0, ny: 0 };
-        const mx  = bx + dir.baseX + dir.nx * S.misreg;
-        const my  = by + dir.baseY + dir.ny * S.misreg;
-        svg.appendChild(mk('line',   { x1: mx - cArm, y1: my,        x2: mx + cArm, y2: my,        stroke: inkHex, 'stroke-width': 0.9, opacity: 0.75 }));
-        svg.appendChild(mk('line',   { x1: mx,        y1: my - cArm, x2: mx,        y2: my + cArm, stroke: inkHex, 'stroke-width': 0.9, opacity: 0.75 }));
-        svg.appendChild(mk('circle', { cx: mx, cy: my, r: regR, stroke: inkHex, 'stroke-width': 0.9, fill: 'none', opacity: 0.75 }));
-      });
-    });
-  } else {
-    // 版ズレなし or 単色: 黒のみ
-    centers.forEach(({ cx, cy, ox, oy }) => {
-      const mx = cx + ox, my = cy + oy;
-      svg.appendChild(mk('line',   { x1: mx - cArm, y1: my,        x2: mx + cArm, y2: my,        stroke: col, 'stroke-width': sw }));
-      svg.appendChild(mk('line',   { x1: mx,        y1: my - cArm, x2: mx,        y2: my + cArm, stroke: col, 'stroke-width': sw }));
-      svg.appendChild(mk('circle', { cx: mx, cy: my, r: regR, stroke: col, 'stroke-width': sw, fill: 'none' }));
-    });
-  }
+  ].forEach(({ cx, cy, ox, oy }) => {
+    const mx = cx + ox, my = cy + oy;
+    svg.appendChild(mk('line',   { x1: mx - cArm, y1: my,        x2: mx + cArm, y2: my,        stroke: col, 'stroke-width': sw }));
+    svg.appendChild(mk('line',   { x1: mx,        y1: my - cArm, x2: mx,        y2: my + cArm, stroke: col, 'stroke-width': sw }));
+    svg.appendChild(mk('circle', { cx: mx, cy: my, r: regR, stroke: col, 'stroke-width': sw, fill: 'none' }));
+  });
 
   frame.appendChild(svg);
 }
@@ -1694,10 +1683,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('paper-frame').style.display  = 'block';
     document.getElementById('reupload-btn').style.display = 'block';
     document.getElementById('save-btn').disabled          = false;
-    document.getElementById('edition-mark').textContent   =
-      'ED. ' + (Math.floor(Math.random() * 49) + 1) + '/50  ·  RISO PRESS';
+    const edMark2 = document.getElementById('edition-mark');
+    edMark2.textContent   = 'ED. ' + (Math.floor(Math.random() * 49) + 1) + '/50  ·  RISO PRESS';
+    edMark2.style.display = 'none';  // hidden until tombo is on
     render();
-    renderTombo();
   });
 });
 </script>
