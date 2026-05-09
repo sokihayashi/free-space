@@ -644,15 +644,15 @@ const PRESETS = [
   { name: 'CMYK',                    inks: CMYK_INKS,                                              mode: 'cmyk'               },
   // ── 2-INK ──
   // ink[0]=影板, ink[last]=ハイライト板。崩壊系は異物色を影(ink[0])に。
-  { name: '真面目なギャル',          inks: ['#69D84F', '#1a1a1a'],                                  mode: 'shadows-highlights' }, // 影が蛍光緑に侵食される
+  { name: '真面目なギャル',          inks: ['#69D84F', '#1a1a1a'],                                  mode: 'shadows-highlights' }, // 制服の影が蛍光緑に侵食される
   { name: '正義と割り勘',            inks: ['#2B6342', '#FF8C7A'],                                  mode: 'shadows-highlights' }, // 深緑の暗部、温かいサーモンが浮上
-  { name: '警備員とヴィーナス',      inks: ['#FF5B1D', '#444444'],                                  mode: 'shadows-highlights' }, // 影から燃えるオレンジ、表面は制服グレー
-  { name: '赤電話',                  inks: ['#E51400', '#0038A7'],                                  mode: 'shadows-highlights' }, // 赤が根底、ネイビーが覆う
-  { name: '口紅',                    inks: ['#5A2D82', '#FF8C7A'],                                  mode: 'shadows-highlights' }, // 深い紫の影、サーモンが唇に浮かぶ
-  { name: '紫式部',                  inks: ['#444444', '#BEB3D4'],                                  mode: 'shadows-highlights' }, // 無彩色の影から淡いラベンダーが立ち上がる
-  { name: '黄信号',                  inks: ['#B6AD1C', '#E51400'],                                  mode: 'channels'           },
-  { name: '若旦那',                  inks: ['#00ABAC', '#BE6B3B'],                                  mode: 'shadows-highlights' }, // 冷たいティールの底、銅が照り返す
-  { name: '水泳部',                  inks: ['#2B6342', '#9AC7E8'],                                  mode: 'shadows-highlights' }, // 深い森の底から水面の空色
+  { name: '警備員とヴィーナス',      inks: ['#FF8C7A', '#444444'],                                  mode: 'shadows-highlights' }, // ヴィーナスの肌色(サーモン)が暗部に潜む、表面は制服グレー
+  { name: '赤電話',                  inks: ['#E51400', '#C5BEB4'],                                  mode: 'shadows-highlights' }, // 赤電話がコンクリートの街頭に溶ける
+  { name: '口紅',                    inks: ['#5A2D82', '#FF8C7A'],                                  mode: 'shadows-highlights' }, // 深い紫の影から、サーモンが唇に浮かぶ
+  { name: '紫式部',                  inks: ['#5A2D82', '#BEB3D4'],                                  mode: 'shadows-highlights' }, // 紫=名前そのもの。深い紫から薄いラベンダーへ
+  { name: '黄信号',                  inks: ['#FFE800', '#FF6C2F'],                                  mode: 'channels'           }, // 黄→橙。信号の黄色から橙の警告へ
+  { name: '若旦那',                  inks: ['#0038A7', '#BE6B3B'],                                  mode: 'shadows-highlights' }, // 藍染めの暗部、漆器の銅色が照り返す
+  { name: '水泳部',                  inks: ['#0038A7', '#35C4C1'],                                  mode: 'shadows-highlights' }, // プールの深い紺、水面のアクア
   // ── 3-INK ──
   { name: '総務部の反乱',            inks: ['#F15060', '#C5BEB4', '#0038A7'],                      mode: 'shadows-highlights' }, // 反乱は影に潜む。赤が暗部を占領、表層だけ冷静なネイビー
   { name: 'PTA最後の刺客',           inks: ['#FF48B0', '#B6AD1C', '#1a1a1a'],                      mode: 'shadows-highlights' }, // 会議室の暗がりから蛍光ピンクが滲む、崩壊の予感
@@ -661,16 +661,16 @@ const PRESETS = [
   { name: '占い師の確定申告',        inks: ['#765BA7', '#FF6C2F', '#C5BEB4'],                      mode: 'shadows-highlights' }, // 紫の神秘が影を支配、オレンジが中間、表面は事務的なストーン
   { name: 'ミス非常階段',            inks: ['#E51400', '#444444', '#9AC7E8'],                      mode: 'shadows-highlights' }, // 危険の赤が暗部に潜伏、表層に空の青
   { name: '赤提灯',                  inks: ['#CF2854', '#FF6C2F', '#B6AD1C'],                      mode: 'shadows-highlights' }, // クリムゾンの核、オレンジの炎、オリーブの煙
-  { name: '団地妻',                  inks: ['#69D84F', '#914E72', '#C5BEB4'],                      mode: 'shadows-highlights' }, // 廊下の暗がりから蛍光緑が滲出す
+  { name: '団地妻',                  inks: ['#D461B0', '#914E72', '#BEB3D4'],                      mode: 'shadows-highlights' }, // 妖艶なオーキッドが暗部に潜む→バーガンディ→薄いラベンダーの表層
   { name: '風邪の日のピアニスト',    inks: ['#FF8C7A', '#BEB3D4', '#0038A7'],                      mode: 'shadows-highlights' }, // 熱っぽいサーモンが影に篭る、ネイビーが表層で冷ます
   { name: 'ラムネ瓶',                inks: ['#69D84F', '#62A9E4', '#C5BEB4'],                      mode: 'shadows-highlights' }, // 瓶底に蛍光緑、コーンフラワーが中間、表面はストーン
-  { name: 'クリームソーダ',          inks: ['#00ABAC', '#FFE800', '#F4AEBF'],                      mode: 'shadows-highlights' }, // ティールのシロップが底、黄が泡、ピンクが泡立ち
+  { name: 'クリームソーダ',          inks: ['#69D84F', '#F4AEBF', '#FFE800'],                      mode: 'shadows-highlights' }, // メロンソーダの蛍光緑→バニラクリームのピンク→レモンの黄
   { name: 'レーダー姉妹',            inks: ['#444444', '#69D84F', '#62A9E4'],                      mode: 'channels'           },
   { name: 'レモンだけが知っている',  inks: ['#FFE800', '#5A2D82', '#82D8D5'],                      mode: 'channels'           },
   { name: 'パフェの副作用',          inks: ['#7B3F2A', '#FF48B0', '#9AC7E8'],                      mode: 'channels'           },
   // ── 4-INK ──
   { name: '縄文マダムの潜水訓練',    inks: ['#69D84F', '#7B3F2A', '#0038A7', '#C5BEB4'],          mode: 'shadows-highlights' }, // 地底から蛍光緑、土、海、表面は砂
-  { name: 'ミラーボール神社',        inks: ['#AC8B2C', '#FF48B0', '#444444', '#35C4C1'],          mode: 'shadows-highlights' }, // 金粉が暗がりに舞う、蛍光ピンクが中間、参道は灰、鳥居はアクア
+  { name: 'ミラーボール神社',        inks: ['#E51400', '#AC8B2C', '#FF48B0', '#35C4C1'],          mode: 'shadows-highlights' }, // 朱の鳥居が影を支配→金の灯籠→蛍光ピンクのミラーボール→アクアの電飾
   { name: '五分刈りの旦那',          inks: ['#E51400', '#7B3F2A', '#FFE800', '#98A589'],          mode: 'shadows-highlights' }, // スカーレットが根っこ、土の茶、炎の黄、草のカーキ
 ];
 
@@ -705,7 +705,7 @@ const S = {
   regmark:     false,
 };
 
-const MAX_DIM = 1000;
+const MAX_DIM = 650;
 let renderDebounce = null;
 let renderLock     = false;
 let renderQueued   = false;
@@ -954,7 +954,7 @@ async function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blur
 
   // Pre-build row list so we can batch without recomputing bounds
   const gyStart = -diag, gyEnd = diag + cellSize;
-  const BATCH = 20;   // yield every N grid rows — larger = faster, scan bar still smooth
+  const BATCH = 50;   // yield every N grid rows — larger = faster, scan bar still smooth
   dctx.beginPath();
   let rowIdx = 0;
   for (let gy = gyStart; gy < gyEnd; gy += cellSize) {
@@ -1149,7 +1149,7 @@ function scheduleRender() {
 // ─────────────────────────────────────────────────────────────
 // IMAGE LOADING
 // ─────────────────────────────────────────────────────────────
-const MIN_DIM = 800;   // upscale small images: more detail in dot density map
+const MIN_DIM = 480;   // upscale small images: more detail in dot density map
 
 function loadImageElement(img) {
   let sw = img.naturalWidth, sh = img.naturalHeight;
