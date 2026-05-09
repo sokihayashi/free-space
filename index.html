@@ -644,10 +644,10 @@ const PRESETS = [
   { name: 'CMYK',                    inks: CMYK_INKS,                                              mode: 'cmyk'               },
   // ── 2-INK ──
   // ink[0]=影板, ink[last]=ハイライト板。崩壊系は異物色を影(ink[0])に。
-  { name: '真面目なギャル',          inks: ['#69D84F', '#1a1a1a'],                                  mode: 'shadows-highlights' }, // 制服の影が蛍光緑に侵食される
+  { name: '真面目なギャル',          inks: ['#FF48B0', '#1a1a1a'],                                  mode: 'shadows-highlights' }, // 蛍光ピンクが制服の影に潜む、表面は真面目な黒
   { name: '正義と割り勘',            inks: ['#2B6342', '#FF8C7A'],                                  mode: 'shadows-highlights' }, // 深緑の暗部、温かいサーモンが浮上
-  { name: '警備員とヴィーナス',      inks: ['#FF8C7A', '#444444'],                                  mode: 'shadows-highlights' }, // ヴィーナスの肌色(サーモン)が暗部に潜む、表面は制服グレー
-  { name: '赤電話',                  inks: ['#E51400', '#C5BEB4'],                                  mode: 'shadows-highlights' }, // 赤電話がコンクリートの街頭に溶ける
+  { name: '警備員とヴィーナス',      inks: ['#F4AEBF', '#444444'],                                  mode: 'shadows-highlights' }, // 大理石のような淡いピンク（ヴィーナス）が暗部に、表面は制服グレー
+  { name: '赤電話',                  inks: ['#CF2854', '#E51400'],                                  mode: 'shadows-highlights' }, // 深いクリムゾン×スカーレット、画面全体が赤に染まる
   { name: '口紅',                    inks: ['#5A2D82', '#FF8C7A'],                                  mode: 'shadows-highlights' }, // 深い紫の影から、サーモンが唇に浮かぶ
   { name: '紫式部',                  inks: ['#5A2D82', '#BEB3D4'],                                  mode: 'shadows-highlights' }, // 紫=名前そのもの。深い紫から薄いラベンダーへ
   { name: '黄信号',                  inks: ['#FFE800', '#FF6C2F'],                                  mode: 'channels'           }, // 黄→橙。信号の黄色から橙の警告へ
@@ -661,8 +661,8 @@ const PRESETS = [
   { name: '占い師の確定申告',        inks: ['#765BA7', '#FF6C2F', '#C5BEB4'],                      mode: 'shadows-highlights' }, // 紫の神秘が影を支配、オレンジが中間、表面は事務的なストーン
   { name: 'ミス非常階段',            inks: ['#E51400', '#444444', '#9AC7E8'],                      mode: 'shadows-highlights' }, // 危険の赤が暗部に潜伏、表層に空の青
   { name: '赤提灯',                  inks: ['#CF2854', '#FF6C2F', '#B6AD1C'],                      mode: 'shadows-highlights' }, // クリムゾンの核、オレンジの炎、オリーブの煙
-  { name: '団地妻',                  inks: ['#D461B0', '#914E72', '#BEB3D4'],                      mode: 'shadows-highlights' }, // 妖艶なオーキッドが暗部に潜む→バーガンディ→薄いラベンダーの表層
-  { name: '風邪の日のピアニスト',    inks: ['#FF8C7A', '#BEB3D4', '#0038A7'],                      mode: 'shadows-highlights' }, // 熱っぽいサーモンが影に篭る、ネイビーが表層で冷ます
+  { name: '団地妻',                  inks: ['#CF2854', '#D461B0', '#BEB3D4'],                      mode: 'shadows-highlights' }, // 深いクリムゾンが妖艶に暗部を占める→オーキッド→淡いラベンダー
+  { name: '風邪の日のピアニスト',    inks: ['#C5BEB4', '#BEB3D4', '#444444'],                      mode: 'shadows-highlights' }, // 彩度ゼロ近く。ストーン→ラベンダー→ダークグレー。鍵盤と病床の色
   { name: 'ラムネ瓶',                inks: ['#69D84F', '#62A9E4', '#C5BEB4'],                      mode: 'shadows-highlights' }, // 瓶底に蛍光緑、コーンフラワーが中間、表面はストーン
   { name: 'クリームソーダ',          inks: ['#69D84F', '#F4AEBF', '#FFE800'],                      mode: 'shadows-highlights' }, // メロンソーダの蛍光緑→バニラクリームのピンク→レモンの黄
   { name: 'レーダー姉妹',            inks: ['#444444', '#69D84F', '#62A9E4'],                      mode: 'channels'           },
@@ -670,8 +670,8 @@ const PRESETS = [
   { name: 'パフェの副作用',          inks: ['#7B3F2A', '#FF48B0', '#9AC7E8'],                      mode: 'channels'           },
   // ── 4-INK ──
   { name: '縄文マダムの潜水訓練',    inks: ['#69D84F', '#7B3F2A', '#0038A7', '#C5BEB4'],          mode: 'shadows-highlights' }, // 地底から蛍光緑、土、海、表面は砂
-  { name: 'ミラーボール神社',        inks: ['#E51400', '#AC8B2C', '#FF48B0', '#35C4C1'],          mode: 'shadows-highlights' }, // 朱の鳥居が影を支配→金の灯籠→蛍光ピンクのミラーボール→アクアの電飾
-  { name: '五分刈りの旦那',          inks: ['#E51400', '#7B3F2A', '#FFE800', '#98A589'],          mode: 'shadows-highlights' }, // スカーレットが根っこ、土の茶、炎の黄、草のカーキ
+  { name: 'ミラーボール神社',        inks: ['#E51400', '#AC8B2C', '#FF48B0', '#765BA7'],          mode: 'shadows-highlights' }, // 朱の鳥居→金の灯籠→蛍光ピンクのミラーボール→パープルの夜気
+  { name: '五分刈りの旦那',          inks: ['#444444', '#7B3F2A', '#B6AD1C', '#98A589'],          mode: 'shadows-highlights' }, // 渋い。ダークグレー→茶→オリーブ→カーキ、全部くすみ
 ];
 
 // ─────────────────────────────────────────────────────────────
