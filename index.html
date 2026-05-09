@@ -435,7 +435,7 @@
     <div class="control-section">
       <div class="section-label">Ink Layers</div>
       <div class="ink-slots" id="ink-slots"></div>
-      <button class="add-ink-btn" id="add-ink-btn">+ Add Third Ink</button>
+      <button class="add-ink-btn" id="add-ink-btn">+ Add Ink</button>
     </div>
 
     <div class="control-section">
@@ -531,24 +531,27 @@ const INK_MAP = Object.fromEntries(RISO_INKS.map(i => [i.hex.toLowerCase(), i]))
 // ─────────────────────────────────────────────────────────────
 // PRESETS
 // ─────────────────────────────────────────────────────────────
+// Ink order for shadows-highlights: [darkest → lightest]
+// Rendering reverses this to follow real Riso print order: light inks first, dark last.
 const PRESETS = [
-  // ── 2-INK ──
-  { name: 'TOKYO NIGHT',  inks: ['#3255A4', '#FF48B0'],            mode: 'channels'           },
-  { name: 'SUMMER ZINE',  inks: ['#F15060', '#FFE800'],            mode: 'channels'           },
-  { name: 'LATE NIGHT',   inks: ['#1a1a1a', '#00ABAC'],            mode: 'shadows-highlights' },
-  { name: 'BOTANICAL',    inks: ['#914E72', '#00A95C'],            mode: 'channels'           },
-  { name: 'SUNSET',       inks: ['#FF6C2F', '#765BA7'],            mode: 'warm-cool'          },
-  { name: 'NEON CITY',    inks: ['#FF48B0', '#00ABAC'],            mode: 'warm-cool'          },
-  { name: 'HARVEST',      inks: ['#FF6C2F', '#914E72'],            mode: 'channels'           },
-  { name: 'GHOST',        inks: ['#949494', '#3255A4'],            mode: 'shadows-highlights' },
-  { name: 'MOONRISE',     inks: ['#765BA7', '#82D8D5'],            mode: 'shadows-highlights' },
-  // ── 3-INK: shadow / midtone / highlight order ──
+  // ── 3-INK (default range) ──
   { name: 'PRINT SHOP',   inks: ['#1a1a1a', '#F15060', '#FFE800'], mode: 'shadows-highlights' },
   { name: 'FIRE',         inks: ['#914E72', '#FF6C2F', '#FFE800'], mode: 'shadows-highlights' },
   { name: 'DEEP OCEAN',   inks: ['#3255A4', '#00ABAC', '#82D8D5'], mode: 'shadows-highlights' },
   { name: 'DUSK',         inks: ['#765BA7', '#FF6C2F', '#FFE800'], mode: 'shadows-highlights' },
+  { name: 'BOTANICAL',    inks: ['#00A95C', '#914E72', '#FFE800'], mode: 'shadows-highlights' },
   { name: 'RISOTTO',      inks: ['#FF48B0', '#FFE800', '#0078BF'], mode: 'channels'           },
   { name: 'CARNIVAL',     inks: ['#FF48B0', '#69D84F', '#FFE800'], mode: 'channels'           },
+  // ── 4-INK ──
+  { name: 'CHROMATIC',    inks: ['#1a1a1a', '#0078BF', '#FF48B0', '#FFE800'], mode: 'shadows-highlights' },
+  { name: 'SPECTRUM',     inks: ['#914E72', '#3255A4', '#00ABAC', '#82D8D5'], mode: 'shadows-highlights' },
+  { name: 'NIGHTFALL',    inks: ['#1a1a1a', '#765BA7', '#FF48B0', '#FFE800'], mode: 'shadows-highlights' },
+  { name: 'AUTUMN',       inks: ['#914E72', '#FF6C2F', '#FFE800', '#69D84F'], mode: 'shadows-highlights' },
+  // ── 2-INK ──
+  { name: 'TOKYO NIGHT',  inks: ['#3255A4', '#FF48B0'],            mode: 'channels'           },
+  { name: 'LATE NIGHT',   inks: ['#1a1a1a', '#00ABAC'],            mode: 'shadows-highlights' },
+  { name: 'SUNSET',       inks: ['#FF6C2F', '#765BA7'],            mode: 'warm-cool'          },
+  { name: 'MOONRISE',     inks: ['#765BA7', '#82D8D5'],            mode: 'shadows-highlights' },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -568,8 +571,8 @@ const S = {
   imageData:   null,
   imgW:        0,
   imgH:        0,
-  inks:        ['#3255A4', '#FF48B0'],
-  splitMode:   'channels',
+  inks:        ['#1a1a1a', '#F15060', '#FFE800'],
+  splitMode:   'shadows-highlights',
   cellSize:    4,
   misreg:      0.5,
   blurPx:      0.1,
@@ -717,34 +720,49 @@ function createPlates(imgData, w, h, mode, inkCount) {
     return [p1, p2, p3];
   }
 
-  // shadows-highlights (default)
-  // Plate 1: shadow ink — dense at dark, fades at light (1-t)^0.9
-  // Plate 2: color ink  — sin(t·π)^0.65: peaks at midtone, ZERO at both black
-  //   and white. This keeps paper visible in near-white areas (white background
-  //   images show paper instead of a sea of ink 2 dots).
-  const p1 = new Uint8Array(n);
-  const p2 = new Uint8Array(n);
-  for (let i = 0; i < n; i++) {
-    const t = lum[i] / 255;
-    p1[i] = Math.round(Math.pow(1 - t, 0.9) * 255);
-    p2[i] = Math.round(Math.pow(Math.sin(t * Math.PI), 0.65) * 255);
-  }
-  if (inkCount === 2) return [p1, p2];
+  // ── SHADOWS-HIGHLIGHTS ──
+  // Plate arrays are ordered [shadow→highlight] matching preset ink order [dark→light].
+  // render() reverses this for compositing: light inks printed first (as in real Riso),
+  // dark/shadow ink printed last so it anchors the print — authentic print-pass order.
+  {
+    const p1 = new Uint8Array(n); // shadow: dark areas
+    const p2 = new Uint8Array(n); // midtone
+    for (let i = 0; i < n; i++) {
+      const t = lum[i] / 255;
+      // Shadow: sharp falloff — dominant in darks, near-zero past midgray
+      p1[i] = Math.round(Math.pow(Math.max(0, 1 - t * 1.9), 0.65) * 255);
+      // Midtone: sin bell, zero at both extremes, peak at t=0.5
+      p2[i] = Math.round(Math.pow(Math.sin(t * Math.PI), 0.5) * 255);
+    }
+    if (inkCount === 2) return [p1, p2];
 
-  // 3-ink trisection — shadow / midtone / highlight, each covering a distinct
-  // tonal zone. Ink order in preset: [shadow, midtone, highlight].
-  //
-  //  plate1 already = (1-t)^0.9   →  dense at black, fades by midgray
-  //  plate2 already = sin(t·π)^0.65 →  midtone bell, zero at both extremes
-  //  plate3 (new)   = sin(norm·π)^0.7 where norm maps t∈[0.4,1] → [0,1]
-  //                   peaks at t≈0.7, zero at t=0.4 and t=1 (paper shows in whites)
-  const p3 = new Uint8Array(n);
-  for (let i = 0; i < n; i++) {
-    const t    = lum[i] / 255;
-    const norm = Math.max(0, Math.min(1, (t - 0.4) / 0.6));
-    p3[i] = Math.round(Math.pow(Math.sin(norm * Math.PI), 0.7) * 255);
+    const p3 = new Uint8Array(n); // highlight: upper mid → light, zero at white
+    for (let i = 0; i < n; i++) {
+      const t    = lum[i] / 255;
+      const norm = Math.max(0, Math.min(1, (t - 0.38) / 0.62));
+      p3[i] = Math.round(Math.pow(Math.sin(norm * Math.PI), 0.65) * 255);
+    }
+    if (inkCount === 3) return [p1, p2, p3];
+
+    // 4-ink quadrisection: deep-shadow / shadow-mid / mid-highlight / highlight
+    // Each bell covers ~60% of the tonal range with ~30% overlap zone.
+    const p4 = new Uint8Array(n); // 4th plate = bright highlight
+    for (let i = 0; i < n; i++) {
+      const t = lum[i] / 255;
+      // Recompute with tighter bands for 4-ink
+      // deep-shadow: t=0→0.35
+      p1[i] = Math.round(Math.pow(Math.max(0, 1 - t * 2.8), 0.6) * 255);
+      // shadow-mid: peaks at t=0.32, zero at 0 and 0.65
+      p2[i] = Math.round(Math.pow(Math.max(0, Math.sin(Math.min(1, t / 0.65) * Math.PI)), 0.55) * 255);
+      // mid-highlight: peaks at t=0.65, zero at 0.3 and 1.0
+      const n3 = Math.max(0, Math.min(1, (t - 0.3) / 0.7));
+      p3[i] = Math.round(Math.pow(Math.sin(n3 * Math.PI), 0.55) * 255);
+      // bright highlight: peaks at t=0.72, zero below 0.45 and at 1.0
+      const n4 = Math.max(0, Math.min(1, (t - 0.45) / 0.55));
+      p4[i] = Math.round(Math.pow(Math.sin(n4 * Math.PI), 0.65) * 255);
+    }
+    return [p1, p2, p3, p4];
   }
-  return [p1, p2, p3];
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -938,17 +956,26 @@ async function render() {
   ctx.fillStyle = '#F5F0E8';
   ctx.fillRect(0, 0, cvs.width, cvs.height);
 
+  // Riso print order: light inks first, dark inks last (dark anchors the print).
+  // For shadows-highlights mode: preset ink order is [dark→light], so reverse both
+  // plates and inks for rendering. For channels/warm-cool: natural order is fine.
+  const useInks   = S.splitMode === 'shadows-highlights'
+    ? [...S.inks].reverse()
+    : [...S.inks];
+  const usePlates = S.splitMode === 'shadows-highlights'
+    ? [...plates].reverse()
+    : plates;
+
   const layers = [];
-  for (let i = 0; i < S.inks.length; i++) {
-    const pct = Math.round(12 + (i / S.inks.length) * 74);
-    const info = INK_MAP[S.inks[i].toLowerCase()] || { angle: [45, 15, 75][i % 3], name: 'Ink' };
+  for (let i = 0; i < useInks.length; i++) {
+    const pct  = Math.round(12 + (i / useInks.length) * 74);
+    const ink  = useInks[i];
+    const info = INK_MAP[ink.toLowerCase()] || { angle: [45, 15, 75][i % 3], name: 'Ink' };
     setOverlayState(pct, `PRINTING ${(info.name || 'INK').toUpperCase()}`);
     await tick();
-    // async halftone: yields every BATCH rows so scan bar stays animated
-    layers.push(await createHalftoneLayer(plates[i] || plates[0], S.imgW, S.imgH, S.cellSize, info.angle, S.inks[i], S.blurPx));
+    layers.push(await createHalftoneLayer(usePlates[i] || usePlates[0], S.imgW, S.imgH, S.cellSize, info.angle, ink, S.blurPx));
     compositeInksOnly(layers);
-    // Brief pause — lets the viewer see each plate layer before the next prints
-    if (i < S.inks.length - 1) await new Promise(r => setTimeout(r, 140));
+    if (i < useInks.length - 1) await new Promise(r => setTimeout(r, 140));
   }
 
   setOverlayState(94, 'FINISHING…');
@@ -1069,7 +1096,7 @@ function renderInkSlots() {
     slots.appendChild(row);
   });
 
-  addBtn.style.display = S.inks.length >= 3 ? 'none' : 'block';
+  addBtn.style.display = S.inks.length >= 4 ? 'none' : 'block';
 }
 
 function buildPresets() {
@@ -1212,7 +1239,7 @@ function setup() {
   });
 
   document.getElementById('add-ink-btn').addEventListener('click', () => {
-    if (S.inks.length >= 3) return;
+    if (S.inks.length >= 4) return;
     const used = new Set(S.inks.map(h => h.toLowerCase()));
     const next = RISO_INKS.find(ink => !used.has(ink.hex.toLowerCase()));
     S.inks.push(next ? next.hex : RISO_INKS[3].hex);
