@@ -207,7 +207,8 @@
     }
 
     /* Ink slots */
-    .ink-slots { display: flex; flex-direction: column; gap: 9px; }
+    .ink-slots { display: flex; flex-direction: column; gap: 12px; }
+    .ink-slot  { display: flex; flex-direction: column; gap: 0; }
     .ink-row   { display: flex; align-items: center; gap: 8px; }
     .ink-index { font-family: var(--font); font-size: 10px; font-weight: 400; color: var(--border); width: 12px; flex-shrink: 0; }
     .ink-swatch {
@@ -388,16 +389,73 @@
     }
     .cmyk-btn:hover { border-color: var(--ink); color: var(--ink); }
     .cmyk-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); border-style: solid; }
-    .dot-mode-row { display: flex; gap: 6px; margin-top: 8px; }
-    .dot-mode-btn {
-      flex: 1; font-family: var(--font); font-size: 10px; font-weight: 500;
-      letter-spacing: 0.08em; text-transform: uppercase;
-      padding: 5px 8px; border-radius: 100px;
-      border: 1px solid var(--border); background: transparent;
-      color: var(--ink-mid); cursor: pointer; transition: all 0.15s;
+    /* 線数 chips — global default */
+    .lpi-chips-wrap { margin-top: 10px; }
+    .lpi-chips-label {
+      font-family: var(--font-display); font-size: 9px; font-weight: 600;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      color: var(--ink-light); margin-bottom: 6px;
     }
-    .dot-mode-btn:hover { border-color: var(--ink); color: var(--ink); }
-    .dot-mode-btn.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .lpi-chips { display: flex; gap: 6px; }
+    .lpi-chip {
+      flex: 1; padding: 6px 8px; border-radius: 6px;
+      border: 1px solid var(--border); background: transparent;
+      cursor: pointer; transition: all 0.13s;
+      display: flex; flex-direction: column; align-items: center; gap: 1px;
+    }
+    .lpi-chip-main {
+      font-family: var(--font-jp); font-size: 12px; font-weight: 600;
+      color: var(--ink-mid);
+    }
+    .lpi-chip-sub {
+      font-family: var(--font-display); font-size: 8px; font-weight: 500;
+      letter-spacing: 0.05em; color: var(--ink-light);
+    }
+    .lpi-chip:hover { border-color: var(--ink-mid); }
+    .lpi-chip.active { background: var(--ink); border-color: var(--ink); }
+    .lpi-chip.active .lpi-chip-main,
+    .lpi-chip.active .lpi-chip-sub { color: var(--paper); }
+
+    /* Per-ink detail row — line frequency + flow */
+    .ink-detail {
+      display: flex; align-items: center; gap: 9px;
+      padding: 5px 0 2px 24px;   /* aligned under the swatch */
+    }
+    .ink-lpi-chips { display: flex; gap: 3px; }
+    .ink-lpi-chip {
+      width: 24px; height: 22px; padding: 0;
+      border: 1px solid var(--border); background: transparent;
+      border-radius: 5px; cursor: pointer;
+      font-family: var(--font-jp); font-size: 11px; font-weight: 500;
+      color: var(--ink-mid); transition: all 0.12s;
+    }
+    .ink-lpi-chip:hover { border-color: var(--ink-mid); }
+    .ink-lpi-chip.active { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+    .ink-flow {
+      flex: 1; display: flex; align-items: center; gap: 6px;
+      min-width: 0;
+    }
+    .ink-flow-label {
+      font-family: var(--font-display); font-size: 8.5px; font-weight: 600;
+      letter-spacing: 0.06em; color: var(--ink-light); flex-shrink: 0;
+    }
+    .ink-flow-slider {
+      flex: 1; min-width: 32px; height: 2px;
+      background: var(--border); border-radius: 2px;
+      outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;
+    }
+    .ink-flow-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 11px; height: 11px;
+      background: var(--ink); border-radius: 50%; cursor: pointer;
+    }
+    .ink-flow-slider::-moz-range-thumb {
+      width: 11px; height: 11px; background: var(--ink);
+      border: none; border-radius: 50%; cursor: pointer;
+    }
+    .ink-flow-val {
+      font-family: var(--font-display); font-size: 8.5px; font-weight: 600;
+      color: var(--ink-mid); min-width: 26px; text-align: right; flex-shrink: 0;
+    }
 
     /* Advanced settings collapsible */
     .advanced-details { border-top: 1px solid var(--border); }
@@ -553,9 +611,9 @@
     <div class="control-section">
       <div class="section-label">印刷の質感</div>
       <div class="feel-chips" id="feel-chips"></div>
-      <div class="dot-mode-row">
-        <button class="dot-mode-btn active" id="dot-mode-halftone">ドット</button>
-        <button class="dot-mode-btn" id="dot-mode-solid">ベタ</button>
+      <div class="lpi-chips-wrap">
+        <div class="lpi-chips-label">線数（全インク）</div>
+        <div class="lpi-chips" id="lpi-chips"></div>
       </div>
     </div>
 
@@ -577,14 +635,6 @@
 
       <div class="control-section">
         <div class="section-label">プリント設定</div>
-
-        <div class="slider-wrap">
-          <div class="slider-header">
-            <span class="slider-label">ドットサイズ</span>
-            <span class="slider-value" id="cell-val">4</span>
-          </div>
-          <input type="range" id="cell-size" min="2" max="14" step="1" value="4">
-        </div>
 
         <div class="slider-wrap">
           <div class="slider-header">
@@ -714,11 +764,22 @@ const PRESETS = [
 // PRINT FEEL — experiential presets that set multiple params at once
 // ─────────────────────────────────────────────────────────────
 const PRINT_FEELS = {
-  FRESH: { cellSize: 4, misreg: 0.8, blurPx: 0,    desc: '71線・きれい'      },
-  ROUGH: { cellSize: 7, misreg: 3.0, blurPx: 0.4,  desc: '40線・手刷り感'    },
-  GHOST: { cellSize: 4, misreg: 7.0, blurPx: 0,    desc: '版ズレ大・うすずり' },
-  BOLD:  { cellSize: 9, misreg: 2.3, blurPx: 0.6,  desc: '32線・粗い'        },
+  FRESH: { lpi: 'medium', misreg: 0.8, blurPx: 0,    desc: '71線・きれい'      },
+  ROUGH: { lpi: 'coarse', misreg: 3.0, blurPx: 0.4,  desc: '40線・手刷り感'    },
+  GHOST: { lpi: 'medium', misreg: 7.0, blurPx: 0,    desc: '版ズレ大・うすずり' },
+  BOLD:  { lpi: 'coarse', misreg: 2.3, blurPx: 0.6,  desc: '32線・粗い'        },
 };
+
+// 線数 (line frequency) presets — three discrete levels.
+// 細(fine) ≈ 100線: dots almost touch, reads as near-solid (former ベタ).
+// 中(medium) ≈ 71線: clean halftone, the Riso default.
+// 粗(coarse) ≈ 40線: pronounced dot grain, hand-printed feel.
+const LPI_PRESETS = {
+  fine:   { cell: 3, label: '細', sub: '100線' },
+  medium: { cell: 5, label: '中', sub: '71線'  },
+  coarse: { cell: 9, label: '粗', sub: '40線'  },
+};
+const LPI_KEYS = ['fine', 'medium', 'coarse'];
 
 // ─────────────────────────────────────────────────────────────
 // STATE
@@ -728,8 +789,10 @@ const S = {
   imgW:        0,
   imgH:        0,
   inks:        ['#1a1a1a', '#F15060', '#FFE800'],
+  inkLpi:      ['medium', 'medium', 'medium'],   // per-ink line frequency
+  inkFlow:     [1.0, 1.0, 1.0],                  // per-ink flow (0.5–1.4)
   splitMode:   'shadows-highlights',
-  cellSize:    4,
+  lpi:         'medium',                          // global default line frequency
   misreg:      0.8,
   blurPx:      0,
   paperCanvas: null,   // paper.jpg loaded as canvas for background
@@ -738,8 +801,15 @@ const S = {
   activePreset:'TOKYO NIGHT',
   activeFeel:  'FRESH',
   tombo:       false,
-  solid:       false,
 };
+
+// Keep inkLpi / inkFlow arrays in sync with S.inks length.
+function syncInkArrays() {
+  while (S.inkLpi.length  < S.inks.length) S.inkLpi.push(S.lpi);
+  while (S.inkFlow.length < S.inks.length) S.inkFlow.push(1.0);
+  S.inkLpi.length  = S.inks.length;
+  S.inkFlow.length = S.inks.length;
+}
 
 const MAX_DIM = 1000;
 let renderDebounce = null;
@@ -1140,12 +1210,15 @@ async function render() {
 
   // CMYK mode always uses exactly the 4 CMYK Riso inks
   if (S.splitMode === 'cmyk' && S.inks.join() !== CMYK_INKS.join()) {
-    S.inks = [...CMYK_INKS];
+    S.inks    = [...CMYK_INKS];
+    S.inkLpi  = S.inks.map(() => S.lpi);
+    S.inkFlow = S.inks.map(() => 1.0);
     S.misregDirs = null;
     renderInkSlots();
   }
 
   if (!S.misregDirs || S.misregDirs.length !== S.inks.length) regenMisregDirs(S.inks.length);
+  syncInkArrays();
   const plates = createPlates(S.imageData, S.imgW, S.imgH, S.splitMode, S.inks.length);
 
   // Riso print order: light inks first, dark inks last (dark anchors the print).
@@ -1153,12 +1226,18 @@ async function render() {
   // Preset swap:true means ink[0] goes to highlights (traditional order — dark in shadows).
   const activePreset = PRESETS.find(p => p.name === S.activePreset);
   const swapSH = !!(activePreset?.swap) && S.splitMode === 'shadows-highlights';
-  const useInks   = S.splitMode === 'shadows-highlights'
-    ? (swapSH ? [...S.inks] : [...S.inks].reverse())
-    : [...S.inks];
-  const usePlates = S.splitMode === 'shadows-highlights'
-    ? [...plates].reverse()
-    : plates;
+  // Plates are always reversed in SH mode (light printed first, shadow last).
+  // Inks are reversed unless swap:true (which assigns dark→highlights for surprise).
+  const inkOrder   = S.inks.map((_, i) => i);
+  const plateOrder = plates.map((_, i) => i);
+  if (S.splitMode === 'shadows-highlights') {
+    if (!swapSH) inkOrder.reverse();
+    plateOrder.reverse();
+  }
+  const useInks    = inkOrder.map(i => S.inks[i]);
+  const useLpi     = inkOrder.map(i => S.inkLpi[i]  || S.lpi);
+  const useFlow    = inkOrder.map(i => S.inkFlow[i] != null ? S.inkFlow[i] : 1.0);
+  const usePlates  = plateOrder.map(i => plates[i] || plates[0]);
 
   const layers = [];
   for (let i = 0; i < useInks.length; i++) {
@@ -1167,12 +1246,10 @@ async function render() {
     const info = INK_MAP[ink.toLowerCase()] || { angle: [45, 15, 75][i % 3], name: 'Ink' };
     setOverlayState(pct, `${info.name || 'INK'} 印刷中`);
     await tick();
-    // ベタモード: 版を二値化してから高密度ハーフトーンに流す
-    const platePass = S.solid
-      ? thresholdPlate(usePlates[i] || usePlates[0], 105)
-      : (usePlates[i] || usePlates[0]);
-    const layer = await createHalftoneLayer(platePass, S.imgW, S.imgH, S.cellSize, info.angle, ink, S.blurPx);
-    layer._opacity = info.opacity != null ? info.opacity : 0.78;
+    const cellSize = (LPI_PRESETS[useLpi[i]] || LPI_PRESETS.medium).cell;
+    const layer = await createHalftoneLayer(usePlates[i], S.imgW, S.imgH, cellSize, info.angle, ink, S.blurPx);
+    const baseOp = info.opacity != null ? info.opacity : 0.78;
+    layer._opacity = Math.max(0.05, Math.min(1, baseOp * useFlow[i]));
     layers.push(layer);
     compositeInksOnly(layers);
     renderTombo();
@@ -1260,6 +1337,7 @@ function loadFile(file) {
 // UI
 // ─────────────────────────────────────────────────────────────
 function renderInkSlots() {
+  syncInkArrays();
   const slots  = document.getElementById('ink-slots');
   const addBtn = document.getElementById('add-ink-btn');
   slots.innerHTML = '';
@@ -1267,7 +1345,10 @@ function renderInkSlots() {
 
   S.inks.forEach((hex, i) => {
     const info = INK_MAP[hex.toLowerCase()] || { name: '?', en: '?', hex };
-    const row  = document.createElement('div');
+    const slot = document.createElement('div');
+    slot.className = 'ink-slot';
+
+    const row = document.createElement('div');
     row.className = 'ink-row';
 
     if (isCmyk) {
@@ -1321,13 +1402,54 @@ function renderInkSlots() {
       const rm = row.querySelector('.remove-ink-btn');
       if (rm) rm.addEventListener('click', () => {
         S.inks.splice(i, 1);
+        S.inkLpi.splice(i, 1);
+        S.inkFlow.splice(i, 1);
         S.misregDirs   = null;
         S.activePreset = null;
         renderInkSlots(); updatePresetBtns(); scheduleRender();
       });
     }
 
-    slots.appendChild(row);
+    slot.appendChild(row);
+
+    // Per-ink line frequency + flow controls (active in CMYK too — physical print parameters)
+    const curLpi  = S.inkLpi[i]  || S.lpi;
+    const curFlow = S.inkFlow[i] != null ? S.inkFlow[i] : 1.0;
+    const lpiBtns = LPI_KEYS.map(k =>
+      `<button class="ink-lpi-chip${k === curLpi ? ' active' : ''}" data-lpi="${k}" title="${LPI_PRESETS[k].sub}">${LPI_PRESETS[k].label}</button>`
+    ).join('');
+
+    const detail = document.createElement('div');
+    detail.className = 'ink-detail';
+    detail.innerHTML = `
+      <div class="ink-lpi-chips">${lpiBtns}</div>
+      <div class="ink-flow">
+        <span class="ink-flow-label">流量</span>
+        <input type="range" class="ink-flow-slider" min="0.5" max="1.4" step="0.05" value="${curFlow}">
+        <span class="ink-flow-val">${Math.round(curFlow * 100)}%</span>
+      </div>
+    `;
+
+    detail.querySelectorAll('.ink-lpi-chip').forEach(b => {
+      b.addEventListener('click', () => {
+        S.inkLpi[i] = b.dataset.lpi;
+        detail.querySelectorAll('.ink-lpi-chip').forEach(x =>
+          x.classList.toggle('active', x.dataset.lpi === S.inkLpi[i]));
+        scheduleRender();
+      });
+    });
+
+    const flowSlider = detail.querySelector('.ink-flow-slider');
+    const flowVal    = detail.querySelector('.ink-flow-val');
+    flowSlider.addEventListener('input', e => {
+      const v = parseFloat(e.target.value);
+      S.inkFlow[i] = v;
+      flowVal.textContent = Math.round(v * 100) + '%';
+      scheduleRender();
+    });
+
+    slot.appendChild(detail);
+    slots.appendChild(slot);
   });
 
   addBtn.style.display = (isCmyk || S.inks.length >= 4) ? 'none' : 'block';
@@ -1360,6 +1482,8 @@ function applyPreset(name) {
   const p = PRESETS.find(x => x.name === name);
   if (!p) return;
   S.inks         = [...p.inks];
+  S.inkLpi       = p.inks.map(() => S.lpi);
+  S.inkFlow      = p.inks.map(() => 1.0);
   S.splitMode    = p.mode;
   S.activePreset = name;
   S.misregDirs   = null;
@@ -1379,6 +1503,26 @@ function syncSplitUI() {
 // ─────────────────────────────────────────────────────────────
 // PRINT FEEL
 // ─────────────────────────────────────────────────────────────
+function buildLpiChips() {
+  const c = document.getElementById('lpi-chips');
+  c.innerHTML = '';
+  LPI_KEYS.forEach(k => {
+    const p = LPI_PRESETS[k];
+    const b = document.createElement('button');
+    b.className = `lpi-chip${k === S.lpi ? ' active' : ''}`;
+    b.dataset.lpi = k;
+    b.innerHTML = `<span class="lpi-chip-main">${p.label}</span><span class="lpi-chip-sub">${p.sub}</span>`;
+    b.addEventListener('click', () => {
+      S.lpi = k;
+      S.inkLpi = S.inks.map(() => k);
+      syncLpiUI();
+      renderInkSlots();
+      scheduleRender();
+    });
+    c.appendChild(b);
+  });
+}
+
 function buildFeelChips() {
   const container = document.getElementById('feel-chips');
   container.innerHTML = '';
@@ -1395,22 +1539,28 @@ function buildFeelChips() {
 function applyFeel(name) {
   const f = PRINT_FEELS[name];
   if (!f) return;
-  S.cellSize   = f.cellSize;
+  S.lpi        = f.lpi;
   S.misreg     = f.misreg;
   S.blurPx     = f.blurPx;
   S.activeFeel = name;
+  syncInkArrays();
+  S.inkLpi = S.inks.map(() => f.lpi);
   // Sync Advanced sliders if visible
-  const cs = document.getElementById('cell-size');
   const mr = document.getElementById('misregistration');
   const bl = document.getElementById('blur-amount');
-  if (cs) { cs.value = f.cellSize;  document.getElementById('cell-val').textContent  = f.cellSize; }
   if (mr) { mr.value = f.misreg;    document.getElementById('misreg-val').textContent = f.misreg; }
   if (bl) { bl.value = f.blurPx;    document.getElementById('blur-val').textContent   = f.blurPx.toFixed(1); }
+  syncLpiUI();
+  renderInkSlots();
   document.querySelectorAll('.feel-chip').forEach(b => {
-    const isActive = b.dataset.feel === name;
-    b.classList.toggle('active', isActive);
+    b.classList.toggle('active', b.dataset.feel === name);
   });
   if (S.imageData) scheduleRender();
+}
+
+function syncLpiUI() {
+  document.querySelectorAll('.lpi-chip').forEach(b =>
+    b.classList.toggle('active', b.dataset.lpi === S.lpi));
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1420,6 +1570,8 @@ function shuffleInks() {
   const inkCount = Math.random() < 0.22 ? 3 : 2;
   const pool = [...RISO_INKS].sort(() => Math.random() - 0.5);
   S.inks         = pool.slice(0, inkCount).map(i => i.hex);
+  S.inkLpi       = S.inks.map(() => S.lpi);
+  S.inkFlow      = S.inks.map(() => 1.0);
   const r = Math.random();
   S.splitMode    = r < 0.45 ? 'channels' : r < 0.75 ? 'shadows-highlights' : 'warm-cool';
   S.activePreset = null;
@@ -1568,12 +1720,6 @@ function setup() {
     }
   });
 
-  document.getElementById('cell-size').addEventListener('input', e => {
-    S.cellSize = parseInt(e.target.value);
-    document.getElementById('cell-val').textContent = S.cellSize;
-    scheduleRender();
-  });
-
   document.getElementById('misregistration').addEventListener('input', e => {
     S.misreg = parseFloat(e.target.value);
     document.getElementById('misreg-val').textContent = S.misreg;
@@ -1608,6 +1754,8 @@ function setup() {
   document.getElementById('cmyk-btn').addEventListener('click', () => {
     S.splitMode    = 'cmyk';
     S.inks         = [...CMYK_INKS];
+    S.inkLpi       = S.inks.map(() => S.lpi);
+    S.inkFlow      = S.inks.map(() => 1.0);
     S.misregDirs   = null;
     S.activePreset = null;
     document.querySelectorAll('.split-chip').forEach(b => b.classList.remove('active'));
@@ -1615,25 +1763,16 @@ function setup() {
     renderInkSlots(); updatePresetBtns(); scheduleRender();
   });
 
-  // ベタ/ドット mode buttons
-  document.getElementById('dot-mode-halftone').addEventListener('click', () => {
-    S.solid = false;
-    document.getElementById('dot-mode-halftone').classList.add('active');
-    document.getElementById('dot-mode-solid').classList.remove('active');
-    scheduleRender();
-  });
-  document.getElementById('dot-mode-solid').addEventListener('click', () => {
-    S.solid = true;
-    document.getElementById('dot-mode-solid').classList.add('active');
-    document.getElementById('dot-mode-halftone').classList.remove('active');
-    scheduleRender();
-  });
+  // 線数 chips — sets global default + overwrites all per-ink lpi
+  buildLpiChips();
 
   document.getElementById('add-ink-btn').addEventListener('click', () => {
     if (S.inks.length >= 4) return;
     const used = new Set(S.inks.map(h => h.toLowerCase()));
     const next = RISO_INKS.find(ink => !used.has(ink.hex.toLowerCase()));
     S.inks.push(next ? next.hex : RISO_INKS[3].hex);
+    S.inkLpi.push(S.lpi);
+    S.inkFlow.push(1.0);
     S.misregDirs   = null;
     S.activePreset = null;
     renderInkSlots(); updatePresetBtns(); scheduleRender();
@@ -1769,12 +1908,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const nonCmyk   = PRESETS.filter(p => p.mode !== 'cmyk');
   const rndPreset  = nonCmyk[Math.floor(Math.random() * nonCmyk.length)];
   S.inks         = [...rndPreset.inks];
+  S.inkLpi       = S.inks.map(() => S.lpi);
+  S.inkFlow      = S.inks.map(() => 1.0);
   S.splitMode    = rndPreset.mode || 'shadows-highlights';
   S.activePreset = rndPreset.name;
 
   buildPresets();
   buildFeelChips();
   renderInkSlots();
+  syncLpiUI();
   setup();
 
   syncSplitUI();
