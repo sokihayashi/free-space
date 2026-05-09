@@ -618,26 +618,34 @@ const CMYK_INKS = ['#FFE800', '#FF48B0', '#0078BF', '#1a1a1a'];
 // Rendering reverses this to follow real Riso print order: light inks first, dark last.
 const PRESETS = [
   // ── CMYK ──
-  { name: 'CMYK',                  inks: CMYK_INKS,                                       mode: 'cmyk'               },
+  { name: 'CMYK',                    inks: CMYK_INKS,                                           mode: 'cmyk'               },
   // ── 2-INK ──
-  { name: '真面目なギャル',        inks: ['#1a1a1a', '#914E72'],                           mode: 'shadows-highlights' },
-  { name: '正義と割り勘',          inks: ['#3255A4', '#AC8B2C'],                           mode: 'shadows-highlights' },
-  { name: '警備員とヴィーナス',    inks: ['#949494', '#82D8D5'],                           mode: 'shadows-highlights' },
-  { name: '赤電話',                inks: ['#F15060', '#1a1a1a'],                           mode: 'shadows-highlights' },
+  { name: '真面目なギャル',          inks: ['#1a1a1a', '#914E72'],                               mode: 'shadows-highlights' },
+  { name: '正義と割り勘',            inks: ['#3255A4', '#AC8B2C'],                               mode: 'shadows-highlights' },
+  { name: '警備員とヴィーナス',      inks: ['#949494', '#82D8D5'],                               mode: 'shadows-highlights' },
+  { name: '赤電話',                  inks: ['#1a1a1a', '#F15060'],                               mode: 'shadows-highlights' },
+  { name: '口紅',                    inks: ['#914E72', '#FF48B0'],                               mode: 'shadows-highlights' },
+  { name: '紫式部',                  inks: ['#765BA7', '#00ABAC'],                               mode: 'shadows-highlights' },
+  { name: '黄信号',                  inks: ['#FF6C2F', '#FFE800'],                               mode: 'channels'           },
   // ── 3-INK ──
-  { name: '総務部の反乱',          inks: ['#1a1a1a', '#F15060', '#FFE800'],                mode: 'shadows-highlights' },
-  { name: 'PTA最後の刺客',         inks: ['#1a1a1a', '#914E72', '#FF48B0'],                mode: 'shadows-highlights' },
-  { name: '占い師の確定申告',      inks: ['#765BA7', '#FF6C2F', '#FFE800'],                mode: 'shadows-highlights' },
-  { name: 'ミス非常階段',          inks: ['#3255A4', '#949494', '#F15060'],                mode: 'shadows-highlights' },
-  { name: '風邪の日のピアニスト',  inks: ['#765BA7', '#949494', '#3255A4'],                mode: 'shadows-highlights' },
-  { name: 'レーダー姉妹',          inks: ['#00ABAC', '#69D84F', '#3255A4'],                mode: 'channels'           },
-  { name: 'レモンだけが知っている',inks: ['#FFE800', '#69D84F', '#00ABAC'],                mode: 'channels'           },
-  { name: 'パフェの副作用',        inks: ['#FF48B0', '#FFE800', '#82D8D5'],                mode: 'channels'           },
-  { name: 'クリームソーダ',        inks: ['#00ABAC', '#82D8D5', '#FFE800'],                mode: 'shadows-highlights' },
+  { name: '総務部の反乱',            inks: ['#1a1a1a', '#F15060', '#FFE800'],                   mode: 'shadows-highlights' },
+  { name: 'PTA最後の刺客',           inks: ['#1a1a1a', '#914E72', '#FF48B0'],                   mode: 'shadows-highlights' },
+  { name: '未亡人',                  inks: ['#1a1a1a', '#765BA7', '#949494'],                   mode: 'shadows-highlights' },
+  { name: '純喫茶',                  inks: ['#1a1a1a', '#AC8B2C', '#FF6C2F'],                   mode: 'shadows-highlights' },
+  { name: '占い師の確定申告',        inks: ['#765BA7', '#FF6C2F', '#FFE800'],                   mode: 'shadows-highlights' },
+  { name: 'ミス非常階段',            inks: ['#3255A4', '#949494', '#F15060'],                   mode: 'shadows-highlights' },
+  { name: '赤提灯',                  inks: ['#914E72', '#F15060', '#AC8B2C'],                   mode: 'shadows-highlights' },
+  { name: '団地妻',                  inks: ['#914E72', '#AC8B2C', '#949494'],                   mode: 'shadows-highlights' },
+  { name: '風邪の日のピアニスト',    inks: ['#765BA7', '#949494', '#3255A4'],                   mode: 'shadows-highlights' },
+  { name: 'ラムネ瓶',                inks: ['#0078BF', '#949494', '#82D8D5'],                   mode: 'shadows-highlights' },
+  { name: 'クリームソーダ',          inks: ['#00ABAC', '#82D8D5', '#FFE800'],                   mode: 'shadows-highlights' },
+  { name: 'レーダー姉妹',            inks: ['#00ABAC', '#69D84F', '#3255A4'],                   mode: 'channels'           },
+  { name: 'レモンだけが知っている',  inks: ['#FFE800', '#69D84F', '#00ABAC'],                   mode: 'channels'           },
+  { name: 'パフェの副作用',          inks: ['#FF48B0', '#FFE800', '#82D8D5'],                   mode: 'channels'           },
   // ── 4-INK ──
-  { name: '縄文マダムの潜水訓練',  inks: ['#914E72', '#3255A4', '#00ABAC', '#82D8D5'],    mode: 'shadows-highlights' },
-  { name: 'ミラーボール神社',      inks: ['#AC8B2C', '#765BA7', '#FF48B0', '#82D8D5'],    mode: 'shadows-highlights' },
-  { name: '五分刈りの旦那',        inks: ['#914E72', '#FF6C2F', '#FFE800', '#69D84F'],    mode: 'shadows-highlights' },
+  { name: '縄文マダムの潜水訓練',    inks: ['#914E72', '#3255A4', '#00ABAC', '#82D8D5'],       mode: 'shadows-highlights' },
+  { name: 'ミラーボール神社',        inks: ['#AC8B2C', '#765BA7', '#FF48B0', '#82D8D5'],       mode: 'shadows-highlights' },
+  { name: '五分刈りの旦那',          inks: ['#914E72', '#FF6C2F', '#FFE800', '#69D84F'],       mode: 'shadows-highlights' },
 ];
 
 // ─────────────────────────────────────────────────────────────
