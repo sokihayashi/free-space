@@ -144,6 +144,7 @@
     /* ── RENDER OVERLAY ────────────────────────── */
     .render-overlay {
       position: absolute; inset: 0;
+      z-index: 2;
       background: rgba(245,240,232,0.08);
       display: none; overflow: hidden;
       pointer-events: none;
@@ -685,14 +686,21 @@ function createPlates(imgData, w, h, mode, inkCount) {
   }
 
   if (mode === 'channels') {
+    // Inverted-channel plates, boosted by luminance so dark source areas
+    // always print with higher dot density regardless of which channel dominates.
+    // boost: +35% density at pure black → 0% at pure white.
     const p1 = new Uint8Array(n), p2 = new Uint8Array(n);
     for (let i = 0; i < n; i++) {
-      p1[i] = 255 - src[i * 4];
-      p2[i] = 255 - src[i * 4 + 2];
+      const boost = 1 + (1 - lum[i] / 255) * 0.35;
+      p1[i] = Math.min(255, Math.round((255 - src[i * 4])     * boost));
+      p2[i] = Math.min(255, Math.round((255 - src[i * 4 + 2]) * boost));
     }
     if (inkCount === 2) return [p1, p2];
     const p3 = new Uint8Array(n);
-    for (let i = 0; i < n; i++) p3[i] = 255 - src[i * 4 + 1];
+    for (let i = 0; i < n; i++) {
+      const boost = 1 + (1 - lum[i] / 255) * 0.35;
+      p3[i] = Math.min(255, Math.round((255 - src[i * 4 + 1]) * boost));
+    }
     return [p1, p2, p3];
   }
 
@@ -891,8 +899,10 @@ async function render() {
   renderLock = true;
 
   const overlay = document.getElementById('render-overlay');
-  // Set scan-bar travel distance to exactly the overlay height (GPU-composited transform)
-  overlay.style.setProperty('--scan-h', (overlay.offsetHeight + 7) + 'px');
+  // Measure the canvas display height (always visible) — overlay is still
+  // display:none here so offsetHeight would be 0. Canvas height = correct travel.
+  const scanH = document.getElementById('output-canvas').offsetHeight || 600;
+  overlay.style.setProperty('--scan-h', (scanH + 7) + 'px');
   overlay.classList.add('active');
   setOverlayState(5, 'SEPARATING…');
   await tick();
