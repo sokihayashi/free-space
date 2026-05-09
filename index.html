@@ -9,7 +9,53 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=New+Tegomin&display=swap" rel="stylesheet">
   <style>
-    PLACEHOLDER
-  </style>
-</head>
-</html>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --paper:      #F5F0E8;
+      --paper-dark: #EDE8DB;
+      --ink:        #1a1a1a;
+      --ink-mid:    #555;
+      --ink-light:  #999;
+      --border:     #D5CEC2;
+      --font:         'DM Mono', 'Courier New', monospace;
+      --font-display: 'Syne', system-ui, sans-serif;
+      --font-jp:      'New Tegomin', serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      padding: 16px 24px;
+    }
+
+    /* ── HEADER ────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--ink);
+    }
+    .logo {
+      font-family: var(--font-display); font-size: 28px; font-weight: 800;
+      letter-spacing: -0.5px; display: flex; align-items: center; gap: 9px;
+    }
+    .logo-reg {
+      width: 15px; height: 15px; opacity: 0.28; flex-shrink: 0;
+    }
+    .tagline {
+      font-family: var(--font); font-size: 10px; color: var(--ink-light);
+      letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500;
+    }
+    .process-tag {
+      font-family: var(--font); font-size: 9px; color: var(--border);
+      letter-spacing: 0.08em; font-weight: 400; margin-left: auto;
+      white-space: nowrap;
+    }
+    @media (max-width: 720px) { .process-tag { display: none; } }
+
+PLACEHOLDER_DO_NOT_USE_THIS_PUSH
