@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RISO PRESS — Risograph Print Simulator</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23F5F0E8'/><circle cx='16' cy='16' r='8' stroke='%231a1a1a' stroke-width='1.4' fill='none'/><line x1='16' y1='4' x2='16' y2='28' stroke='%231a1a1a' stroke-width='1'/><line x1='4' y1='16' x2='28' y2='16' stroke='%231a1a1a' stroke-width='1'/><circle cx='22' cy='22' r='5' fill='%23FF48B0' opacity='.82'/><circle cx='10' cy='22' r='5' fill='%230078BF' opacity='.82'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=New+Tegomin&display=swap" rel="stylesheet">
@@ -578,7 +579,6 @@
       <button class="btn-secondary" id="share-btn">X でシェア</button>
       <div class="mark-chips">
         <button class="mark-chip" id="tombo-btn">トンボ</button>
-        <button class="mark-chip" id="regmark-btn">見当</button>
       </div>
     </div>
   </div>
@@ -678,10 +678,10 @@ const PRESETS = [
 // PRINT FEEL — experiential presets that set multiple params at once
 // ─────────────────────────────────────────────────────────────
 const PRINT_FEELS = {
-  FRESH: { cellSize: 3, misreg: 0.5, blurPx: 0.1,  desc: '細かい・きれい' },
-  WORN:  { cellSize: 5, misreg: 3.5, blurPx: 1.0,  desc: 'にじみ・ヴィンテージ' },
+  FRESH: { cellSize: 3, misreg: 1.5, blurPx: 0.1,  desc: '細かい・きれい' },
+  WORN:  { cellSize: 5, misreg: 4.5, blurPx: 1.0,  desc: 'にじみ・ヴィンテージ' },
   GHOST: { cellSize: 3, misreg: 8,   blurPx: 0.15, desc: '版ズレ大・うすずり' },
-  BOLD:  { cellSize: 9, misreg: 2,   blurPx: 1.8,  desc: '粗い・インク濃め' },
+  BOLD:  { cellSize: 9, misreg: 3.0, blurPx: 1.8,  desc: '粗い・インク濃め' },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -694,7 +694,7 @@ const S = {
   inks:        ['#1a1a1a', '#F15060', '#FFE800'],
   splitMode:   'shadows-highlights',
   cellSize:    3,
-  misreg:      0.5,
+  misreg:      1.5,
   blurPx:      0.1,
   paperCanvas: null,   // paper.jpg loaded as canvas for background
   overlayTex:  null,
@@ -702,7 +702,6 @@ const S = {
   activePreset:'TOKYO NIGHT',
   activeFeel:  'FRESH',
   tombo:       false,
-  regmark:     false,
 };
 
 const MAX_DIM = 650;
@@ -1010,7 +1009,7 @@ function compositeInksOnly(layers) {
   }
 
   ctx.globalCompositeOperation = 'multiply';
-  ctx.globalAlpha = 0.90;
+  ctx.globalAlpha = 0.82;
   for (let i = 0; i < layers.length; i++) {
     const dir = S.misregDirs ? S.misregDirs[i] : { baseX: 0, baseY: 0, nx: 0, ny: 0 };
     const ox  = dir.baseX + dir.nx * S.misreg;
@@ -1378,7 +1377,7 @@ function shuffleInks() {
 function renderTombo() {
   const old = document.getElementById('tombo-overlay');
   if (old) old.remove();
-  if (!S.tombo && !S.regmark) return;
+  if (!S.tombo) return;
 
   const frame = document.getElementById('paper-frame');
   if (frame.style.display === 'none' || !frame.offsetWidth) return;
@@ -1386,10 +1385,10 @@ function renderTombo() {
   const W   = frame.offsetWidth;
   const H   = frame.offsetHeight;
   const sty = window.getComputedStyle(frame);
-  const pad = parseInt(sty.paddingTop, 10) || 36;
+  const pad = parseInt(sty.paddingTop, 10) || 24;
 
-  // Print area corners within the frame
-  const px = pad, py = pad, pw = W - pad * 2, ph = H - pad * 2;
+  // 仕上がりエリア (trim area)
+  const tx = pad, ty = pad, tw = W - pad * 2, th = H - pad * 2;
 
   const ns  = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
@@ -1404,54 +1403,45 @@ function renderTombo() {
     Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
     return el;
   };
-  const col = 'rgba(26,26,26,0.55)';
-  const sw  = 0.8;
-  const arm = 18;
-  const gap = 3;
 
-  if (S.tombo) {
-    // Corner トンボ: outer circle + crosshair arms extending outward
-    [
-      { cx: px,      cy: py      },
-      { cx: px + pw, cy: py      },
-      { cx: px,      cy: py + ph },
-      { cx: px + pw, cy: py + ph },
-    ].forEach(({ cx, cy }) => {
-      const g = document.createElementNS(ns, 'g');
-      g.appendChild(mk('circle', { cx, cy, r: 9, stroke: col, 'stroke-width': sw, fill: 'none' }));
-      g.appendChild(mk('line', { x1: cx - gap - arm, y1: cy,  x2: cx - gap,       y2: cy,  stroke: col, 'stroke-width': sw }));
-      g.appendChild(mk('line', { x1: cx + gap,       y1: cy,  x2: cx + gap + arm, y2: cy,  stroke: col, 'stroke-width': sw }));
-      g.appendChild(mk('line', { x1: cx, y1: cy - gap - arm,  x2: cx, y2: cy - gap,       stroke: col, 'stroke-width': sw }));
-      g.appendChild(mk('line', { x1: cx, y1: cy + gap,        x2: cx, y2: cy + gap + arm, stroke: col, 'stroke-width': sw }));
-      svg.appendChild(g);
-    });
+  const col = 'rgba(26,26,26,0.52)';
+  const sw  = 0.65;
+  const arm = 11;   // アームの長さ
+  const bld = 5;    // 塗り足し幅 (≈3mm)
 
-    // Edge center marks (top / bottom / left / right)
-    [
-      { x1: px + pw/2, y1: py - gap - arm, x2: px + pw/2, y2: py - gap },
-      { x1: px + pw/2, y1: py + ph + gap,  x2: px + pw/2, y2: py + ph + gap + arm },
-      { x1: px - gap - arm, y1: py + ph/2, x2: px - gap,       y2: py + ph/2 },
-      { x1: px + pw + gap,  y1: py + ph/2, x2: px + pw + gap + arm, y2: py + ph/2 },
-    ].forEach(a => svg.appendChild(mk('line', { ...a, stroke: col, 'stroke-width': sw })));
-  }
+  // ── 角トンボ: 二重L字 (inner=仕上がり線 / outer=塗り足し線) ──
+  [
+    { x: tx,      y: ty,      dx: -1, dy: -1 },  // TL
+    { x: tx + tw, y: ty,      dx:  1, dy: -1 },  // TR
+    { x: tx,      y: ty + th, dx: -1, dy:  1 },  // BL
+    { x: tx + tw, y: ty + th, dx:  1, dy:  1 },  // BR
+  ].forEach(({ x, y, dx, dy }) => {
+    // 内側L (仕上がり線)
+    svg.appendChild(mk('line', { x1: x, y1: y, x2: x + dx * arm, y2: y,            stroke: col, 'stroke-width': sw }));
+    svg.appendChild(mk('line', { x1: x, y1: y, x2: x,            y2: y + dy * arm, stroke: col, 'stroke-width': sw }));
+    // 外側L (塗り足し線, bld px外側)
+    const ox = x + dx * bld, oy = y + dy * bld;
+    svg.appendChild(mk('line', { x1: ox, y1: oy, x2: ox + dx * arm, y2: oy,              stroke: col, 'stroke-width': sw }));
+    svg.appendChild(mk('line', { x1: ox, y1: oy, x2: ox,            y2: oy + dy * arm,   stroke: col, 'stroke-width': sw }));
+  });
 
-  if (S.regmark) {
-    // 見当マーク: concentric circle targets at edge midpoints, outside crop zone
-    const off = arm + gap + 18;
-    [
-      { cx: px + pw/2,       cy: py - off           },
-      { cx: px + pw/2,       cy: py + ph + off      },
-      { cx: px - off,        cy: py + ph/2          },
-      { cx: px + pw + off,   cy: py + ph/2          },
-    ].forEach(({ cx, cy }) => {
-      const g = document.createElementNS(ns, 'g');
-      g.appendChild(mk('circle', { cx, cy, r: 7, stroke: col, 'stroke-width': sw, fill: 'none' }));
-      g.appendChild(mk('circle', { cx, cy, r: 2.5, fill: col }));
-      g.appendChild(mk('line', { x1: cx - 13, y1: cy, x2: cx + 13, y2: cy, stroke: col, 'stroke-width': sw }));
-      g.appendChild(mk('line', { x1: cx, y1: cy - 13, x2: cx, y2: cy + 13, stroke: col, 'stroke-width': sw }));
-      svg.appendChild(g);
-    });
-  }
+  // ── センタートンボ + 見当マーク ──
+  // 各辺中央: 十字線 + 見当サークル (色版合わせ用)
+  const cArm = 12;
+  const regR = 5;
+  const mOff = Math.round(pad * 0.48);  // マージン中央に配置
+
+  [
+    { cx: tx + tw / 2, cy: ty,       ox: 0,     oy: -mOff },  // 上辺
+    { cx: tx + tw / 2, cy: ty + th,  ox: 0,     oy:  mOff },  // 下辺
+    { cx: tx,          cy: ty + th/2, ox: -mOff, oy: 0     },  // 左辺
+    { cx: tx + tw,     cy: ty + th/2, ox:  mOff, oy: 0     },  // 右辺
+  ].forEach(({ cx, cy, ox, oy }) => {
+    const mx = cx + ox, my = cy + oy;
+    svg.appendChild(mk('line',   { x1: mx - cArm, y1: my,        x2: mx + cArm, y2: my,        stroke: col, 'stroke-width': sw }));
+    svg.appendChild(mk('line',   { x1: mx,        y1: my - cArm, x2: mx,        y2: my + cArm, stroke: col, 'stroke-width': sw }));
+    svg.appendChild(mk('circle', { cx: mx, cy: my, r: regR, stroke: col, 'stroke-width': sw, fill: 'none' }));
+  });
 
   frame.appendChild(svg);
 }
@@ -1559,12 +1549,6 @@ function setup() {
   document.getElementById('tombo-btn').addEventListener('click', () => {
     S.tombo = !S.tombo;
     document.getElementById('tombo-btn').classList.toggle('active', S.tombo);
-    renderTombo();
-  });
-
-  document.getElementById('regmark-btn').addEventListener('click', () => {
-    S.regmark = !S.regmark;
-    document.getElementById('regmark-btn').classList.toggle('active', S.regmark);
     renderTombo();
   });
 
