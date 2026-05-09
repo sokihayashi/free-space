@@ -1136,6 +1136,7 @@ async function render() {
   await new Promise(r => setTimeout(r, 200));  // hold so the user reads "完成"
 
   overlay.classList.remove('active');
+  renderTombo();   // 見当マークを版ズレ情報で再描画
   renderLock = false;
   if (renderQueued) { renderQueued = false; render(); }
 }
@@ -1406,10 +1407,13 @@ function renderTombo() {
 
   const col = 'rgba(26,26,26,0.52)';
   const sw  = 0.65;
-  const arm = 11;   // アームの長さ
+  const arm = 13;   // アームの長さ
   const bld = 5;    // 塗り足し幅 (≈3mm)
 
-  // ── 角トンボ: 二重L字 (inner=仕上がり線 / outer=塗り足し線) ──
+  // ── 角トンボ: 二重L字 (日本式) ──
+  // 内側L: 仕上がり線のコーナーから各アームを余白方向へ伸ばす
+  // 外側L: 各アームを塗り足し幅(bld)だけ平行にオフセット (対角ではなく垂直方向に)
+  //   内H → 外Hはy方向にbld, 内V → 外VはX方向にbld — これで正しい平行二重L字になる
   [
     { x: tx,      y: ty,      dx: -1, dy: -1 },  // TL
     { x: tx + tw, y: ty,      dx:  1, dy: -1 },  // TR
@@ -1417,31 +1421,47 @@ function renderTombo() {
     { x: tx + tw, y: ty + th, dx:  1, dy:  1 },  // BR
   ].forEach(({ x, y, dx, dy }) => {
     // 内側L (仕上がり線)
-    svg.appendChild(mk('line', { x1: x, y1: y, x2: x + dx * arm, y2: y,            stroke: col, 'stroke-width': sw }));
-    svg.appendChild(mk('line', { x1: x, y1: y, x2: x,            y2: y + dy * arm, stroke: col, 'stroke-width': sw }));
-    // 外側L (塗り足し線, bld px外側)
-    const ox = x + dx * bld, oy = y + dy * bld;
-    svg.appendChild(mk('line', { x1: ox, y1: oy, x2: ox + dx * arm, y2: oy,              stroke: col, 'stroke-width': sw }));
-    svg.appendChild(mk('line', { x1: ox, y1: oy, x2: ox,            y2: oy + dy * arm,   stroke: col, 'stroke-width': sw }));
+    svg.appendChild(mk('line', { x1: x,          y1: y,          x2: x + dx*arm, y2: y,          stroke: col, 'stroke-width': sw }));
+    svg.appendChild(mk('line', { x1: x,          y1: y,          x2: x,          y2: y + dy*arm, stroke: col, 'stroke-width': sw }));
+    // 外側L (塗り足し線): 各アームを垂直方向にbldだけ平行移動 — 対角オフセットは誤り
+    svg.appendChild(mk('line', { x1: x,          y1: y + dy*bld, x2: x + dx*arm, y2: y + dy*bld, stroke: col, 'stroke-width': sw }));
+    svg.appendChild(mk('line', { x1: x + dx*bld, y1: y,          x2: x + dx*bld, y2: y + dy*arm, stroke: col, 'stroke-width': sw }));
   });
 
-  // ── センタートンボ + 見当マーク ──
-  // 各辺中央: 十字線 + 見当サークル (色版合わせ用)
-  const cArm = 12;
+  // ── センタートンボ + 見当マーク (⊕) ──
+  // 各辺中央: 十字線 + 見当サークル。インク色×版ズレを重ねて色ズレを可視化。
+  const cArm = 13;
   const regR = 5;
-  const mOff = Math.round(pad * 0.48);  // マージン中央に配置
+  const mOff = Math.max(8, Math.round(pad * 0.5));
+  const centers = [
+    { cx: tx + tw/2, cy: ty,       ox: 0,     oy: -mOff },
+    { cx: tx + tw/2, cy: ty + th,  ox: 0,     oy:  mOff },
+    { cx: tx,        cy: ty + th/2, ox: -mOff, oy: 0    },
+    { cx: tx + tw,   cy: ty + th/2, ox:  mOff, oy: 0    },
+  ];
 
-  [
-    { cx: tx + tw / 2, cy: ty,       ox: 0,     oy: -mOff },  // 上辺
-    { cx: tx + tw / 2, cy: ty + th,  ox: 0,     oy:  mOff },  // 下辺
-    { cx: tx,          cy: ty + th/2, ox: -mOff, oy: 0     },  // 左辺
-    { cx: tx + tw,     cy: ty + th/2, ox:  mOff, oy: 0     },  // 右辺
-  ].forEach(({ cx, cy, ox, oy }) => {
-    const mx = cx + ox, my = cy + oy;
-    svg.appendChild(mk('line',   { x1: mx - cArm, y1: my,        x2: mx + cArm, y2: my,        stroke: col, 'stroke-width': sw }));
-    svg.appendChild(mk('line',   { x1: mx,        y1: my - cArm, x2: mx,        y2: my + cArm, stroke: col, 'stroke-width': sw }));
-    svg.appendChild(mk('circle', { cx: mx, cy: my, r: regR, stroke: col, 'stroke-width': sw, fill: 'none' }));
-  });
+  // 版ズレがある場合: 各インク色で⊕を描いて色ズレを可視化 (リソの見当確認マークを再現)
+  if (S.misregDirs && S.inks && S.inks.length > 1) {
+    centers.forEach(({ cx, cy, ox, oy }) => {
+      const bx = cx + ox, by = cy + oy;
+      S.inks.forEach((inkHex, i) => {
+        const dir = S.misregDirs[i] || { baseX: 0, baseY: 0, nx: 0, ny: 0 };
+        const mx  = bx + dir.baseX + dir.nx * S.misreg;
+        const my  = by + dir.baseY + dir.ny * S.misreg;
+        svg.appendChild(mk('line',   { x1: mx - cArm, y1: my,        x2: mx + cArm, y2: my,        stroke: inkHex, 'stroke-width': 0.9, opacity: 0.75 }));
+        svg.appendChild(mk('line',   { x1: mx,        y1: my - cArm, x2: mx,        y2: my + cArm, stroke: inkHex, 'stroke-width': 0.9, opacity: 0.75 }));
+        svg.appendChild(mk('circle', { cx: mx, cy: my, r: regR, stroke: inkHex, 'stroke-width': 0.9, fill: 'none', opacity: 0.75 }));
+      });
+    });
+  } else {
+    // 版ズレなし or 単色: 黒のみ
+    centers.forEach(({ cx, cy, ox, oy }) => {
+      const mx = cx + ox, my = cy + oy;
+      svg.appendChild(mk('line',   { x1: mx - cArm, y1: my,        x2: mx + cArm, y2: my,        stroke: col, 'stroke-width': sw }));
+      svg.appendChild(mk('line',   { x1: mx,        y1: my - cArm, x2: mx,        y2: my + cArm, stroke: col, 'stroke-width': sw }));
+      svg.appendChild(mk('circle', { cx: mx, cy: my, r: regR, stroke: col, 'stroke-width': sw, fill: 'none' }));
+    });
+  }
 
   frame.appendChild(svg);
 }
