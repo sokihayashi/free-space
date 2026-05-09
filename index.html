@@ -6,7 +6,7 @@
   <title>RISO PRESS — Risograph Print Simulator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Yomogi&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -19,6 +19,7 @@
       --border:     #D5CEC2;
       --font:         'DM Mono', 'Courier New', monospace;
       --font-display: 'Syne', system-ui, sans-serif;
+      --font-jp:      'Yomogi', cursive;
     }
 
     body {
@@ -100,7 +101,7 @@
     .drop-zone:hover, .drop-zone.drag-over { border-color: var(--ink); }
     .drop-icon { width: 44px; height: 44px; opacity: 0.25; }
     .drop-text {
-      font-family: var(--font); font-size: 11px; color: var(--ink-light);
+      font-family: var(--font-jp); font-size: 12px; color: var(--ink-light);
       text-align: center; line-height: 1.9; font-weight: 400;
     }
     .drop-text strong { font-family: var(--font-display); font-size: 13px; font-weight: 700; color: var(--ink-mid); display: block; margin-bottom: 2px; }
@@ -118,8 +119,9 @@
     }
     #output-canvas { display: block; width: 100%; height: auto; }
 
-    /* Registration marks — printed in every plate margin on real riso output */
-    .reg-marks { position: absolute; inset: 0; pointer-events: none; }
+    /* Registration marks — hidden by default, activated via toggle */
+    .reg-marks { position: absolute; inset: 0; pointer-events: none; display: none; }
+    .reg-marks.active { display: block; }
     .reg-mark {
       position: absolute; width: 18px; height: 18px; opacity: 0.18;
     }
@@ -180,8 +182,8 @@
       text-align: center;
     }
     .overlay-label {
-      font-family: var(--font); font-size: 9px; font-weight: 500;
-      letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 6px;
+      font-family: var(--font-jp); font-size: 11px; font-weight: 400;
+      letter-spacing: 0.06em; color: var(--ink-mid); margin-bottom: 6px;
     }
     .progress-track {
       width: 80px; height: 2px;
@@ -235,6 +237,65 @@
       margin-top: 8px; transition: all 0.13s;
     }
     .add-ink-btn:hover { border-color: var(--ink-mid); color: var(--ink-mid); }
+
+    /* Swatch picker — replaces <select> for ink colour choice */
+    .swatch-wrap { position: relative; flex: 1; }
+    .swatch-trigger {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 9px 5px 7px; width: 100%;
+      border: 1.5px solid var(--border); border-radius: 6px;
+      background: transparent; cursor: pointer; transition: border-color 0.13s;
+    }
+    .swatch-trigger:hover { border-color: var(--ink-mid); }
+    .swatch-trigger-dot {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 1.5px solid rgba(0,0,0,0.12); flex-shrink: 0;
+    }
+    .swatch-trigger-name {
+      font-family: var(--font-jp); font-size: 13px; color: var(--ink);
+      flex: 1; text-align: left;
+    }
+    .swatch-trigger-en {
+      font-family: var(--font); font-size: 8.5px; color: var(--ink-light);
+      letter-spacing: 0.03em; white-space: nowrap;
+    }
+    .swatch-popup {
+      position: absolute; top: calc(100% + 6px); left: 0; z-index: 200;
+      background: var(--paper); border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.14); width: 216px;
+    }
+    .swatch-popup.hidden { display: none; }
+    .swatch-opt {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      cursor: pointer; padding: 5px 2px; border-radius: 7px; transition: background 0.1s;
+    }
+    .swatch-opt:hover { background: var(--paper-dark); }
+    .swatch-opt-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2.5px solid transparent; transition: border-color 0.1s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+    .swatch-opt.selected .swatch-opt-dot { border-color: var(--ink); }
+    .swatch-opt-name {
+      font-family: var(--font-jp); font-size: 8.5px; color: var(--ink-mid); text-align: center;
+    }
+    .swatch-name-locked {
+      flex: 1; font-family: var(--font-jp); font-size: 13px; color: var(--ink); opacity: 0.45;
+    }
+
+    /* Mark toggle chips — トンボ / 見当 */
+    .mark-chips { display: flex; gap: 6px; margin-top: 10px; }
+    .mark-chip {
+      display: flex; align-items: center; gap: 4px;
+      padding: 5px 13px;
+      border: 1.5px solid var(--border); border-radius: 100px;
+      background: transparent; cursor: pointer;
+      font-family: var(--font-jp); font-size: 12px; color: var(--ink-light);
+      transition: all 0.13s;
+    }
+    .mark-chip:hover { border-color: var(--ink-mid); color: var(--ink-mid); }
+    .mark-chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
     /* Sliders */
     .slider-wrap { margin-bottom: 13px; }
@@ -299,7 +360,7 @@
       letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid);
     }
     .feel-sub {
-      font-family: var(--font); font-size: 9px; font-weight: 400; color: var(--ink-light);
+      font-family: var(--font-jp); font-size: 10px; font-weight: 400; color: var(--ink-light);
       letter-spacing: 0; text-transform: none; line-height: 1.3; text-align: center;
     }
     .feel-chip.active .feel-name { color: var(--paper); }
@@ -399,8 +460,8 @@
     <svg class="logo-reg" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="7.5" cy="7.5" r="5.5" stroke="#1a1a1a" stroke-width="1"/><line x1="7.5" y1="0" x2="7.5" y2="15" stroke="#1a1a1a" stroke-width="0.7"/><line x1="0" y1="7.5" x2="15" y2="7.5" stroke="#1a1a1a" stroke-width="0.7"/></svg>
     RISO PRESS
   </div>
-  <div class="tagline">Risograph Halftone Simulator</div>
-  <div class="process-tag">版分解 · AMハーフトーン · インクMultiply · 版ずれ</div>
+  <div class="tagline">Risograph Print Simulator</div>
+  <div class="process-tag">版分解 · インク重ね · 特色インク · 版ずれ</div>
 </header>
 
 <div class="presets-bar">
@@ -514,6 +575,10 @@
     <div class="control-section" style="border-top: 1px solid var(--border);">
       <button class="btn-primary" id="save-btn" disabled>PNG で保存</button>
       <button class="btn-secondary" id="share-btn">X でシェア</button>
+      <div class="mark-chips">
+        <button class="mark-chip" id="tombo-btn">トンボ</button>
+        <button class="mark-chip" id="regmark-btn">見当</button>
+      </div>
     </div>
   </div>
 </div>
@@ -523,22 +588,22 @@
 // RISO INK PALETTE  (Riso Kagaku authentic colors + screen angles)
 // ─────────────────────────────────────────────────────────────
 const RISO_INKS = [
-  { name: 'Black',              hex: '#1a1a1a', angle: 45 },
-  { name: 'Fluorescent Pink',   hex: '#FF48B0', angle: 75 },
-  { name: 'Blue',               hex: '#0078BF', angle: 15 },
-  { name: 'Yellow',             hex: '#FFE800', angle:  0 },
-  { name: 'Bright Red',         hex: '#F15060', angle: 75 },
-  { name: 'Orange',             hex: '#FF6C2F', angle: 75 },
-  { name: 'Fluorescent Orange', hex: '#FF5B1D', angle: 75 },
-  { name: 'Green',              hex: '#00A95C', angle: 15 },
-  { name: 'Teal',               hex: '#00ABAC', angle: 15 },
-  { name: 'Medium Blue',        hex: '#3255A4', angle: 15 },
-  { name: 'Purple',             hex: '#765BA7', angle: 75 },
-  { name: 'Burgundy',           hex: '#914E72', angle: 45 },
-  { name: 'Gold',               hex: '#AC8B2C', angle:  0 },
-  { name: 'Light Gray',         hex: '#949494', angle: 45 },
-  { name: 'Fluorescent Green',  hex: '#69D84F', angle: 15 },
-  { name: 'Mint',               hex: '#82D8D5', angle: 15 },
+  { name: '墨',   en: 'Black',              hex: '#1a1a1a', angle: 45 },
+  { name: '撫子', en: 'Fluorescent Pink',   hex: '#FF48B0', angle: 75 },
+  { name: '瑠璃', en: 'Blue',               hex: '#0078BF', angle: 15 },
+  { name: '山吹', en: 'Yellow',             hex: '#FFE800', angle:  0 },
+  { name: '緋',   en: 'Bright Red',         hex: '#F15060', angle: 75 },
+  { name: '柿',   en: 'Orange',             hex: '#FF6C2F', angle: 75 },
+  { name: '蛍橙', en: 'Fluorescent Orange', hex: '#FF5B1D', angle: 75 },
+  { name: '若草', en: 'Green',              hex: '#00A95C', angle: 15 },
+  { name: '青磁', en: 'Teal',               hex: '#00ABAC', angle: 15 },
+  { name: '群青', en: 'Medium Blue',        hex: '#3255A4', angle: 15 },
+  { name: '藤',   en: 'Purple',             hex: '#765BA7', angle: 75 },
+  { name: '牡丹', en: 'Burgundy',           hex: '#914E72', angle: 45 },
+  { name: '琥珀', en: 'Gold',               hex: '#AC8B2C', angle:  0 },
+  { name: '銀鼠', en: 'Light Gray',         hex: '#949494', angle: 45 },
+  { name: '若葉', en: 'Fluorescent Green',  hex: '#69D84F', angle: 15 },
+  { name: '薄荷', en: 'Mint',               hex: '#82D8D5', angle: 15 },
 ];
 
 const INK_MAP = Object.fromEntries(RISO_INKS.map(i => [i.hex.toLowerCase(), i]));
@@ -601,6 +666,8 @@ const S = {
   misregDirs:  null,
   activePreset:'TOKYO NIGHT',
   activeFeel:  'FRESH',
+  tombo:       false,
+  regmark:     false,
 };
 
 const MAX_DIM = 1000;
@@ -1021,7 +1088,7 @@ async function render() {
     const pct  = Math.round(12 + (i / useInks.length) * 74);
     const ink  = useInks[i];
     const info = INK_MAP[ink.toLowerCase()] || { angle: [45, 15, 75][i % 3], name: 'Ink' };
-    setOverlayState(pct, `${(info.name || 'INK').toUpperCase()} 印刷中`);
+    setOverlayState(pct, `${info.name || 'INK'} 印刷中`);
     await tick();
     layers.push(await createHalftoneLayer(usePlates[i] || usePlates[0], S.imgW, S.imgH, S.cellSize, info.angle, ink, S.blurPx));
     compositeInksOnly(layers);
@@ -1088,7 +1155,7 @@ function loadImageElement(img) {
     'ED. ' + (Math.floor(Math.random() * 49) + 1) + '/50  ·  RISO PRESS';
 
   // Ensure paper texture is loaded before rendering
-  const go = () => render();
+  const go = () => { render(); renderTombo(); };
   S.paperCanvas ? go() : loadPaperTexture().then(go);
 }
 
@@ -1106,10 +1173,6 @@ function loadFile(file) {
 // ─────────────────────────────────────────────────────────────
 // UI
 // ─────────────────────────────────────────────────────────────
-function inkOptions() {
-  return RISO_INKS.map(i => `<option value="${i.hex}">${i.name}</option>`).join('');
-}
-
 function renderInkSlots() {
   const slots  = document.getElementById('ink-slots');
   const addBtn = document.getElementById('add-ink-btn');
@@ -1117,29 +1180,60 @@ function renderInkSlots() {
   const isCmyk = S.splitMode === 'cmyk';
 
   S.inks.forEach((hex, i) => {
-    const row = document.createElement('div');
+    const info = INK_MAP[hex.toLowerCase()] || { name: '?', en: '?', hex };
+    const row  = document.createElement('div');
     row.className = 'ink-row';
-    row.innerHTML = `
-      <span class="ink-index">${i + 1}</span>
-      <div class="ink-swatch" style="background:${hex}"></div>
-      <select class="ink-select" data-idx="${i}" ${isCmyk ? 'disabled style="opacity:0.5;cursor:default"' : ''}>${inkOptions()}</select>
-      ${isCmyk
-        ? `<div style="width:22px;font-size:11px;text-align:center;opacity:0.3">🔒</div>`
-        : S.inks.length > 2
+
+    if (isCmyk) {
+      row.innerHTML = `
+        <span class="ink-index">${i + 1}</span>
+        <div class="ink-swatch" style="background:${hex}"></div>
+        <span class="swatch-name-locked">${info.name}</span>
+        <div style="width:22px;font-size:11px;text-align:center;opacity:0.3">🔒</div>
+      `;
+    } else {
+      const swatchOpts = RISO_INKS.map(ink => `
+        <div class="swatch-opt${ink.hex.toLowerCase() === hex.toLowerCase() ? ' selected' : ''}"
+             data-hex="${ink.hex}" title="${ink.en}">
+          <div class="swatch-opt-dot" style="background:${ink.hex}"></div>
+          <div class="swatch-opt-name">${ink.name}</div>
+        </div>`).join('');
+
+      row.innerHTML = `
+        <span class="ink-index">${i + 1}</span>
+        <div class="swatch-wrap">
+          <button class="swatch-trigger" type="button">
+            <div class="swatch-trigger-dot" style="background:${hex}"></div>
+            <span class="swatch-trigger-name">${info.name}</span>
+            <span class="swatch-trigger-en">${info.en || ''}</span>
+          </button>
+          <div class="swatch-popup hidden">${swatchOpts}</div>
+        </div>
+        ${S.inks.length > 2
           ? `<button class="remove-ink-btn" data-idx="${i}">×</button>`
           : `<div style="width:22px"></div>`}
-    `;
-    const sel = row.querySelector('select');
-    sel.value = hex;
-    if (!isCmyk) {
-      sel.addEventListener('change', e => {
-        S.inks[i]      = e.target.value;
-        S.misregDirs   = null;
-        S.activePreset = null;
-        row.querySelector('.ink-swatch').style.background = e.target.value;
-        updatePresetBtns();
-        scheduleRender();
+      `;
+
+      const popup   = row.querySelector('.swatch-popup');
+      const trigger = row.querySelector('.swatch-trigger');
+
+      trigger.addEventListener('click', e => {
+        e.stopPropagation();
+        document.querySelectorAll('.swatch-popup').forEach(p => { if (p !== popup) p.classList.add('hidden'); });
+        popup.classList.toggle('hidden');
       });
+
+      popup.querySelectorAll('.swatch-opt').forEach(opt => {
+        opt.addEventListener('click', e => {
+          e.stopPropagation();
+          S.inks[i]      = opt.dataset.hex;
+          S.misregDirs   = null;
+          S.activePreset = null;
+          popup.classList.add('hidden');
+          renderInkSlots(); updatePresetBtns(); scheduleRender();
+        });
+      });
+
       const rm = row.querySelector('.remove-ink-btn');
       if (rm) rm.addEventListener('click', () => {
         S.inks.splice(i, 1);
@@ -1148,6 +1242,7 @@ function renderInkSlots() {
         renderInkSlots(); updatePresetBtns(); scheduleRender();
       });
     }
+
     slots.appendChild(row);
   });
 
@@ -1240,6 +1335,91 @@ function shuffleInks() {
   renderInkSlots();
   updatePresetBtns();
   if (S.imageData) scheduleRender();
+}
+
+// ─────────────────────────────────────────────────────────────
+// TOMBO — Japanese crop marks (トンボ) and registration marks (見当)
+// Drawn as an SVG overlay on top of the paper-frame.
+// ─────────────────────────────────────────────────────────────
+function renderTombo() {
+  const old = document.getElementById('tombo-overlay');
+  if (old) old.remove();
+  if (!S.tombo && !S.regmark) return;
+
+  const frame = document.getElementById('paper-frame');
+  if (frame.style.display === 'none' || !frame.offsetWidth) return;
+
+  const W   = frame.offsetWidth;
+  const H   = frame.offsetHeight;
+  const sty = window.getComputedStyle(frame);
+  const pad = parseInt(sty.paddingTop, 10) || 36;
+
+  // Print area corners within the frame
+  const px = pad, py = pad, pw = W - pad * 2, ph = H - pad * 2;
+
+  const ns  = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.id    = 'tombo-overlay';
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width',   '100%');
+  svg.setAttribute('height',  '100%');
+  svg.style.cssText = 'position:absolute;inset:0;pointer-events:none;overflow:visible;';
+
+  const mk = (tag, attrs) => {
+    const el = document.createElementNS(ns, tag);
+    Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+    return el;
+  };
+  const col = 'rgba(26,26,26,0.55)';
+  const sw  = 0.8;
+  const arm = 18;
+  const gap = 3;
+
+  if (S.tombo) {
+    // Corner トンボ: outer circle + crosshair arms extending outward
+    [
+      { cx: px,      cy: py      },
+      { cx: px + pw, cy: py      },
+      { cx: px,      cy: py + ph },
+      { cx: px + pw, cy: py + ph },
+    ].forEach(({ cx, cy }) => {
+      const g = document.createElementNS(ns, 'g');
+      g.appendChild(mk('circle', { cx, cy, r: 9, stroke: col, 'stroke-width': sw, fill: 'none' }));
+      g.appendChild(mk('line', { x1: cx - gap - arm, y1: cy,  x2: cx - gap,       y2: cy,  stroke: col, 'stroke-width': sw }));
+      g.appendChild(mk('line', { x1: cx + gap,       y1: cy,  x2: cx + gap + arm, y2: cy,  stroke: col, 'stroke-width': sw }));
+      g.appendChild(mk('line', { x1: cx, y1: cy - gap - arm,  x2: cx, y2: cy - gap,       stroke: col, 'stroke-width': sw }));
+      g.appendChild(mk('line', { x1: cx, y1: cy + gap,        x2: cx, y2: cy + gap + arm, stroke: col, 'stroke-width': sw }));
+      svg.appendChild(g);
+    });
+
+    // Edge center marks (top / bottom / left / right)
+    [
+      { x1: px + pw/2, y1: py - gap - arm, x2: px + pw/2, y2: py - gap },
+      { x1: px + pw/2, y1: py + ph + gap,  x2: px + pw/2, y2: py + ph + gap + arm },
+      { x1: px - gap - arm, y1: py + ph/2, x2: px - gap,       y2: py + ph/2 },
+      { x1: px + pw + gap,  y1: py + ph/2, x2: px + pw + gap + arm, y2: py + ph/2 },
+    ].forEach(a => svg.appendChild(mk('line', { ...a, stroke: col, 'stroke-width': sw })));
+  }
+
+  if (S.regmark) {
+    // 見当マーク: concentric circle targets at edge midpoints, outside crop zone
+    const off = arm + gap + 18;
+    [
+      { cx: px + pw/2,       cy: py - off           },
+      { cx: px + pw/2,       cy: py + ph + off      },
+      { cx: px - off,        cy: py + ph/2          },
+      { cx: px + pw + off,   cy: py + ph/2          },
+    ].forEach(({ cx, cy }) => {
+      const g = document.createElementNS(ns, 'g');
+      g.appendChild(mk('circle', { cx, cy, r: 7, stroke: col, 'stroke-width': sw, fill: 'none' }));
+      g.appendChild(mk('circle', { cx, cy, r: 2.5, fill: col }));
+      g.appendChild(mk('line', { x1: cx - 13, y1: cy, x2: cx + 13, y2: cy, stroke: col, 'stroke-width': sw }));
+      g.appendChild(mk('line', { x1: cx, y1: cy - 13, x2: cx, y2: cy + 13, stroke: col, 'stroke-width': sw }));
+      svg.appendChild(g);
+    });
+  }
+
+  frame.appendChild(svg);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1340,6 +1520,23 @@ function setup() {
     const url  = encodeURIComponent('https://sokihayashi.github.io/free-space/');
     const text = encodeURIComponent('Made with RISO PRESS — free risograph print simulator');
     window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+  });
+
+  document.getElementById('tombo-btn').addEventListener('click', () => {
+    S.tombo = !S.tombo;
+    document.getElementById('tombo-btn').classList.toggle('active', S.tombo);
+    renderTombo();
+  });
+
+  document.getElementById('regmark-btn').addEventListener('click', () => {
+    S.regmark = !S.regmark;
+    document.getElementById('regmark-btn').classList.toggle('active', S.regmark);
+    renderTombo();
+  });
+
+  // Close any open swatch popup when clicking outside
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.swatch-popup').forEach(p => p.classList.add('hidden'));
   });
 }
 
@@ -1462,6 +1659,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('edition-mark').textContent   =
       'ED. ' + (Math.floor(Math.random() * 49) + 1) + '/50  ·  RISO PRESS';
     render();
+    renderTombo();
   });
 });
 </script>
