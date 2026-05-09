@@ -532,17 +532,23 @@ const INK_MAP = Object.fromEntries(RISO_INKS.map(i => [i.hex.toLowerCase(), i]))
 // PRESETS
 // ─────────────────────────────────────────────────────────────
 const PRESETS = [
+  // ── 2-INK ──
   { name: 'TOKYO NIGHT',  inks: ['#3255A4', '#FF48B0'],            mode: 'channels'           },
   { name: 'SUMMER ZINE',  inks: ['#F15060', '#FFE800'],            mode: 'channels'           },
   { name: 'LATE NIGHT',   inks: ['#1a1a1a', '#00ABAC'],            mode: 'shadows-highlights' },
   { name: 'BOTANICAL',    inks: ['#914E72', '#00A95C'],            mode: 'channels'           },
   { name: 'SUNSET',       inks: ['#FF6C2F', '#765BA7'],            mode: 'warm-cool'          },
-  { name: 'RISOTTO',      inks: ['#FF48B0', '#FFE800', '#0078BF'], mode: 'channels'           },
   { name: 'NEON CITY',    inks: ['#FF48B0', '#00ABAC'],            mode: 'warm-cool'          },
   { name: 'HARVEST',      inks: ['#FF6C2F', '#914E72'],            mode: 'channels'           },
   { name: 'GHOST',        inks: ['#949494', '#3255A4'],            mode: 'shadows-highlights' },
-  { name: 'FOREST',       inks: ['#00A95C', '#1a1a1a'],            mode: 'shadows-highlights' },
-  { name: 'MOONRISE',    inks: ['#765BA7', '#82D8D5'],            mode: 'shadows-highlights' },
+  { name: 'MOONRISE',     inks: ['#765BA7', '#82D8D5'],            mode: 'shadows-highlights' },
+  // ── 3-INK: shadow / midtone / highlight order ──
+  { name: 'PRINT SHOP',   inks: ['#1a1a1a', '#F15060', '#FFE800'], mode: 'shadows-highlights' },
+  { name: 'FIRE',         inks: ['#914E72', '#FF6C2F', '#FFE800'], mode: 'shadows-highlights' },
+  { name: 'DEEP OCEAN',   inks: ['#3255A4', '#00ABAC', '#82D8D5'], mode: 'shadows-highlights' },
+  { name: 'DUSK',         inks: ['#765BA7', '#FF6C2F', '#FFE800'], mode: 'shadows-highlights' },
+  { name: 'RISOTTO',      inks: ['#FF48B0', '#FFE800', '#0078BF'], mode: 'channels'           },
+  { name: 'CARNIVAL',     inks: ['#FF48B0', '#69D84F', '#FFE800'], mode: 'channels'           },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -677,10 +683,17 @@ function createPlates(imgData, w, h, mode, inkCount) {
       p2[i] = Math.round(Math.min(255, cool * 0.7 + l          * 0.35) * ws);
     }
     if (inkCount === 2) return [p1, p2];
+    // 3rd ink: neutral/desaturated areas — grays and blacks that aren't
+    // captured well by warm or cool channels alone.
     const p3 = new Uint8Array(n);
     for (let i = 0; i < n; i++) {
-      const l = lum[i];
-      p3[i] = Math.round(255 - l);
+      const b   = i * 4;
+      const r   = src[b], g = src[b+1], bl = src[b+2];
+      const mx  = Math.max(r, g, bl), mn = Math.min(r, g, bl);
+      const sat = mx > 0 ? (mx - mn) / mx : 0; // HSV saturation
+      const l   = lum[i] / 255;
+      // High density where: dark AND low saturation (neutral shadows/grays)
+      p3[i] = Math.round(Math.min(255, (1 - sat) * (1 - l) * 340));
     }
     return [p1, p2, p3];
   }
@@ -718,13 +731,20 @@ function createPlates(imgData, w, h, mode, inkCount) {
   }
   if (inkCount === 2) return [p1, p2];
 
-  // 3rd plate: highlight bell shifted toward light tones
+  // 3-ink trisection — shadow / midtone / highlight, each covering a distinct
+  // tonal zone. Ink order in preset: [shadow, midtone, highlight].
+  //
+  //  plate1 already = (1-t)^0.9   →  dense at black, fades by midgray
+  //  plate2 already = sin(t·π)^0.65 →  midtone bell, zero at both extremes
+  //  plate3 (new)   = sin(norm·π)^0.7 where norm maps t∈[0.4,1] → [0,1]
+  //                   peaks at t≈0.7, zero at t=0.4 and t=1 (paper shows in whites)
   const p3 = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
-    const t = lum[i] / 255;
-    p3[i] = Math.round(Math.pow(Math.sin(Math.min(1, t * 1.4) * Math.PI), 0.7) * 255);
+    const t    = lum[i] / 255;
+    const norm = Math.max(0, Math.min(1, (t - 0.4) / 0.6));
+    p3[i] = Math.round(Math.pow(Math.sin(norm * Math.PI), 0.7) * 255);
   }
-  return [p1, p3, p2];
+  return [p1, p2, p3];
 }
 
 // ─────────────────────────────────────────────────────────────
