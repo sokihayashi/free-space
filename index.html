@@ -274,18 +274,27 @@
     }
     .control-section { padding: 16px 0; }
 
-    /* Print Feel chips */
-    .feel-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    /* Print Feel chips — two-line cards */
+    .feel-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .feel-chip {
-      padding: 6px 13px;
-      border: 1.5px solid var(--border); border-radius: 100px;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 9px 10px 8px;
+      border: 1.5px solid var(--border); border-radius: 8px;
       background: transparent; cursor: pointer;
-      font-family: var(--font); font-size: 10px; font-weight: 700;
-      letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid);
-      transition: all 0.13s;
+      font-family: var(--font); transition: all 0.13s;
     }
-    .feel-chip:hover  { border-color: var(--ink-mid); }
+    .feel-chip:hover  { border-color: var(--ink-mid); background: var(--paper-dark); }
     .feel-chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+    .feel-name {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--ink-mid);
+    }
+    .feel-sub {
+      font-size: 9.5px; font-weight: 400; color: var(--ink-light);
+      letter-spacing: 0; text-transform: none; line-height: 1.3; text-align: center;
+    }
+    .feel-chip.active .feel-name { color: var(--paper); }
+    .feel-chip.active .feel-sub  { color: rgba(245,240,232,0.62); }
 
     /* Advanced settings collapsible */
     .advanced-details { border-top: 1px solid var(--border); }
@@ -399,8 +408,8 @@
         <path d="M4 32 L13 23 20 29 29 19 40 32"/>
       </svg>
       <div class="drop-text">
-        <strong>Drop your photo here</strong><br>
-        click to browse — it prints plate by plate
+        <strong>写真をドロップ</strong><br>
+        クリックで選択 — 版ごとに印刷していきます
       </div>
       <input type="file" id="file-input" accept="image/*" style="display:none">
     </div>
@@ -417,7 +426,7 @@
       </div>
     </div>
 
-    <button class="reupload-btn" id="reupload-btn">↑ Upload Your Photo</button>
+    <button class="reupload-btn" id="reupload-btn">↑ 写真を変える</button>
 
     <!-- Printing animation overlay -->
     <div class="render-overlay" id="render-overlay">
@@ -433,72 +442,68 @@
 
   <div class="controls">
     <div class="control-section">
-      <div class="section-label">Ink Layers</div>
+      <div class="section-label">インク設定</div>
       <div class="ink-slots" id="ink-slots"></div>
-      <button class="add-ink-btn" id="add-ink-btn">+ Add Ink</button>
+      <button class="add-ink-btn" id="add-ink-btn">+ インクを追加</button>
     </div>
 
     <div class="control-section">
-      <div class="section-label">Print Feel</div>
-      <div class="feel-chips" id="feel-chips">
-        <button class="feel-chip active" data-feel="FRESH">Fresh</button>
-        <button class="feel-chip" data-feel="WORN">Worn</button>
-        <button class="feel-chip" data-feel="GHOST">Ghost</button>
-        <button class="feel-chip" data-feel="BOLD">Bold</button>
-      </div>
+      <div class="section-label">印刷の質感</div>
+      <div class="feel-chips" id="feel-chips"></div>
     </div>
 
     <details class="advanced-details" id="advanced-details">
       <summary class="advanced-toggle">
-        <span>Advanced Settings</span>
+        <span>詳細設定</span>
         <span class="toggle-arrow">▸</span>
       </summary>
 
       <div class="control-section">
-        <div class="section-label">Ink Separation</div>
+        <div class="section-label">分版モード</div>
         <select class="control-select" id="split-mode">
-          <option value="shadows-highlights">Shadows / Highlights</option>
-          <option value="warm-cool">Warm / Cool Tones</option>
-          <option value="channels">RGB Channels</option>
+          <option value="shadows-highlights">明暗分版</option>
+          <option value="warm-cool">暖色 / 寒色</option>
+          <option value="channels">RGBチャンネル</option>
+          <option value="cmyk">CMYK写真分版</option>
         </select>
       </div>
 
       <div class="control-section">
-        <div class="section-label">Print Settings</div>
+        <div class="section-label">プリント設定</div>
 
         <div class="slider-wrap">
           <div class="slider-header">
-            <span class="slider-label">Dot Size</span>
-            <span class="slider-value" id="cell-val">4 px</span>
+            <span class="slider-label">ドットサイズ</span>
+            <span class="slider-value" id="cell-val">3 px</span>
           </div>
-          <input type="range" id="cell-size" min="2" max="20" step="1" value="4">
+          <input type="range" id="cell-size" min="2" max="20" step="1" value="3">
         </div>
 
         <div class="slider-wrap">
           <div class="slider-header">
-            <span class="slider-label">Plate Drift</span>
-            <span class="slider-value" id="misreg-val">1 px</span>
+            <span class="slider-label">版ズレ</span>
+            <span class="slider-value" id="misreg-val">0.5 px</span>
           </div>
           <div class="slider-row-inline">
-            <input type="range" id="misregistration" min="0" max="14" step="0.5" value="1">
-            <button class="regen-btn" id="regen-btn" title="Re-roll plate offsets">↺</button>
+            <input type="range" id="misregistration" min="0" max="14" step="0.5" value="0.5">
+            <button class="regen-btn" id="regen-btn" title="版ズレをランダム再生成">↺</button>
           </div>
         </div>
 
         <div class="slider-wrap">
           <div class="slider-header">
-            <span class="slider-label">Ink Bleed</span>
-            <span class="slider-value" id="blur-val">0.4</span>
+            <span class="slider-label">インクにじみ</span>
+            <span class="slider-value" id="blur-val">0.1</span>
           </div>
-          <input type="range" id="blur-amount" min="0" max="3" step="0.1" value="0.4">
+          <input type="range" id="blur-amount" min="0" max="3" step="0.1" value="0.1">
         </div>
 
       </div>
     </details>
 
     <div class="control-section" style="border-top: 1px solid var(--border);">
-      <button class="btn-primary" id="save-btn" disabled>Save PNG</button>
-      <button class="btn-secondary" id="share-btn">Share on X</button>
+      <button class="btn-primary" id="save-btn" disabled>PNG で保存</button>
+      <button class="btn-secondary" id="share-btn">X でシェア</button>
     </div>
   </div>
 </div>
@@ -528,12 +533,17 @@ const RISO_INKS = [
 
 const INK_MAP = Object.fromEntries(RISO_INKS.map(i => [i.hex.toLowerCase(), i]));
 
+// CMYK inks: Yellow → Magenta → Cyan → Black (real Riso print order, light first)
+const CMYK_INKS = ['#FFE800', '#FF48B0', '#0078BF', '#1a1a1a'];
+
 // ─────────────────────────────────────────────────────────────
 // PRESETS
 // ─────────────────────────────────────────────────────────────
 // Ink order for shadows-highlights: [darkest → lightest]
 // Rendering reverses this to follow real Riso print order: light inks first, dark last.
 const PRESETS = [
+  // ── CMYK ──
+  { name: 'CMYK',         inks: CMYK_INKS,                                      mode: 'cmyk'               },
   // ── 3-INK (default range) ──
   { name: 'PRINT SHOP',   inks: ['#1a1a1a', '#F15060', '#FFE800'], mode: 'shadows-highlights' },
   { name: 'FIRE',         inks: ['#914E72', '#FF6C2F', '#FFE800'], mode: 'shadows-highlights' },
@@ -558,10 +568,10 @@ const PRESETS = [
 // PRINT FEEL — experiential presets that set multiple params at once
 // ─────────────────────────────────────────────────────────────
 const PRINT_FEELS = {
-  FRESH: { cellSize: 4, misreg: 0.5, blurPx: 0.1 },
-  WORN:  { cellSize: 5, misreg: 3.5, blurPx: 1.0 },
-  GHOST: { cellSize: 3, misreg: 8,   blurPx: 0.15 },
-  BOLD:  { cellSize: 9, misreg: 2,   blurPx: 1.8  },
+  FRESH: { cellSize: 3, misreg: 0.5, blurPx: 0.1,  desc: '細かい・きれい' },
+  WORN:  { cellSize: 5, misreg: 3.5, blurPx: 1.0,  desc: 'にじみ・ヴィンテージ' },
+  GHOST: { cellSize: 3, misreg: 8,   blurPx: 0.15, desc: '版ズレ大・うすずり' },
+  BOLD:  { cellSize: 9, misreg: 2,   blurPx: 1.8,  desc: '粗い・インク濃め' },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -573,7 +583,7 @@ const S = {
   imgH:        0,
   inks:        ['#1a1a1a', '#F15060', '#FFE800'],
   splitMode:   'shadows-highlights',
-  cellSize:    4,
+  cellSize:    3,
   misreg:      0.5,
   blurPx:      0.1,
   paperCanvas: null,   // paper.jpg loaded as canvas for background
@@ -718,6 +728,29 @@ function createPlates(imgData, w, h, mode, inkCount) {
       p3[i] = Math.min(255, Math.round((255 - src[i * 4 + 1]) * boost));
     }
     return [p1, p2, p3];
+  }
+
+  if (mode === 'cmyk') {
+    // Standard CMYK separation with GCR (Grey Component Replacement).
+    // Maps RGB → (C, M, Y, K) using real colorimetric formulas.
+    // Riso ink angles happen to match standard CMYK screen angles exactly:
+    //   Yellow 0°, Magenta(F.Pink) 75°, Cyan(Blue) 15°, Black 45°
+    const pY = new Uint8Array(n), pM = new Uint8Array(n);
+    const pC = new Uint8Array(n), pK = new Uint8Array(n);
+    for (let i = 0; i < n; i++) {
+      const b  = i * 4;
+      const r  = src[b] / 255, g = src[b+1] / 255, bl = src[b+2] / 255;
+      const k  = 1 - Math.max(r, g, bl);
+      const d  = 1 - k;
+      // Suppress very thin CMY ink where K does the work
+      const kBoost = Math.min(1, k * 1.15);
+      pC[i] = d > 0.02 ? Math.round(Math.max(0, Math.min(1, (1-r-k)/d)) * (1-kBoost*0.3) * 255) : 0;
+      pM[i] = d > 0.02 ? Math.round(Math.max(0, Math.min(1, (1-g-k)/d)) * (1-kBoost*0.3) * 255) : 0;
+      pY[i] = d > 0.02 ? Math.round(Math.max(0, Math.min(1, (1-bl-k)/d)) * (1-kBoost*0.3) * 255) : 0;
+      pK[i] = Math.round(k * 255);
+    }
+    // Print order: Y first (lightest), then M, C, K last (anchors blacks)
+    return [pY, pM, pC, pK];
   }
 
   // ── SHADOWS-HIGHLIGHTS ──
@@ -942,8 +975,15 @@ async function render() {
   const scanH = document.getElementById('output-canvas').offsetHeight || 600;
   overlay.style.setProperty('--scan-h', (scanH + 7) + 'px');
   overlay.classList.add('active');
-  setOverlayState(5, 'SEPARATING…');
+  setOverlayState(5, '版分解中…');
   await tick();
+
+  // CMYK mode always uses exactly the 4 CMYK Riso inks
+  if (S.splitMode === 'cmyk' && S.inks.join() !== CMYK_INKS.join()) {
+    S.inks = [...CMYK_INKS];
+    S.misregDirs = null;
+    renderInkSlots();
+  }
 
   if (!S.misregDirs || S.misregDirs.length !== S.inks.length) regenMisregDirs(S.inks.length);
   const plates = createPlates(S.imageData, S.imgW, S.imgH, S.splitMode, S.inks.length);
@@ -971,17 +1011,17 @@ async function render() {
     const pct  = Math.round(12 + (i / useInks.length) * 74);
     const ink  = useInks[i];
     const info = INK_MAP[ink.toLowerCase()] || { angle: [45, 15, 75][i % 3], name: 'Ink' };
-    setOverlayState(pct, `PRINTING ${(info.name || 'INK').toUpperCase()}`);
+    setOverlayState(pct, `${(info.name || 'INK').toUpperCase()} 印刷中`);
     await tick();
     layers.push(await createHalftoneLayer(usePlates[i] || usePlates[0], S.imgW, S.imgH, S.cellSize, info.angle, ink, S.blurPx));
     compositeInksOnly(layers);
     if (i < useInks.length - 1) await new Promise(r => setTimeout(r, 140));
   }
 
-  setOverlayState(94, 'FINISHING…');
+  setOverlayState(94, '仕上げ中…');
   await tick();
   compositeRiso(layers);   // final pass adds overlayTex if present
-  setOverlayState(100, 'PRINTED');
+  setOverlayState(100, '完成');
   await new Promise(r => setTimeout(r, 420));  // hold so the user reads "PRINTED"
 
   overlay.classList.remove('active');
@@ -1064,6 +1104,7 @@ function renderInkSlots() {
   const slots  = document.getElementById('ink-slots');
   const addBtn = document.getElementById('add-ink-btn');
   slots.innerHTML = '';
+  const isCmyk = S.splitMode === 'cmyk';
 
   S.inks.forEach((hex, i) => {
     const row = document.createElement('div');
@@ -1071,32 +1112,36 @@ function renderInkSlots() {
     row.innerHTML = `
       <span class="ink-index">${i + 1}</span>
       <div class="ink-swatch" style="background:${hex}"></div>
-      <select class="ink-select" data-idx="${i}">${inkOptions()}</select>
-      ${S.inks.length > 2
-        ? `<button class="remove-ink-btn" data-idx="${i}">×</button>`
-        : `<div style="width:22px"></div>`}
+      <select class="ink-select" data-idx="${i}" ${isCmyk ? 'disabled style="opacity:0.5;cursor:default"' : ''}>${inkOptions()}</select>
+      ${isCmyk
+        ? `<div style="width:22px;font-size:11px;text-align:center;opacity:0.3">🔒</div>`
+        : S.inks.length > 2
+          ? `<button class="remove-ink-btn" data-idx="${i}">×</button>`
+          : `<div style="width:22px"></div>`}
     `;
     const sel = row.querySelector('select');
     sel.value = hex;
-    sel.addEventListener('change', e => {
-      S.inks[i]      = e.target.value;
-      S.misregDirs   = null;
-      S.activePreset = null;
-      row.querySelector('.ink-swatch').style.background = e.target.value;
-      updatePresetBtns();
-      scheduleRender();
-    });
-    const rm = row.querySelector('.remove-ink-btn');
-    if (rm) rm.addEventListener('click', () => {
-      S.inks.splice(i, 1);
-      S.misregDirs   = null;
-      S.activePreset = null;
-      renderInkSlots(); updatePresetBtns(); scheduleRender();
-    });
+    if (!isCmyk) {
+      sel.addEventListener('change', e => {
+        S.inks[i]      = e.target.value;
+        S.misregDirs   = null;
+        S.activePreset = null;
+        row.querySelector('.ink-swatch').style.background = e.target.value;
+        updatePresetBtns();
+        scheduleRender();
+      });
+      const rm = row.querySelector('.remove-ink-btn');
+      if (rm) rm.addEventListener('click', () => {
+        S.inks.splice(i, 1);
+        S.misregDirs   = null;
+        S.activePreset = null;
+        renderInkSlots(); updatePresetBtns(); scheduleRender();
+      });
+    }
     slots.appendChild(row);
   });
 
-  addBtn.style.display = S.inks.length >= 4 ? 'none' : 'block';
+  addBtn.style.display = (isCmyk || S.inks.length >= 4) ? 'none' : 'block';
 }
 
 function buildPresets() {
@@ -1136,6 +1181,19 @@ function applyPreset(name) {
 // ─────────────────────────────────────────────────────────────
 // PRINT FEEL
 // ─────────────────────────────────────────────────────────────
+function buildFeelChips() {
+  const container = document.getElementById('feel-chips');
+  container.innerHTML = '';
+  Object.entries(PRINT_FEELS).forEach(([key, f]) => {
+    const btn = document.createElement('button');
+    btn.className = `feel-chip${S.activeFeel === key ? ' active' : ''}`;
+    btn.dataset.feel = key;
+    btn.innerHTML = `<span class="feel-name">${key}</span><span class="feel-sub">${f.desc}</span>`;
+    btn.addEventListener('click', () => applyFeel(key));
+    container.appendChild(btn);
+  });
+}
+
 function applyFeel(name) {
   const f = PRINT_FEELS[name];
   if (!f) return;
@@ -1150,9 +1208,10 @@ function applyFeel(name) {
   if (cs) { cs.value = f.cellSize;  document.getElementById('cell-val').textContent  = f.cellSize + ' px'; }
   if (mr) { mr.value = f.misreg;    document.getElementById('misreg-val').textContent = f.misreg + ' px'; }
   if (bl) { bl.value = f.blurPx;    document.getElementById('blur-val').textContent   = f.blurPx.toFixed(1); }
-  document.querySelectorAll('.feel-chip').forEach(b =>
-    b.classList.toggle('active', b.dataset.feel === name)
-  );
+  document.querySelectorAll('.feel-chip').forEach(b => {
+    const isActive = b.dataset.feel === name;
+    b.classList.toggle('active', isActive);
+  });
   if (S.imageData) scheduleRender();
 }
 
@@ -1222,10 +1281,6 @@ function setup() {
 
   document.getElementById('shuffle-btn').addEventListener('click', shuffleInks);
 
-  document.querySelectorAll('.feel-chip').forEach(btn =>
-    btn.addEventListener('click', () => applyFeel(btn.dataset.feel))
-  );
-
   document.getElementById('blur-amount').addEventListener('input', e => {
     S.blurPx = parseFloat(e.target.value);
     document.getElementById('blur-val').textContent = S.blurPx.toFixed(1);
@@ -1235,7 +1290,11 @@ function setup() {
   document.getElementById('split-mode').addEventListener('change', e => {
     S.splitMode    = e.target.value;
     S.activePreset = null;
-    updatePresetBtns(); scheduleRender();
+    if (S.splitMode === 'cmyk') {
+      S.inks = [...CMYK_INKS];
+      S.misregDirs = null;
+    }
+    renderInkSlots(); updatePresetBtns(); scheduleRender();
   });
 
   document.getElementById('add-ink-btn').addEventListener('click', () => {
@@ -1369,12 +1428,15 @@ function makeAutoImage() {
 // ─────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Pick a random preset on every load so repeat visitors see variety
-  const rndPreset = PRESETS[Math.floor(Math.random() * PRESETS.length)];
+  // Skip CMYK for random default — it's better experienced intentionally
+  const nonCmyk   = PRESETS.filter(p => p.mode !== 'cmyk');
+  const rndPreset  = nonCmyk[Math.floor(Math.random() * nonCmyk.length)];
   S.inks         = [...rndPreset.inks];
-  S.splitMode    = rndPreset.mode || 'channels';
+  S.splitMode    = rndPreset.mode || 'shadows-highlights';
   S.activePreset = rndPreset.name;
 
   buildPresets();
+  buildFeelChips();
   renderInkSlots();
   setup();
 
