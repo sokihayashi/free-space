@@ -262,8 +262,9 @@
     .swatch-popup {
       position: absolute; top: calc(100% + 6px); left: 0; z-index: 200;
       background: var(--paper); border: 1.5px solid var(--border); border-radius: 10px;
-      padding: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.14); width: 216px;
+      padding: 10px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.14); width: 248px;
+      max-height: 300px; overflow-y: auto; scrollbar-width: thin;
     }
     .swatch-popup.hidden { display: none; }
     .swatch-opt {
@@ -588,22 +589,44 @@
 // RISO INK PALETTE  (Riso Kagaku authentic colors + screen angles)
 // ─────────────────────────────────────────────────────────────
 const RISO_INKS = [
+  // ── DARKS ──
   { name: 'Black',              hex: '#1a1a1a', angle: 45 },
-  { name: 'Fluorescent Pink',   hex: '#FF48B0', angle: 75 },
-  { name: 'Blue',               hex: '#0078BF', angle: 15 },
-  { name: 'Yellow',             hex: '#FFE800', angle:  0 },
+  { name: 'Dark Gray',          hex: '#444444', angle: 45 },
+  { name: 'Navy',               hex: '#0038A7', angle: 15 },
+  { name: 'Forest',             hex: '#2B6342', angle: 15 },
+  { name: 'Brown',              hex: '#7B3F2A', angle: 45 },
+  { name: 'Violet',             hex: '#5A2D82', angle: 75 },
+  { name: 'Crimson',            hex: '#CF2854', angle: 75 },
+  // ── VIVIDS ──
+  { name: 'Scarlet',            hex: '#E51400', angle: 75 },
   { name: 'Bright Red',         hex: '#F15060', angle: 75 },
+  { name: 'Burgundy',           hex: '#914E72', angle: 45 },
   { name: 'Orange',             hex: '#FF6C2F', angle: 75 },
   { name: 'Fluorescent Orange', hex: '#FF5B1D', angle: 75 },
-  { name: 'Green',              hex: '#00A95C', angle: 15 },
-  { name: 'Teal',               hex: '#00ABAC', angle: 15 },
-  { name: 'Medium Blue',        hex: '#3255A4', angle: 15 },
+  { name: 'Fluorescent Pink',   hex: '#FF48B0', angle: 75 },
   { name: 'Purple',             hex: '#765BA7', angle: 75 },
-  { name: 'Burgundy',           hex: '#914E72', angle: 45 },
-  { name: 'Gold',               hex: '#AC8B2C', angle:  0 },
-  { name: 'Light Gray',         hex: '#949494', angle: 45 },
+  { name: 'Medium Blue',        hex: '#3255A4', angle: 15 },
+  { name: 'Blue',               hex: '#0078BF', angle: 15 },
+  { name: 'Teal',               hex: '#00ABAC', angle: 15 },
+  { name: 'Green',              hex: '#00A95C', angle: 15 },
   { name: 'Fluorescent Green',  hex: '#69D84F', angle: 15 },
+  { name: 'Yellow',             hex: '#FFE800', angle:  0 },
+  // ── MIDS ──
+  { name: 'Copper',             hex: '#BE6B3B', angle:  0 },
+  { name: 'Gold',               hex: '#AC8B2C', angle:  0 },
+  { name: 'Olive',              hex: '#B6AD1C', angle:  0 },
+  { name: 'Orchid',             hex: '#D461B0', angle: 75 },
+  { name: 'Cornflower',         hex: '#62A9E4', angle: 15 },
+  { name: 'Aqua',               hex: '#35C4C1', angle: 15 },
   { name: 'Mint',               hex: '#82D8D5', angle: 15 },
+  // ── MUTED / PASTEL ──
+  { name: 'Salmon',             hex: '#FF8C7A', angle: 75 },
+  { name: 'Pink',               hex: '#F4AEBF', angle: 75 },
+  { name: 'Lavender',           hex: '#BEB3D4', angle: 75 },
+  { name: 'Sky Blue',           hex: '#9AC7E8', angle: 15 },
+  { name: 'Khaki',              hex: '#98A589', angle: 45 },
+  { name: 'Stone',              hex: '#C5BEB4', angle: 45 },
+  { name: 'Light Gray',         hex: '#949494', angle: 45 },
 ];
 
 const INK_MAP = Object.fromEntries(RISO_INKS.map(i => [i.hex.toLowerCase(), i]));
@@ -622,22 +645,24 @@ const PRESETS = [
   // ── 2-INK ──
   { name: '真面目なギャル',          inks: ['#1a1a1a', '#914E72'],                               mode: 'shadows-highlights' },
   { name: '正義と割り勘',            inks: ['#3255A4', '#AC8B2C'],                               mode: 'shadows-highlights' },
-  { name: '警備員とヴィーナス',      inks: ['#949494', '#82D8D5'],                               mode: 'shadows-highlights' },
+  { name: '警備員とヴィーナス',      inks: ['#98A589', '#F4AEBF'],                               mode: 'shadows-highlights' },
   { name: '赤電話',                  inks: ['#1a1a1a', '#F15060'],                               mode: 'shadows-highlights' },
-  { name: '口紅',                    inks: ['#914E72', '#FF48B0'],                               mode: 'shadows-highlights' },
-  { name: '紫式部',                  inks: ['#765BA7', '#00ABAC'],                               mode: 'shadows-highlights' },
+  { name: '口紅',                    inks: ['#CF2854', '#FF48B0'],                               mode: 'shadows-highlights' },
+  { name: '紫式部',                  inks: ['#5A2D82', '#35C4C1'],                               mode: 'shadows-highlights' },
   { name: '黄信号',                  inks: ['#FF6C2F', '#FFE800'],                               mode: 'channels'           },
+  { name: '若旦那',                  inks: ['#0038A7', '#AC8B2C'],                               mode: 'shadows-highlights' },
+  { name: '水泳部',                  inks: ['#62A9E4', '#35C4C1'],                               mode: 'channels'           },
   // ── 3-INK ──
   { name: '総務部の反乱',            inks: ['#1a1a1a', '#F15060', '#FFE800'],                   mode: 'shadows-highlights' },
   { name: 'PTA最後の刺客',           inks: ['#1a1a1a', '#914E72', '#FF48B0'],                   mode: 'shadows-highlights' },
-  { name: '未亡人',                  inks: ['#1a1a1a', '#765BA7', '#949494'],                   mode: 'shadows-highlights' },
-  { name: '純喫茶',                  inks: ['#1a1a1a', '#AC8B2C', '#FF6C2F'],                   mode: 'shadows-highlights' },
+  { name: '未亡人',                  inks: ['#1a1a1a', '#5A2D82', '#BEB3D4'],                   mode: 'shadows-highlights' },
+  { name: '純喫茶',                  inks: ['#7B3F2A', '#BE6B3B', '#AC8B2C'],                   mode: 'shadows-highlights' },
   { name: '占い師の確定申告',        inks: ['#765BA7', '#FF6C2F', '#FFE800'],                   mode: 'shadows-highlights' },
-  { name: 'ミス非常階段',            inks: ['#3255A4', '#949494', '#F15060'],                   mode: 'shadows-highlights' },
-  { name: '赤提灯',                  inks: ['#914E72', '#F15060', '#AC8B2C'],                   mode: 'shadows-highlights' },
-  { name: '団地妻',                  inks: ['#914E72', '#AC8B2C', '#949494'],                   mode: 'shadows-highlights' },
-  { name: '風邪の日のピアニスト',    inks: ['#765BA7', '#949494', '#3255A4'],                   mode: 'shadows-highlights' },
-  { name: 'ラムネ瓶',                inks: ['#0078BF', '#949494', '#82D8D5'],                   mode: 'shadows-highlights' },
+  { name: 'ミス非常階段',            inks: ['#0038A7', '#98A589', '#E51400'],                   mode: 'shadows-highlights' },
+  { name: '赤提灯',                  inks: ['#CF2854', '#E51400', '#AC8B2C'],                   mode: 'shadows-highlights' },
+  { name: '団地妻',                  inks: ['#CF2854', '#BE6B3B', '#98A589'],                   mode: 'shadows-highlights' },
+  { name: '風邪の日のピアニスト',    inks: ['#5A2D82', '#BEB3D4', '#62A9E4'],                   mode: 'shadows-highlights' },
+  { name: 'ラムネ瓶',                inks: ['#62A9E4', '#9AC7E8', '#35C4C1'],                   mode: 'shadows-highlights' },
   { name: 'クリームソーダ',          inks: ['#00ABAC', '#82D8D5', '#FFE800'],                   mode: 'shadows-highlights' },
   { name: 'レーダー姉妹',            inks: ['#00ABAC', '#69D84F', '#3255A4'],                   mode: 'channels'           },
   { name: 'レモンだけが知っている',  inks: ['#FFE800', '#69D84F', '#00ABAC'],                   mode: 'channels'           },
