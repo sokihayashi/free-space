@@ -6,7 +6,7 @@
   <title>RISO PRESS — Risograph Print Simulator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Yomogi&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=New+Tegomin&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -19,7 +19,7 @@
       --border:     #D5CEC2;
       --font:         'DM Mono', 'Courier New', monospace;
       --font-display: 'Syne', system-ui, sans-serif;
-      --font-jp:      'Yomogi', cursive;
+      --font-jp:      'New Tegomin', serif;
     }
 
     body {
@@ -27,7 +27,7 @@
       background: var(--paper);
       color: var(--ink);
       min-height: 100vh;
-      padding: 28px 32px;
+      padding: 16px 24px;
     }
 
     /* ── HEADER ────────────────────────────────── */
@@ -35,8 +35,8 @@
       display: flex;
       align-items: baseline;
       gap: 18px;
-      margin-bottom: 22px;
-      padding-bottom: 18px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
       border-bottom: 2px solid var(--ink);
     }
     .logo {
@@ -58,7 +58,7 @@
     @media (max-width: 720px) { .process-tag { display: none; } }
 
     /* ── PRESETS ───────────────────────────────── */
-    .presets-bar { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 24px; }
+    .presets-bar { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 16px; }
     .presets-row { flex: 1; display: flex; gap: 8px; flex-wrap: wrap; }
     .preset-btn {
       display: flex; align-items: center; gap: 7px;
@@ -86,7 +86,7 @@
     .shuffle-btn:hover { border-color: var(--ink-mid); color: var(--ink-mid); border-style: solid; }
 
     /* ── LAYOUT ────────────────────────────────── */
-    .main { display: grid; grid-template-columns: 1fr 288px; gap: 28px; align-items: start; }
+    .main { display: grid; grid-template-columns: 1fr 288px; gap: 20px; align-items: start; }
 
     /* ── CANVAS AREA ───────────────────────────── */
     .canvas-wrap { position: relative; }
@@ -110,7 +110,7 @@
     .paper-frame {
       display: none;
       background: #F5F0E8 url('paper.jpg') center/cover;
-      padding: 36px;
+      padding: 24px;
       position: relative;
       box-shadow:
         inset 0 0 0 1px rgba(0,0,0,0.04),
@@ -252,7 +252,7 @@
       border: 1.5px solid rgba(0,0,0,0.12); flex-shrink: 0;
     }
     .swatch-trigger-name {
-      font-family: var(--font-jp); font-size: 13px; color: var(--ink);
+      font-family: var(--font); font-size: 11px; color: var(--ink);
       flex: 1; text-align: left;
     }
     .swatch-trigger-en {
@@ -278,7 +278,8 @@
     }
     .swatch-opt.selected .swatch-opt-dot { border-color: var(--ink); }
     .swatch-opt-name {
-      font-family: var(--font-jp); font-size: 8.5px; color: var(--ink-mid); text-align: center;
+      font-family: var(--font); font-size: 7.5px; color: var(--ink-mid); text-align: center;
+      letter-spacing: -0.01em;
     }
     .swatch-name-locked {
       flex: 1; font-family: var(--font-jp); font-size: 13px; color: var(--ink); opacity: 0.45;
@@ -340,9 +341,9 @@
       background: var(--paper);
       border: 1px solid var(--border);
       border-radius: 4px;
-      padding: 0 18px;
+      padding: 0 14px;
     }
-    .control-section { padding: 16px 0; }
+    .control-section { padding: 12px 0; }
 
     /* Print Feel chips — two-line cards */
     .feel-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -398,9 +399,9 @@
     .btn-secondary:hover { border-color: var(--ink); background: var(--paper-dark); }
 
     @media (max-width: 720px) {
-      body { padding: 14px 14px 40px; }
+      body { padding: 10px 12px 32px; }
 
-      header { gap: 12px; margin-bottom: 14px; padding-bottom: 14px; }
+      header { gap: 12px; margin-bottom: 10px; padding-bottom: 10px; }
       .logo  { font-size: 21px; }
       .tagline { display: none; }
 
@@ -421,7 +422,7 @@
       .main { grid-template-columns: 1fr; gap: 16px; }
 
       /* Tighter paper frame on small screens */
-      .paper-frame { padding: 18px; }
+      .paper-frame { padding: 14px; }
 
       /* Bigger touch targets on sliders */
       input[type="range"] { height: 4px; }
@@ -437,8 +438,7 @@
       .btn-primary   { padding: 15px; }
       .btn-secondary { padding: 13px; }
 
-      .control-section { padding: 14px 0; }
-      .paper-frame { padding: 18px; }
+      .control-section { padding: 10px 0; }
       .reg-mark { width: 14px; height: 14px; }
     }
 
@@ -588,22 +588,22 @@
 // RISO INK PALETTE  (Riso Kagaku authentic colors + screen angles)
 // ─────────────────────────────────────────────────────────────
 const RISO_INKS = [
-  { name: '墨',   en: 'Black',              hex: '#1a1a1a', angle: 45 },
-  { name: '撫子', en: 'Fluorescent Pink',   hex: '#FF48B0', angle: 75 },
-  { name: '瑠璃', en: 'Blue',               hex: '#0078BF', angle: 15 },
-  { name: '山吹', en: 'Yellow',             hex: '#FFE800', angle:  0 },
-  { name: '緋',   en: 'Bright Red',         hex: '#F15060', angle: 75 },
-  { name: '柿',   en: 'Orange',             hex: '#FF6C2F', angle: 75 },
-  { name: '蛍橙', en: 'Fluorescent Orange', hex: '#FF5B1D', angle: 75 },
-  { name: '若草', en: 'Green',              hex: '#00A95C', angle: 15 },
-  { name: '青磁', en: 'Teal',               hex: '#00ABAC', angle: 15 },
-  { name: '群青', en: 'Medium Blue',        hex: '#3255A4', angle: 15 },
-  { name: '藤',   en: 'Purple',             hex: '#765BA7', angle: 75 },
-  { name: '牡丹', en: 'Burgundy',           hex: '#914E72', angle: 45 },
-  { name: '琥珀', en: 'Gold',               hex: '#AC8B2C', angle:  0 },
-  { name: '銀鼠', en: 'Light Gray',         hex: '#949494', angle: 45 },
-  { name: '若葉', en: 'Fluorescent Green',  hex: '#69D84F', angle: 15 },
-  { name: '薄荷', en: 'Mint',               hex: '#82D8D5', angle: 15 },
+  { name: 'Black',              hex: '#1a1a1a', angle: 45 },
+  { name: 'Fluorescent Pink',   hex: '#FF48B0', angle: 75 },
+  { name: 'Blue',               hex: '#0078BF', angle: 15 },
+  { name: 'Yellow',             hex: '#FFE800', angle:  0 },
+  { name: 'Bright Red',         hex: '#F15060', angle: 75 },
+  { name: 'Orange',             hex: '#FF6C2F', angle: 75 },
+  { name: 'Fluorescent Orange', hex: '#FF5B1D', angle: 75 },
+  { name: 'Green',              hex: '#00A95C', angle: 15 },
+  { name: 'Teal',               hex: '#00ABAC', angle: 15 },
+  { name: 'Medium Blue',        hex: '#3255A4', angle: 15 },
+  { name: 'Purple',             hex: '#765BA7', angle: 75 },
+  { name: 'Burgundy',           hex: '#914E72', angle: 45 },
+  { name: 'Gold',               hex: '#AC8B2C', angle:  0 },
+  { name: 'Light Gray',         hex: '#949494', angle: 45 },
+  { name: 'Fluorescent Green',  hex: '#69D84F', angle: 15 },
+  { name: 'Mint',               hex: '#82D8D5', angle: 15 },
 ];
 
 const INK_MAP = Object.fromEntries(RISO_INKS.map(i => [i.hex.toLowerCase(), i]));
@@ -618,25 +618,25 @@ const CMYK_INKS = ['#FFE800', '#FF48B0', '#0078BF', '#1a1a1a'];
 // Rendering reverses this to follow real Riso print order: light inks first, dark last.
 const PRESETS = [
   // ── CMYK ──
-  { name: 'CMYK',         inks: CMYK_INKS,                                      mode: 'cmyk'               },
-  // ── 3-INK (default range) ──
-  { name: 'PRINT SHOP',   inks: ['#1a1a1a', '#F15060', '#FFE800'], mode: 'shadows-highlights' },
-  { name: 'FIRE',         inks: ['#914E72', '#FF6C2F', '#FFE800'], mode: 'shadows-highlights' },
-  { name: 'DEEP OCEAN',   inks: ['#3255A4', '#00ABAC', '#82D8D5'], mode: 'shadows-highlights' },
-  { name: 'DUSK',         inks: ['#765BA7', '#FF6C2F', '#FFE800'], mode: 'shadows-highlights' },
-  { name: 'BOTANICAL',    inks: ['#00A95C', '#914E72', '#FFE800'], mode: 'shadows-highlights' },
-  { name: 'RISOTTO',      inks: ['#FF48B0', '#FFE800', '#0078BF'], mode: 'channels'           },
-  { name: 'CARNIVAL',     inks: ['#FF48B0', '#69D84F', '#FFE800'], mode: 'channels'           },
+  { name: 'CMYK',             inks: CMYK_INKS,                                       mode: 'cmyk'               },
+  // ── 3-INK ──
+  { name: '活版職人と夕暮れ',    inks: ['#1a1a1a', '#F15060', '#FFE800'],               mode: 'shadows-highlights' },
+  { name: '火の玉ストレート！',   inks: ['#914E72', '#FF6C2F', '#FFE800'],               mode: 'shadows-highlights' },
+  { name: '地球とランデブー',    inks: ['#3255A4', '#00ABAC', '#82D8D5'],               mode: 'shadows-highlights' },
+  { name: '女神の夜遊び',       inks: ['#765BA7', '#FF6C2F', '#FFE800'],               mode: 'shadows-highlights' },
+  { name: '植物採集の午後',     inks: ['#00A95C', '#914E72', '#FFE800'],               mode: 'shadows-highlights' },
+  { name: 'クレオパトラ大作戦！', inks: ['#FF48B0', '#FFE800', '#0078BF'],               mode: 'channels'           },
+  { name: '愛♥情熱のカーニバル', inks: ['#FF48B0', '#69D84F', '#FFE800'],               mode: 'channels'           },
   // ── 4-INK ──
-  { name: 'CHROMATIC',    inks: ['#1a1a1a', '#0078BF', '#FF48B0', '#FFE800'], mode: 'shadows-highlights' },
-  { name: 'SPECTRUM',     inks: ['#914E72', '#3255A4', '#00ABAC', '#82D8D5'], mode: 'shadows-highlights' },
-  { name: 'NIGHTFALL',    inks: ['#1a1a1a', '#765BA7', '#FF48B0', '#FFE800'], mode: 'shadows-highlights' },
-  { name: 'AUTUMN',       inks: ['#914E72', '#FF6C2F', '#FFE800', '#69D84F'], mode: 'shadows-highlights' },
+  { name: '本気と書いてマジ！',   inks: ['#1a1a1a', '#0078BF', '#FF48B0', '#FFE800'],   mode: 'shadows-highlights' },
+  { name: '卑弥呼のバケーション', inks: ['#914E72', '#3255A4', '#00ABAC', '#82D8D5'],   mode: 'shadows-highlights' },
+  { name: 'デンジャラスBeauty',  inks: ['#1a1a1a', '#765BA7', '#FF48B0', '#FFE800'],   mode: 'shadows-highlights' },
+  { name: '五分刈りの旦那',      inks: ['#914E72', '#FF6C2F', '#FFE800', '#69D84F'],   mode: 'shadows-highlights' },
   // ── 2-INK ──
-  { name: 'TOKYO NIGHT',  inks: ['#3255A4', '#FF48B0'],            mode: 'channels'           },
-  { name: 'LATE NIGHT',   inks: ['#1a1a1a', '#00ABAC'],            mode: 'shadows-highlights' },
-  { name: 'SUNSET',       inks: ['#FF6C2F', '#765BA7'],            mode: 'warm-cool'          },
-  { name: 'MOONRISE',     inks: ['#765BA7', '#82D8D5'],            mode: 'shadows-highlights' },
+  { name: 'インテリ眼鏡とモーツァルト', inks: ['#3255A4', '#FF48B0'],                  mode: 'channels'           },
+  { name: '萌えるリーゼント',    inks: ['#1a1a1a', '#00ABAC'],                          mode: 'shadows-highlights' },
+  { name: '女番長(スケバン)',     inks: ['#FF6C2F', '#765BA7'],                          mode: 'warm-cool'          },
+  { name: '甲殻類イムニダ',      inks: ['#765BA7', '#82D8D5'],                          mode: 'shadows-highlights' },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -1188,7 +1188,7 @@ function renderInkSlots() {
       row.innerHTML = `
         <span class="ink-index">${i + 1}</span>
         <div class="ink-swatch" style="background:${hex}"></div>
-        <span class="swatch-name-locked">${info.name}</span>
+        <span class="swatch-name-locked" style="font-family:var(--font);font-size:11px">${info.name}</span>
         <div style="width:22px;font-size:11px;text-align:center;opacity:0.3">🔒</div>
       `;
     } else {
@@ -1205,7 +1205,6 @@ function renderInkSlots() {
           <button class="swatch-trigger" type="button">
             <div class="swatch-trigger-dot" style="background:${hex}"></div>
             <span class="swatch-trigger-name">${info.name}</span>
-            <span class="swatch-trigger-en">${info.en || ''}</span>
           </button>
           <div class="swatch-popup hidden">${swatchOpts}</div>
         </div>
@@ -1501,7 +1500,7 @@ function setup() {
     // Export includes paper margin via paper-frame rendering
     const frame  = document.getElementById('paper-frame');
     const canvas = document.getElementById('output-canvas');
-    const pad    = 36;
+    const pad    = 24;
     const fw     = canvas.width  + pad * 2;
     const fh     = canvas.height + pad * 2;
     const exp    = document.createElement('canvas');
@@ -1664,3 +1663,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 </body>
+</html>
