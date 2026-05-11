@@ -776,9 +776,9 @@ const PRINT_FEELS = {
 // 中(medium) ≈ 71線: clean halftone, the Riso default.
 // 粗(coarse) ≈ 40線: pronounced dot grain, hand-printed feel.
 const LPI_PRESETS = {
-  fine:   { cell: 2, label: '細', sub: '120線' },
-  medium: { cell: 5, label: '中', sub: '71線'  },
-  coarse: { cell: 9, label: '粗', sub: '40線'  },
+  fine:   { cell: 2, label: '細', sub: '120線', bleed: 0.7 },
+  medium: { cell: 5, label: '中', sub: '71線',  bleed: 0   },
+  coarse: { cell: 9, label: '粗', sub: '40線',  bleed: 0   },
 };
 const LPI_KEYS = ['fine', 'medium', 'coarse'];
 
@@ -1047,7 +1047,9 @@ async function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blur
   const cosA   = Math.cos(-angle);
   const sinA   = Math.sin(-angle);
   const halfC  = cellSize / 2;
-  const maxR   = halfC * 0.97;
+  // Small cells: slight overlap so dense areas merge into near-solid (Riso ink bleed physics)
+  const overlapF = cellSize <= 2 ? 1.08 : 0.97;
+  const maxR   = halfC * overlapF;
   const TWO_PI = Math.PI * 2;
   const diag   = Math.ceil(Math.sqrt(W * W + H * H));
   const ocx    = W / 2, ocy = H / 2;
@@ -1256,8 +1258,10 @@ async function render() {
   for (let i = 0; i < useInks.length; i++) {
     const ink      = useInks[i];
     const info     = INK_MAP[ink.toLowerCase()] || { angle: [45, 15, 75][i % 3], name: 'Ink' };
-    const cellSize = (LPI_PRESETS[useLpi[i]] || LPI_PRESETS.medium).cell;
-    const lkey     = `${ink}|${cellSize}|${S.blurPx}|${plateOrder[i]}`;
+    const preset   = LPI_PRESETS[useLpi[i]] || LPI_PRESETS.medium;
+    const cellSize = preset.cell;
+    const effectiveBlur = Math.max(S.blurPx, preset.bleed || 0);
+    const lkey     = `${ink}|${cellSize}|${effectiveBlur}|${plateOrder[i]}`;
     let layer;
     if (S._cache.layerKeys[i] === lkey && S._cache.layers[i]) {
       layer = S._cache.layers[i];
@@ -1266,7 +1270,7 @@ async function render() {
       const pct = Math.round(12 + (i / useInks.length) * 74);
       setOverlayState(pct, `${info.name || 'INK'} 印刷中`);
       await tick();
-      layer = await createHalftoneLayer(usePlates[i], S.imgW, S.imgH, cellSize, info.angle, ink, S.blurPx);
+      layer = await createHalftoneLayer(usePlates[i], S.imgW, S.imgH, cellSize, info.angle, ink, effectiveBlur);
       S._cache.layers[i]    = layer;
       S._cache.layerKeys[i] = lkey;
     }
