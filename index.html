@@ -1060,7 +1060,7 @@ async function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blur
 
   // Pre-build row list so we can batch without recomputing bounds
   const gyStart = -diag, gyEnd = diag + cellSize;
-  const BATCH = 50;   // yield every N grid rows — larger = faster, scan bar still smooth
+  const BATCH = 240;  // yield every N grid rows — larger = faster, scan bar still smooth
   dctx.beginPath();
   let rowIdx = 0;
   for (let gy = gyStart; gy < gyEnd; gy += cellSize) {
@@ -1219,58 +1219,109 @@ async function render() {
 
   if (!S.misregDirs || S.misregDirs.length !== S.inks.length) regenMisregDirs(S.inks.length);
   syncInkArrays();
-  const plates = createPlates(S.imageData, S.imgW, S.imgH, S.splitMode, S.inks.length);
 
-  // Riso print order: light inks first, dark inks last (dark anchors the print).
-  // For shadows-highlights mode: preset ink order is [dark→light], so reverse both.
-  // Preset swap:true means ink[0] goes to highlights (traditional order — dark in shadows).
+  // ── PLATE CACHE ── reuse plates when image/split/ink-count unchanged
+  S._cache = S._cache || { plateKey: null, plates: null, layers: [], layerKeys: [], inkOrder: [] };
+  const plateKey = `${S.splitMode}|${S.inks.length}|${S.imgW}x${S.imgH}`;
+  let plates;
+  if (S._cache.plateKey === plateKey && S._cache.plates && S._cache.imageData === S.imageData) {
+    plates = S._cache.plates;
+  } else {
+    plates = createPlates(S.imageData, S.imgW, S.imgH, S.splitMode, S.inks.length);
+    S._cache.plates    = plates;
+    S._cache.plateKey  = plateKey;
+    S._cache.imageData = S.imageData;
+    S._cache.layers    = [];   // plates changed → all layers invalid
+    S._cache.layerKeys = [];
+  }
+
   const activePreset = PRESETS.find(p => p.name === S.activePreset);
   const swapSH = !!(activePreset?.swap) && S.splitMode === 'shadows-highlights';
-  // Plates are always reversed in SH mode (light printed first, shadow last).
-  // Inks are reversed unless swap:true (which assigns dark→highlights for surprise).
   const inkOrder   = S.inks.map((_, i) => i);
   const plateOrder = plates.map((_, i) => i);
   if (S.splitMode === 'shadows-highlights') {
     if (!swapSH) inkOrder.reverse();
     plateOrder.reverse();
   }
+  S._cache.inkOrder = inkOrder;
   const useInks    = inkOrder.map(i => S.inks[i]);
   const useLpi     = inkOrder.map(i => S.inkLpi[i]  || S.lpi);
   const useFlow    = inkOrder.map(i => S.inkFlow[i] != null ? S.inkFlow[i] : 1.0);
   const usePlates  = plateOrder.map(i => plates[i] || plates[0]);
 
+  // ── LAYER CACHE ── reuse halftone canvas when (ink, cellSize, blur, plate) unchanged
   const layers = [];
+  let allCached = true;
   for (let i = 0; i < useInks.length; i++) {
-    const pct  = Math.round(12 + (i / useInks.length) * 74);
-    const ink  = useInks[i];
-    const info = INK_MAP[ink.toLowerCase()] || { angle: [45, 15, 75][i % 3], name: 'Ink' };
-    setOverlayState(pct, `${info.name || 'INK'} 印刷中`);
-    await tick();
+    const ink      = useInks[i];
+    const info     = INK_MAP[ink.toLowerCase()] || { angle: [45, 15, 75][i % 3], name: 'Ink' };
     const cellSize = (LPI_PRESETS[useLpi[i]] || LPI_PRESETS.medium).cell;
-    const layer = await createHalftoneLayer(usePlates[i], S.imgW, S.imgH, cellSize, info.angle, ink, S.blurPx);
+    const lkey     = `${ink}|${cellSize}|${S.blurPx}|${plateOrder[i]}`;
+    let layer;
+    if (S._cache.layerKeys[i] === lkey && S._cache.layers[i]) {
+      layer = S._cache.layers[i];
+    } else {
+      allCached = false;
+      const pct = Math.round(12 + (i / useInks.length) * 74);
+      setOverlayState(pct, `${info.name || 'INK'} 印刷中`);
+      await tick();
+      layer = await createHalftoneLayer(usePlates[i], S.imgW, S.imgH, cellSize, info.angle, ink, S.blurPx);
+      S._cache.layers[i]    = layer;
+      S._cache.layerKeys[i] = lkey;
+    }
     const baseOp = info.opacity != null ? info.opacity : 0.78;
     layer._opacity = Math.max(0.05, Math.min(1, baseOp * useFlow[i]));
     layers.push(layer);
-    compositeInksOnly(layers);
+    if (!allCached) { compositeInksOnly(layers); renderTombo(); }
+  }
+  // Trim cache to current ink count
+  S._cache.layers.length    = useInks.length;
+  S._cache.layerKeys.length = useInks.length;
+
+  if (allCached) {
+    // Fast path: nothing changed at the halftone level (e.g. flow / misreg only).
+    compositeRiso(layers);
     renderTombo();
-    if (i < useInks.length - 1) await new Promise(r => setTimeout(r, 50));
+    overlay.classList.remove('active');
+  } else {
+    setOverlayState(100, '完成');
+    compositeRiso(layers);
+    overlay.classList.remove('active');
+    renderTombo();
   }
 
-  setOverlayState(94, '仕上げ中…');
-  await tick();
-  compositeRiso(layers);   // final pass adds overlayTex if present
-  setOverlayState(100, '完成');
-  await new Promise(r => setTimeout(r, 200));  // hold so the user reads "完成"
-
-  overlay.classList.remove('active');
-  renderTombo();   // 見当マークを版ズレ情報で再描画
   renderLock = false;
   if (renderQueued) { renderQueued = false; render(); }
 }
 
 function scheduleRender() {
   clearTimeout(renderDebounce);
-  renderDebounce = setTimeout(render, 90);
+  renderDebounce = setTimeout(render, 25);
+}
+
+// Recompose-only path: when only opacity (流量) or misregistration changes,
+// the cached halftone layers are still valid — just re-blend with new alpha/offsets.
+// ~20× faster than a full halftone pass.
+function scheduleRecompose() {
+  clearTimeout(renderDebounce);
+  renderDebounce = setTimeout(() => {
+    if (renderLock || !S._cache?.layers?.length) { render(); return; }
+    applyFlowToCachedLayers();
+    compositeRiso(S._cache.layers);
+    renderTombo();
+  }, 12);
+}
+
+function applyFlowToCachedLayers() {
+  const order = S._cache.inkOrder || [];
+  for (let i = 0; i < S._cache.layers.length; i++) {
+    const origIdx = order[i];
+    const ink     = S.inks[origIdx];
+    const info    = INK_MAP[ink?.toLowerCase()] || {};
+    const flow    = S.inkFlow[origIdx] != null ? S.inkFlow[origIdx] : 1.0;
+    const baseOp  = info.opacity != null ? info.opacity : 0.78;
+    S._cache.layers[i]._opacity = Math.max(0.05, Math.min(1, baseOp * flow));
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1445,7 +1496,7 @@ function renderInkSlots() {
       const v = parseFloat(e.target.value);
       S.inkFlow[i] = v;
       flowVal.textContent = Math.round(v * 100) + '%';
-      scheduleRender();
+      scheduleRecompose();   // opacity-only → reuse cached halftone layers
     });
 
     slot.appendChild(detail);
@@ -1723,7 +1774,7 @@ function setup() {
   document.getElementById('misregistration').addEventListener('input', e => {
     S.misreg = parseFloat(e.target.value);
     document.getElementById('misreg-val').textContent = S.misreg;
-    scheduleRender();
+    scheduleRecompose();   // misreg only shifts layers → no halftone redo
   });
 
   document.getElementById('regen-btn').addEventListener('click', () => {
