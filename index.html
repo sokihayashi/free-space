@@ -812,7 +812,7 @@ function syncInkArrays() {
   S.inkFlow.length = S.inks.length;
 }
 
-const MAX_DIM = 1000;
+const MAX_DIM = 600;
 let renderDebounce = null;
 let renderLock     = false;
 let renderQueued   = false;
@@ -889,12 +889,16 @@ function createPlates(imgData, w, h, mode, inkCount) {
     lum[i] = 0.299 * src[b] + 0.587 * src[b+1] + 0.114 * src[b+2];
   }
 
-  // Auto-levels: stretch 3rd–97th percentile to fill 0–255.
-  // Makes flat illustrations pop; near-white areas stay near-white (no clipping).
+  // Auto-levels: stretch 3rd–97th percentile to 0–255.
+  // O(n) histogram percentile — avoids O(n log n) sort.
   {
-    const sorted = lum.slice().sort();
-    const lo  = sorted[Math.floor(n * 0.03)];
-    const hi  = sorted[Math.min(n - 1, Math.floor(n * 0.97))];
+    const hist = new Int32Array(256);
+    for (let i = 0; i < n; i++) hist[Math.min(255, lum[i] | 0)]++;
+    const p3 = n * 0.03, p97 = n * 0.97;
+    let lo = 0, hi = 255, cumul = 0;
+    for (let v = 0; v < 256; v++) { cumul += hist[v]; if (cumul >= p3)  { lo = v; break; } }
+    cumul = 0;
+    for (let v = 255; v >= 0; v--) { cumul += hist[v]; if (cumul >= n - p97) { hi = v; break; } }
     const rng = Math.max(1, hi - lo);
     for (let i = 0; i < n; i++) {
       lum[i] = Math.max(0, Math.min(255, (lum[i] - lo) / rng * 255));
@@ -1018,19 +1022,35 @@ function createPlates(imgData, w, h, mode, inkCount) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// SAMPLE PLATE — box average around (cx,cy) with radius r
+// PRE-BLUR PLATE — separable 1D box blur, radius r (integer).
+// Pre-computing this once converts per-dot O(r²) sampling into O(1).
 // ─────────────────────────────────────────────────────────────
-function samplePlate(plate, w, h, cx, cy, r) {
-  const x0 = Math.max(0,   Math.floor(cx - r));
-  const x1 = Math.min(w-1, Math.ceil (cx + r));
-  const y0 = Math.max(0,   Math.floor(cy - r));
-  const y1 = Math.min(h-1, Math.ceil (cy + r));
-  let sum = 0, cnt = 0;
-  for (let y = y0; y <= y1; y++) {
-    const row = y * w;
-    for (let x = x0; x <= x1; x++) { sum += plate[row + x]; cnt++; }
+function preBlurPlate(plate, w, h, r) {
+  const ir = Math.max(1, Math.ceil(r));
+  const tmp = new Float32Array(w * h);
+  const out = new Float32Array(w * h);
+  // Horizontal pass
+  for (let y = 0; y < h; y++) {
+    const base = y * w;
+    let sum = 0;
+    for (let x = 0; x < Math.min(ir, w); x++) sum += plate[base + x];
+    for (let x = 0; x < w; x++) {
+      if (x + ir < w)      sum += plate[base + x + ir];
+      if (x - ir >= 0)     sum -= plate[base + x - ir - 1];
+      tmp[base + x] = sum / (Math.min(x + ir, w - 1) - Math.max(x - ir, 0) + 1);
+    }
   }
-  return cnt > 0 ? sum / cnt : 0;
+  // Vertical pass
+  for (let x = 0; x < w; x++) {
+    let sum = 0;
+    for (let y = 0; y < Math.min(ir, h); y++) sum += tmp[y * w + x];
+    for (let y = 0; y < h; y++) {
+      if (y + ir < h)      sum += tmp[(y + ir) * w + x];
+      if (y - ir >= 0)     sum -= tmp[(y - ir - 1) * w + x];
+      out[y * w + x] = sum / (Math.min(y + ir, h - 1) - Math.max(y - ir, 0) + 1);
+    }
+  }
+  return out;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1054,6 +1074,10 @@ async function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blur
   const diag   = Math.ceil(Math.sqrt(W * W + H * H));
   const ocx    = W / 2, ocy = H / 2;
 
+  // Pre-blur plate once → O(1) per dot instead of O(cellSize²) per dot
+  const blurred = preBlurPlate(plate, w, h, halfC);
+  await new Promise(r => setTimeout(r, 0)); // yield after CPU-heavy blur
+
   const dc   = document.createElement('canvas');
   dc.width   = W; dc.height = H;
   const dctx = dc.getContext('2d');
@@ -1061,28 +1085,24 @@ async function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blur
   dctx.fillRect(0, 0, W, H);
   dctx.fillStyle = inkHex;
 
-  // Pre-build row list so we can batch without recomputing bounds
-  const gyStart = -diag, gyEnd = diag + cellSize;
-  const BATCH = 240;  // yield every N grid rows — larger = faster, scan bar still smooth
   dctx.beginPath();
-  let rowIdx = 0;
-  for (let gy = gyStart; gy < gyEnd; gy += cellSize) {
+  for (let gy = -diag; gy < diag + cellSize; gy += cellSize) {
     for (let gx = -diag; gx < diag + cellSize; gx += cellSize) {
       const rcx = gx + halfC, rcy = gy + halfC;
       const scx = ocx + rcx * cosA - rcy * sinA;
       const scy = ocy + rcx * sinA + rcy * cosA;
       if (scx < -cellSize || scx > W + cellSize) continue;
       if (scy < -cellSize || scy > H + cellSize) continue;
-      const density = samplePlate(plate, w, h, scx - pad, scy - pad, halfC);
+      // O(1) lookup into pre-blurred plate
+      const bx = Math.max(0, Math.min(w - 1, (scx - pad + 0.5) | 0));
+      const by = Math.max(0, Math.min(h - 1, (scy - pad + 0.5) | 0));
+      const density = blurred[by * w + bx];
       if (density < 1) continue;
-      const jitter = 0.96 + Math.random() * 0.08;
-      const radius = Math.sqrt(density / 255) * maxR * jitter;
+      const radius = Math.sqrt(density / 255) * maxR;
       if (radius < 0.25) continue;
       dctx.moveTo(scx + radius, scy);
       dctx.arc(scx, scy, radius, 0, TWO_PI);
     }
-    // Canvas path state persists across awaits — yielding here is safe
-    if (++rowIdx % BATCH === 0) await new Promise(r => setTimeout(r, 0));
   }
   dctx.fill();
 
