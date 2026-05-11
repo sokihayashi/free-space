@@ -669,9 +669,7 @@
 </div>
 
 <script>
-// ─────────────────────────────────────────────────────────────
 // RISO INK PALETTE  (Riso Kagaku authentic colors + screen angles)
-// ─────────────────────────────────────────────────────────────
 // opacity = 隠蔽率 (ink coverage). Riso inks are translucent — darks ~0.8-0.9,
 // fluorescents/pastels ~0.45-0.6, yellow notoriously low ~0.45.
 const RISO_INKS = [
@@ -720,9 +718,7 @@ const INK_MAP = Object.fromEntries(RISO_INKS.map(i => [i.hex.toLowerCase(), i]))
 // CMYK inks: Yellow → Magenta → Cyan → Black (real Riso print order, light first)
 const CMYK_INKS = ['#FFE800', '#FF48B0', '#0078BF', '#1a1a1a'];
 
-// ─────────────────────────────────────────────────────────────
 // PRESETS
-// ─────────────────────────────────────────────────────────────
 // Ink order for shadows-highlights: [darkest → lightest]
 // Rendering reverses this to follow real Riso print order: light inks first, dark last.
 const PRESETS = [
@@ -760,9 +756,7 @@ const PRESETS = [
   { name: '五分刈りの旦那',          inks: ['#444444', '#7B3F2A', '#B6AD1C', '#98A589'],          mode: 'shadows-highlights' }, // 渋い。ダークグレー→茶→オリーブ→カーキ、全部くすみ
 ];
 
-// ─────────────────────────────────────────────────────────────
 // PRINT FEEL — experiential presets that set multiple params at once
-// ─────────────────────────────────────────────────────────────
 const PRINT_FEELS = {
   FRESH: { lpi: 'fine',   misreg: 0.8, blurPx: 0,    desc: '120線・きれい'     },
   ROUGH: { lpi: 'coarse', misreg: 3.0, blurPx: 0.4,  desc: '40線・手刷り感'    },
@@ -782,9 +776,7 @@ const LPI_PRESETS = {
 };
 const LPI_KEYS = ['fine', 'medium', 'coarse'];
 
-// ─────────────────────────────────────────────────────────────
 // STATE
-// ─────────────────────────────────────────────────────────────
 const S = {
   imageData:   null,
   imgW:        0,
@@ -817,10 +809,8 @@ let renderDebounce = null;
 let renderLock     = false;
 let renderQueued   = false;
 
-// ─────────────────────────────────────────────────────────────
 // PAPER TEXTURE — load paper.jpg as the canvas background.
 // The physical paper texture IS the background; no synthetic grain needed.
-// ─────────────────────────────────────────────────────────────
 function loadPaperTexture() {
   return new Promise(resolve => {
     const img = new Image();
@@ -837,11 +827,9 @@ function loadPaperTexture() {
   });
 }
 
-// ─────────────────────────────────────────────────────────────
 // OVERLAY TEXTURE LOADER
 // Load an external image (e.g. paper/hair grain) as a burn layer.
 // Usage: loadOverlayTexture('path/to/grain.png').then(t => S.overlayTex = t)
-// ─────────────────────────────────────────────────────────────
 function loadOverlayTexture(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -857,13 +845,11 @@ function loadOverlayTexture(url) {
   });
 }
 
-// ─────────────────────────────────────────────────────────────
 // MISREGISTRATION DIRECTIONS
 // Plate 0 is the anchor. Other plates get:
 //   base  — always-on tiny offset (~0.6px X, ~1.1px Y) even at slider=0
 //   norm  — normalised direction scaled by the slider
 // This mirrors real Riso: every print job has some baseline drift.
-// ─────────────────────────────────────────────────────────────
 function regenMisregDirs(count) {
   S.misregDirs = [{ baseX: 0, baseY: 0, nx: 0, ny: 0 }];
   for (let i = 1; i < count; i++) {
@@ -876,9 +862,7 @@ function regenMisregDirs(count) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
 // PLATE CREATION — separate image into per-ink density maps
-// ─────────────────────────────────────────────────────────────
 function createPlates(imgData, w, h, mode, inkCount) {
   const src = imgData.data;
   const n   = w * h;
@@ -1021,10 +1005,8 @@ function createPlates(imgData, w, h, mode, inkCount) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
 // PRE-BLUR PLATE — separable 1D box blur, radius r (integer).
 // Pre-computing this once converts per-dot O(r²) sampling into O(1).
-// ─────────────────────────────────────────────────────────────
 function preBlurPlate(plate, w, h, r) {
   const ir = Math.max(1, Math.ceil(r));
   const tmp = new Float32Array(w * h);
@@ -1053,12 +1035,10 @@ function preBlurPlate(plate, w, h, r) {
   return out;
 }
 
-// ─────────────────────────────────────────────────────────────
 // HALFTONE LAYER — async AM halftone on angled grid per ink
 // dot radius = √(density/255) × maxR  preserves tonal area exactly
 // Rendered on a padded canvas so edge dots are not clipped.
 // Row-batched with yields so the scan bar animation stays fluid.
-// ─────────────────────────────────────────────────────────────
 async function createHalftoneLayer(plate, w, h, cellSize, angleDeg, inkHex, blurPx) {
   const pad    = Math.ceil(cellSize + blurPx + 1);
   const W      = w + pad * 2;
@@ -1131,10 +1111,8 @@ function thresholdPlate(plate, thresh) {
   return out;
 }
 
-// ─────────────────────────────────────────────────────────────
 // COMPOSITE — split into ink-only pass + grain pass so
 // progressive layer display works (shows plates building up).
-// ─────────────────────────────────────────────────────────────
 function compositeInksOnly(layers) {
   const canvas = document.getElementById('output-canvas');
   const ctx    = canvas.getContext('2d');
@@ -1178,9 +1156,7 @@ function compositeRiso(layers) {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
 // RENDER ANIMATION HELPERS
-// ─────────────────────────────────────────────────────────────
 function tick() { return new Promise(r => setTimeout(r, 0)); }
 
 function setOverlayState(pct, label) {
@@ -1190,11 +1166,9 @@ function setOverlayState(pct, label) {
   if (lbl && label) lbl.textContent = label;
 }
 
-// ─────────────────────────────────────────────────────────────
 // EDGE FADE — after compositing, paint a paper-colored gradient
 // over each canvas edge so halftone dots fade out instead of
 // cutting at a perfect geometric line. Width ≈ 2 dot cells.
-// ─────────────────────────────────────────────────────────────
 function applyEdgeFade(canvas, cellSize) {
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
@@ -1214,9 +1188,7 @@ function applyEdgeFade(canvas, cellSize) {
   ctx.fillStyle = mk(0, h, 0, h-ew);   ctx.fillRect(0,      h-ew,   w,  ew);
 }
 
-// ─────────────────────────────────────────────────────────────
 // RENDER (async — each ink plate yields to let animation update)
-// ─────────────────────────────────────────────────────────────
 async function render() {
   if (!S.imageData) return;
   if (renderLock) { renderQueued = true; return; }
@@ -1349,9 +1321,7 @@ function applyFlowToCachedLayers() {
   }
 }
 
-// ─────────────────────────────────────────────────────────────
 // IMAGE LOADING
-// ─────────────────────────────────────────────────────────────
 const MIN_DIM = 720;   // upscale small images: more detail in dot density map
 
 function loadImageElement(img) {
@@ -1409,9 +1379,7 @@ function loadFile(file) {
   reader.readAsDataURL(file);
 }
 
-// ─────────────────────────────────────────────────────────────
 // UI
-// ─────────────────────────────────────────────────────────────
 function renderInkSlots() {
   syncInkArrays();
   const slots  = document.getElementById('ink-slots');
@@ -1576,9 +1544,7 @@ function syncSplitUI() {
   if (cmykBtn) cmykBtn.classList.toggle('active', isCmyk);
 }
 
-// ─────────────────────────────────────────────────────────────
 // PRINT FEEL
-// ─────────────────────────────────────────────────────────────
 function buildLpiChips() {
   const c = document.getElementById('lpi-chips');
   c.innerHTML = '';
@@ -1639,9 +1605,7 @@ function syncLpiUI() {
     b.classList.toggle('active', b.dataset.lpi === S.lpi));
 }
 
-// ─────────────────────────────────────────────────────────────
 // SHUFFLE — pick random Riso inks for instant surprise
-// ─────────────────────────────────────────────────────────────
 function shuffleInks() {
   const inkCount = Math.random() < 0.22 ? 3 : 2;
   const pool = [...RISO_INKS].sort(() => Math.random() - 0.5);
@@ -1658,10 +1622,8 @@ function shuffleInks() {
   if (S.imageData) scheduleRender();
 }
 
-// ─────────────────────────────────────────────────────────────
 // TOMBO — Japanese crop marks (トンボ) and registration marks (見当)
 // Drawn as an SVG overlay on top of the paper-frame.
-// ─────────────────────────────────────────────────────────────
 function renderTombo() {
   const old    = document.getElementById('tombo-overlay');
   if (old) old.remove();
@@ -1765,9 +1727,7 @@ function renderTombo() {
   frame.appendChild(svg);
 }
 
-// ─────────────────────────────────────────────────────────────
 // EVENTS
-// ─────────────────────────────────────────────────────────────
 function setup() {
   const dz = document.getElementById('drop-zone');
   const fi = document.getElementById('file-input');
@@ -1891,13 +1851,11 @@ function setup() {
   });
 }
 
-// ─────────────────────────────────────────────────────────────
 // DEMO IMAGE — nocturnal cityscape zine poster.
 // Night sky + crescent moon + city silhouette. Flat tonal zones
 // (no smooth gradients) so the halftone dot grid reads cleanly
 // at tonal boundaries. Channels mode: dark sky → dense bi-color
 // dots; cream moon → paper shows through. Classically "Riso".
-// ─────────────────────────────────────────────────────────────
 function makeAutoImage() {
   const w = 600, h = 450;  // 4:3 — classic photo / zine proportion
   const c = document.createElement('canvas');
@@ -1975,9 +1933,7 @@ function makeAutoImage() {
   return ctx.getImageData(0, 0, w, h);
 }
 
-// ─────────────────────────────────────────────────────────────
 // INIT
-// ─────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Pick a random preset on every load so repeat visitors see variety
   // Skip CMYK for random default — it's better experienced intentionally
