@@ -764,7 +764,7 @@ const PRESETS = [
 // PRINT FEEL — experiential presets that set multiple params at once
 // ─────────────────────────────────────────────────────────────
 const PRINT_FEELS = {
-  FRESH: { lpi: 'medium', misreg: 0.8, blurPx: 0,    desc: '71線・きれい'      },
+  FRESH: { lpi: 'fine',   misreg: 0.8, blurPx: 0,    desc: '120線・きれい'     },
   ROUGH: { lpi: 'coarse', misreg: 3.0, blurPx: 0.4,  desc: '40線・手刷り感'    },
   GHOST: { lpi: 'medium', misreg: 7.0, blurPx: 0,    desc: '版ズレ大・うすずり' },
   BOLD:  { lpi: 'coarse', misreg: 2.3, blurPx: 0.6,  desc: '32線・粗い'        },
@@ -772,10 +772,11 @@ const PRINT_FEELS = {
 
 // 線数 (line frequency) presets — three discrete levels.
 // 細(fine) ≈ 100線: dots almost touch, reads as near-solid (former ベタ).
+// 細(fine)   ≈ 120線: very dense, near-solid ink.
 // 中(medium) ≈ 71線: clean halftone, the Riso default.
 // 粗(coarse) ≈ 40線: pronounced dot grain, hand-printed feel.
 const LPI_PRESETS = {
-  fine:   { cell: 3, label: '細', sub: '100線' },
+  fine:   { cell: 2, label: '細', sub: '120線' },
   medium: { cell: 5, label: '中', sub: '71線'  },
   coarse: { cell: 9, label: '粗', sub: '40線'  },
 };
@@ -789,10 +790,10 @@ const S = {
   imgW:        0,
   imgH:        0,
   inks:        ['#1a1a1a', '#F15060', '#FFE800'],
-  inkLpi:      ['medium', 'medium', 'medium'],   // per-ink line frequency
+  inkLpi:      ['fine', 'fine', 'fine'],          // per-ink line frequency
   inkFlow:     [1.0, 1.0, 1.0],                  // per-ink flow (0.5–1.4)
   splitMode:   'shadows-highlights',
-  lpi:         'medium',                          // global default line frequency
+  lpi:         'fine',                            // global default line frequency
   misreg:      0.8,
   blurPx:      0,
   paperCanvas: null,   // paper.jpg loaded as canvas for background
