@@ -26,14 +26,16 @@ RISO PRESS physically simulates all four of these properties in the browser usin
   - Dot radius = √(density/255) × cell_half — preserves tonal area exactly
 - **16 authentic Riso Kagaku ink colors** — Fluorescent Pink, Medium Blue, Teal, Burgundy, Gold…
 - **Multiply-blend compositing** — transparent ink layering on cream paper (#F5F0E8), matching the physical Riso overprint
-- **Per-plate misregistration** — randomized XY offset per ink, scalable from 0–14 px
+- **Per-plate misregistration** — randomized XY offset per ink, scalable from 0–20 px, Y-axis weighted (feed direction)
 - **Ink bleed** — Gaussian blur on each halftone layer simulates dot gain / paper absorption
 - **Paper grain** — pronounced uncoated-paper noise texture (190–254 value range + 1.5% fiber marks), intensity controllable
+- **Paper margin frame** — cream border around output simulates real print margins; included in PNG export
+- **Scan bar animation** — per-ink color sweep during rendering, with progress indicator
 - **Color separation modes**: Shadows/Highlights · Warm/Cool · RGB Channels
 - **6 presets**: TOKYO NIGHT · SUMMER ZINE · LATE NIGHT · BOTANICAL · SUNSET · RISOTTO
 - **2 or 3 ink plates** — add or remove ink layers
 - Drag & drop · file upload · clipboard paste (⌘V / Ctrl+V)
-- One-click **Save PNG** export
+- One-click **Save PNG** export (with paper margin)
 
 ---
 
@@ -70,7 +72,7 @@ Output PNG
 | Control | Range | Effect |
 |---------|-------|--------|
 | Cell Size | 4–24 px | Halftone screen frequency — smaller = finer detail |
-| Misregistration | 0–14 px | Plate offset distance (randomize button rerolls directions) |
+| Misregistration | 0–20 px | Plate offset distance (randomize button rerolls directions) |
 | Ink Bleed | 0–3 px | Gaussian blur radius on halftone dots |
 | Paper Grain | 0–100% | Multiply intensity of uncoated-paper texture |
 | Color Split | 3 modes | How the source image is separated into ink plates |
