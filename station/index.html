@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STATION MAP — 文字を地図にするカバー画像ジェネレータ</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23EFE8DC'/><path d='M4 20 L12 12 L20 12 L28 4' stroke='%23F62E36' stroke-width='3' fill='none'/><path d='M4 8 L14 18 L28 18' stroke='%2300A7DB' stroke-width='3' fill='none'/><circle cx='14' cy='18' r='4' fill='%23EFE8DC' stroke='%2316263F' stroke-width='2'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --paper:#F5F0E8; --paper-dark:#EDE8DB; --ink:#1a1a1a; --ink-mid:#555;
+    --ink-light:#999; --border:#D5CEC2;
+    --font:'DM Mono','Courier New',monospace;
+    --font-display:'Syne',system-ui,sans-serif;
+  }
+  body{font-family:var(--font);background:var(--paper);color:var(--ink);
+       min-height:100vh;padding:16px 24px 40px}
+  body.drag{outline:3px dashed var(--ink);outline-offset:-12px}
+
+  header{display:flex;align-items:baseline;gap:18px;margin-bottom:14px;
+         padding-bottom:12px;border-bottom:2px solid var(--ink);flex-wrap:wrap}
+  .logo{font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.5px}
+  .tagline{font-size:10px;color:var(--ink-light);letter-spacing:.14em;text-transform:uppercase}
+  .home{margin-left:auto;font-size:10px;color:var(--ink-mid);letter-spacing:.08em}
+  .home a{color:var(--ink-mid)}
+
+  .wrap{display:grid;grid-template-columns:minmax(0,1fr) 336px;gap:26px;align-items:start}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+
+  #canvas-holder{border:1px solid var(--border);background:var(--paper-dark);line-height:0}
+  #canvas-holder canvas{width:100%!important;height:auto!important;display:block}
+
+  .panel{display:flex;flex-direction:column;gap:14px}
+  .card{border:1px solid var(--border);background:#fff;padding:13px 14px}
+  .card h2{font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+           color:var(--ink-light);font-weight:500;margin-bottom:10px;font-family:var(--font)}
+  label.row{display:flex;justify-content:space-between;align-items:center;
+            font-size:11px;margin:7px 0;gap:10px}
+  label.row span.v{color:var(--ink-light);font-size:10px}
+  input[type=range]{width:100%;accent-color:var(--ink)}
+  input[type=text],textarea,select{width:100%;font-family:var(--font);font-size:12px;
+    padding:7px 8px;border:1px solid var(--border);background:var(--paper);color:var(--ink)}
+  textarea{resize:vertical;min-height:62px;line-height:1.35}
+  .btn{font-family:var(--font);font-size:11px;letter-spacing:.08em;padding:9px 12px;
+       border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer;
+       text-transform:uppercase}
+  .btn.ghost{background:transparent;color:var(--ink)}
+  .btn:disabled{opacity:.45;cursor:default}
+  .btn-row{display:flex;gap:8px;margin-top:10px}
+  .btn-row .btn{flex:1}
+  .checks{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;font-size:11px}
+  .checks label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  .file{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .file input{display:none}
+  .hint{font-size:10px;color:var(--ink-light);line-height:1.55;margin-top:8px}
+  #srcname{font-size:10px;color:var(--ink-mid);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .thumbbox{display:flex;gap:12px;align-items:center}
+  #thumb{width:112px;height:112px;border:1px solid var(--border);flex-shrink:0;background:#fff}
+  .readout{font-size:10px;line-height:1.6}
+  .readout.ok{color:#1a7a4a}.readout.warn{color:#a06a10}.readout.bad{color:#b0342c}
+  body.has-src .textonly{display:none}
+  .coast-only{display:none}
+  body.mode-coast .coast-only{display:flex}
+  body.mode-coast .transit-only,body.mode-district .transit-only{display:none}
+  body.mode-coast .notcoast-only{display:none}
+  body:not(.mode-transit) label.row.transit-only,
+  body:not(.mode-transit) input.transit-only{display:none}
+  .seedrow{display:flex;gap:8px}
+  .seedrow input[type=number]{flex:1;font-family:var(--font);font-size:12px;padding:7px 8px;
+    border:1px solid var(--border);background:var(--paper)}
+</style>
+</head>
+<body class="mode-district">
+
+<header>
+  <div class="logo">STATION MAP</div>
+  <div class="tagline">Typographic city-map generator · p5.js</div>
+  <div class="home"><a href="../">← RISO PRESS</a></div>
+</header>
+
+<div class="wrap">
+  <div id="canvas-holder"></div>
+
+  <div class="panel">
+
+    <div class="card">
+      <h2>1 — 素材</h2>
+      <div class="file">
+        <label class="btn ghost" for="file">画像 / SVG を選ぶ</label>
+        <input type="file" id="file" accept="image/*,.svg">
+        <div id="srcname">テキストモード</div>
+      </div>
+      <div class="textonly">
+        <textarea id="text" spellcheck="false">東京
+コンテンツ
+ステーション</textarea>
+        <select id="font" style="margin-top:8px">
+          <option value='700 100px "Hiragino Sans", "Yu Gothic", "Noto Sans JP", sans-serif'>和文 ゴシック</option>
+          <option value='900 100px "Helvetica Neue", Arial, sans-serif'>Sans / Black</option>
+          <option value='700 100px "Arial Narrow", Impact, sans-serif'>Sans / Condensed</option>
+          <option value='900 100px Georgia, "Times New Roman", serif'>Serif / Black</option>
+          <option value='600 100px "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif'>和文 明朝</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button class="btn ghost" id="cleartext">テキストに戻す</button>
+      </div>
+      <div class="hint">ドラッグ&amp;ドロップ / ⌘V の貼り付けも可。太い書体ほど「街」が入って地図らしくなります。</div>
+    </div>
+
+    <div class="card">
+      <h2>2 — マスク調整</h2>
+      <label class="row">文字サイズ <span class="v" id="scale-val">1</span></label>
+      <input type="range" id="scale" min="0.45" max="1.9" step="0.02" value="1">
+      <label class="row">上下位置 <span class="v" id="offsety-val">0</span></label>
+      <input type="range" id="offsety" min="-0.25" max="0.25" step="0.01" value="0">
+      <label class="row">2値化しきい値 <span class="v" id="threshold-val">0.55</span></label>
+      <input type="range" id="threshold" min="0.15" max="0.9" step="0.01" value="0.55">
+      <div class="checks" style="margin-top:10px">
+        <label><input type="checkbox" id="srcinvert" disabled> 素材の白黒反転</label>
+        <label><input type="checkbox" id="invert"> 文字を海にする</label>
+      </div>
+      <div class="hint">透過 PNG / SVG はアルファをそのまま使うのでしきい値は不要です。</div>
+    </div>
+
+    <div class="card">
+      <h2>3 — 地図</h2>
+      <select id="mode" style="margin-bottom:11px">
+        <option value="district">街区 — 文字の領域だけ街区の色が変わる</option>
+        <option value="transit">路線 — 文字そのものを路線網にする</option>
+        <option value="coast">陸と水 — 文字が陸地、外が湾になる</option>
+      </select>
+      <div class="seedrow">
+        <input type="number" id="seed" value="7">
+        <button class="btn" id="dice">SEED 🎲</button>
+      </div>
+      <label class="row" style="margin-top:12px">街路密度 <span class="v" id="density-val">1.2</span></label>
+      <input type="range" id="density" min="0.5" max="1.8" step="0.05" value="1.2">
+      <label class="row transit-only">連絡線の数 <span class="v" id="rails-val">3</span></label>
+      <input type="range" class="transit-only" id="rails" min="0" max="9" step="1" value="3">
+      <label class="row transit-only">八方位化 <span class="v" id="octo-val">0.7</span></label>
+      <input type="range" class="transit-only" id="octo" min="0" max="1" step="0.05" value="0.7">
+      <label class="row transit-only">路線の太さ <span class="v" id="linew-val">1</span></label>
+      <input type="range" class="transit-only" id="linew" min="0.4" max="1.7" step="0.05" value="1">
+      <label class="row transit-only">街の淡さ <span class="v" id="bg-val">0.55</span></label>
+      <input type="range" class="transit-only" id="bg" min="0" max="1" step="0.02" value="0.55">
+      <select id="palette" style="margin-top:10px">
+        <option value="paper">PAPER TOKYO — 生成り × 紺 × 朱</option>
+        <option value="night">NIGHT HUB — 夜（反転）</option>
+        <option value="riso">RISO BLUE — リソ青</option>
+        <option value="blueprint">BLUEPRINT — 青焼き</option>
+      </select>
+      <div class="checks" style="margin-top:11px">
+        <label class="transit-only"><input type="checkbox" id="extend" checked> 路線を場外へ延長</label>
+        <label class="notcoast-only"><input type="checkbox" id="water" checked> 湾をつくる</label>
+        <label class="notcoast-only"><input type="checkbox" id="follow" checked> 密度を文字に従わせる</label>
+        <label class="notcoast-only"><input type="checkbox" id="glyphroad" checked> 文字の輪郭を道路にする</label>
+        <label class="coast-only"><input type="checkbox" id="contours" checked> 等深線</label>
+        <label><input type="checkbox" id="frame" checked> 図郭・目盛</label>
+        <label><input type="checkbox" id="compass" checked> 方位・スケール</label>
+        <label><input type="checkbox" id="grain" checked> 紙の粒子</label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>4 — 文字組・書き出し</h2>
+      <input type="text" id="subtitle" value="TOKYO CONTENTS STATION">
+      <label class="row" style="margin-top:8px"><span>副題をプレートに載せる</span><input type="checkbox" id="subplate" checked></label>
+      <div class="thumbbox" style="margin-top:12px">
+        <canvas id="thumb" width="112" height="112"></canvas>
+        <div>
+          <div class="hint" style="margin:0 0 6px">実際のポッドキャストアプリでの見え方（112px）</div>
+          <div class="readout" id="contrast"></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="save1400">PNG 1400</button>
+        <button class="btn" id="save3000">PNG 3000</button>
+      </div>
+      <div class="hint">Apple Podcasts / Spotify は 1400–3000px の正方形。3000 は書き出しに数秒かかります。</div>
+    </div>
+
+  </div>
+</div>
+
+<script src="vendor/p5.min.js"></script>
+<script src="sketch.js"></script>
+</body>
+</html>

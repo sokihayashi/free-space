@@ -82,3 +82,10 @@ Output PNG
 ## Tech Stack
 
 Pure HTML + Canvas 2D — zero dependencies, zero build step.
+
+---
+
+## Also in this repo
+
+**[STATION MAP](./station/)** — 文字を地図そのものに変換するカバー画像ジェネレータ（p5.js）。
+街区の再帰分割による都市生成と、字形の骨格抽出による路線図生成。
